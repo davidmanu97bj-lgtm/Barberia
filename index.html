@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>República Argentina — Barbería</title>
+  <style>
+    :root{
+      --bg:#f5f5f2;
+      --panel:#ffffff;
+      --ink:#111111;
+      --muted:#747474;
+      --line:#e7e7e2;
+      --soft:#f0f0ec;
+      --dark:#151515;
+      --radius:22px;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+    }
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+
+    /* LOGIN */
+    .login-screen{
+      min-height:100dvh;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(0,0,0,.05), transparent 26%),
+        var(--bg);
+    }
+    .login-card{
+      width:min(100%,390px);
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      padding:34px 26px 26px;
+    }
+    .brand-mark{
+      width:58px;height:58px;border-radius:18px;
+      background:var(--dark); color:white;
+      display:grid; place-items:center;
+      font-weight:800; font-size:22px; letter-spacing:-1px;
+      margin-bottom:22px;
+    }
+    .eyebrow{
+      text-transform:uppercase;
+      font-size:11px;
+      letter-spacing:.16em;
+      color:var(--muted);
+      font-weight:700;
+      margin:0 0 8px;
+    }
+    h1{font-size:28px;line-height:1.05;margin:0 0 8px;letter-spacing:-.7px}
+    .sub{color:var(--muted);font-size:14px;margin:0 0 26px}
+    label{display:block;font-size:12px;font-weight:700;margin:0 0 7px}
+    .field{margin-bottom:15px}
+    input,select,textarea{
+      width:100%; border:1px solid var(--line); background:#fafaf8;
+      border-radius:14px; padding:13px 14px; outline:none;
+    }
+    input:focus,select:focus,textarea:focus{border-color:#999;background:white}
+    .primary{
+      width:100%; border:0; border-radius:14px; padding:14px 16px;
+      background:var(--dark); color:white; font-weight:800;
+    }
+    .login-foot{margin:14px 0 0;text-align:center;color:#999;font-size:11px}
+
+    /* APP */
+    .app{min-height:100dvh}
+    .topbar{
+      position:sticky;top:0;z-index:10;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px clamp(16px,4vw,34px);
+      background:rgba(245,245,242,.92);backdrop-filter:blur(14px);
+      border-bottom:1px solid rgba(0,0,0,.05);
+    }
+    .brandline{display:flex;gap:11px;align-items:center}
+    .mini-mark{
+      width:38px;height:38px;border-radius:12px;background:var(--dark);color:white;
+      display:grid;place-items:center;font-weight:900;font-size:14px
+    }
+    .brand-title{font-weight:850;line-height:1;font-size:15px}
+    .brand-sub{color:var(--muted);font-size:11px;margin-top:4px}
+    .top-actions{display:flex;gap:8px}
+    .ghost{
+      border:1px solid var(--line);background:white;border-radius:12px;
+      padding:10px 12px;font-weight:700;font-size:12px;
+    }
+    .main{
+      max-width:1380px;margin:auto;padding:24px clamp(12px,3vw,30px) 40px;
+    }
+    .summary{
+      background:var(--dark); color:white; border-radius:24px;
+      padding:20px 22px; display:flex; justify-content:space-between;align-items:flex-end;
+      gap:16px; margin-bottom:18px;
+    }
+    .summary small{color:#bfbfbf;font-weight:650}
+    .summary .value{font-size:clamp(24px,4vw,38px);font-weight:900;letter-spacing:-1.2px;margin-top:5px}
+    .summary .day{font-size:12px;color:#c8c8c8;text-align:right}
+    .workspace{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);
+      gap:14px; align-items:start;
+    }
+    .money-panel,.settlement{
+      background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+      box-shadow:0 5px 20px rgba(0,0,0,.03);overflow:hidden;
+    }
+    .panel-head{padding:18px;border-bottom:1px solid var(--line)}
+    .panel-tag{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:800}
+    .panel-total{font-size:clamp(24px,3.5vw,34px);font-weight:900;letter-spacing:-1px;margin:7px 0 14px}
+    .collect{
+      border:0;border-radius:14px;padding:13px 14px;width:100%;
+      background:var(--dark);color:white;font-weight:850
+    }
+    .panel-body{padding:14px}
+    .empty{
+      padding:34px 14px;text-align:center;color:#aaa;font-size:12px;
+      border:1px dashed #ddd;border-radius:14px;
+    }
+    .receipt{
+      border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px;
+      background:#fcfcfa;
+    }
+    .receipt-top{display:flex;justify-content:space-between;gap:10px}
+    .receipt strong{font-size:14px}
+    .receipt .amount{font-weight:900}
+    .receipt-meta{font-size:11px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between;gap:8px}
+    .proof{font-size:10px;background:var(--soft);padding:3px 7px;border-radius:999px;color:#555}
+
+    .settlement{
+      position:sticky;top:88px;
+      padding:17px 14px;text-align:center;
+    }
+    .settle-icon{
+      width:42px;height:42px;border-radius:14px;background:var(--soft);
+      display:grid;place-items:center;margin:0 auto 12px;font-size:18px
+    }
+    .settlement h3{font-size:13px;margin:0 0 8px}
+    .settle-status{
+      border-radius:12px;background:#f4f4f1;padding:12px 8px;
+      font-size:11px;line-height:1.4;color:#555
+    }
+    .settle-status strong{display:block;color:#111;font-size:13px;margin-bottom:4px}
+    .divider{height:1px;background:var(--line);margin:14px 0}
+    .mini-total{font-size:11px;color:var(--muted)}
+    .mini-total strong{display:block;color:var(--ink);font-size:18px;margin-top:3px}
+
+    .close-box{
+      margin-top:18px;background:white;border:1px solid var(--line);
+      border-radius:var(--radius);padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px
+    }
+    .close-box h3{margin:0 0 5px;font-size:15px}
+    .close-box p{margin:0;color:var(--muted);font-size:12px}
+    .close-btn{
+      border:0;background:var(--dark);color:white;padding:13px 18px;border-radius:14px;
+      font-weight:850;white-space:nowrap
+    }
+
+    /* MODAL */
+    .modal{
+      position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:50;
+      display:grid;place-items:end center;padding:16px;
+    }
+    .modal-card{
+      width:min(100%,500px);background:white;border-radius:24px;padding:20px;
+      box-shadow:0 20px 60px rgba(0,0,0,.2)
+    }
+    .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .modal-head h2{font-size:18px;margin:0}
+    .x{border:0;background:var(--soft);width:34px;height:34px;border-radius:10px;font-weight:900}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .file-note{font-size:10px;color:#888;margin-top:6px}
+    .modal-actions{display:flex;gap:9px;margin-top:18px}
+    .modal-actions button{flex:1}
+    .secondary{border:1px solid var(--line);background:white;border-radius:13px;padding:12px;font-weight:800}
+    .save{border:0;background:var(--dark);color:white;border-radius:13px;padding:12px;font-weight:800}
+    .close-summary{background:var(--soft);border-radius:16px;padding:14px;margin-top:6px}
+    .close-summary div{display:flex;justify-content:space-between;font-size:12px;padding:5px 0}
+    .close-summary strong{font-size:13px}
+
+    @media (max-width:760px){
+      .topbar{padding:12px}
+      .ghost.logout-text{display:none}
+      .main{padding:14px 8px 28px}
+      .summary{padding:16px;border-radius:18px}
+      .summary .value{font-size:25px}
+      .workspace{grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);gap:6px}
+      .money-panel,.settlement{border-radius:16px}
+      .panel-head{padding:12px 9px}
+      .panel-tag{font-size:9px;letter-spacing:.08em}
+      .panel-total{font-size:20px;margin:6px 0 10px}
+      .collect{font-size:11px;padding:11px 6px}
+      .panel-body{padding:8px 6px}
+      .receipt{padding:8px;border-radius:11px}
+      .receipt-top{display:block}
+      .receipt .amount{margin-top:3px}
+      .receipt-meta{display:block;font-size:9px}
+      .proof{display:inline-block;margin-top:5px}
+      .settlement{top:72px;padding:12px 6px}
+      .settle-icon{width:34px;height:34px;border-radius:10px;font-size:14px}
+      .settlement h3{font-size:10px}
+      .settle-status{font-size:9px;padding:9px 5px}
+      .settle-status strong{font-size:10px}
+      .mini-total{font-size:9px}.mini-total strong{font-size:14px}
+      .close-box{border-radius:16px;padding:14px;align-items:flex-start;flex-direction:column}
+      .close-btn{width:100%}
+      .modal{padding:8px}
+      .row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="brand-mark">RA</div>
+      <p class="eyebrow">Barbería</p>
+      <h1>República Argentina</h1>
+      <p class="sub">Acceso al control diario de caja.</p>
+
+      <form id="loginForm">
+        <div class="field">
+          <label>Usuario</label>
+          <input id="user" autocomplete="username" placeholder="Ej. barbero01" required />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        </div>
+        <button class="primary" type="submit">Ingresar</button>
+      </form>
+      <p class="login-foot">Prototipo visual · Firebase se conectará después</p>
+    </div>
+  </section>
+
+  <section id="app" class="app hidden">
+    <header class="topbar">
+      <div class="brandline">
+        <div class="mini-mark">RA</div>
+        <div>
+          <div class="brand-title">República Argentina</div>
+          <div class="brand-sub">Caja diaria · <span id="operatorName">Barbero</span></div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="logoutBtn" class="ghost logout-text">Salir</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="summary">
+        <div>
+          <small>Total facturado hoy</small>
+          <div class="value" id="grandTotal">$ 0</div>
+        </div>
+        <div class="day">
+          Caja abierta<br>
+          <strong id="todayLabel"></strong>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <article class="money-panel">
+          <div class="panel-head">
+            <div class="panel-tag">Efectivo</div>
+            <div class="panel-total" id="cashTotal">$ 0</div>
+            <button class="collect" data-mode="cash">+ Cobrar en efectivo</button>
+          </div>
+          <div class="panel-body" id="cashList">
+            <div class="empty">Los cobros en efectivo aparecerán acá.</div>
+          </div>
+        </article>
+
+        <aside class="settlement">
+          <div class="settle-icon">⇄</div>
+          <h3>Quién paga a quién</h3>
+          <div class="settle-status">
+            <strong>Sin calcular</strong>
+            La lógica de liquidación se conectará después.
+          </div>
+          <div class="divider"></div>
+          <div class="mini-total">
+            Jornada
+            <strong id="centerTotal">$ 0</strong>
+          </div>
+        </aside>
+
+        <article class="money-panel">
+          <div class="panel-head">
+            <div class="panel-tag">Digital</div>
+            <div class="panel-total" id="digitalTotal">$ 0</div>
+            <button class="collect" data-mode="digital">+ Cobrar digital</button>
+          </div>
+          <div class="panel-body" id="digitalList">
+            <div class="empty">Los cobros digitales y sus comprobantes aparecerán acá.</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="close-box">
+        <div>
+          <h3>Finalizar jornada</h3>
+          <p>Cuando termine el día, enviar el pedido de cierre de caja.</p>
+        </div>
+        <button id="closeDayBtn" class="close-btn">Pedir cierre</button>
+      </section>
+    </main>
+  </section>
+
+  <div id="chargeModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="chargeTitle">Nuevo cobro</h2>
+        <button class="x" data-close="chargeModal">×</button>
+      </div>
+      <form id="chargeForm">
+        <input type="hidden" id="chargeMode" />
+        <div class="row">
+          <div class="field">
+            <label>Importe</label>
+            <input id="amount" inputmode="numeric" placeholder="$ 0" required />
+          </div>
+          <div class="field">
+            <label>Servicio</label>
+            <select id="service" required>
+              <option value="">Seleccionar</option>
+              <option>Corte</option>
+              <option>Barba</option>
+              <option>Corte + barba</option>
+              <option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Detalle / cliente</label>
+          <input id="detail" placeholder="Opcional" />
+        </div>
+        <div id="proofField" class="field hidden">
+          <label>Comprobante digital</label>
+          <input id="proof" type="file" accept="image/*,.pdf" />
+          <div class="file-note">En Firebase, este archivo se podrá guardar en Storage.</div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" data-close="chargeModal">Cancelar</button>
+          <button type="submit" class="save">Registrar cobro</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="closeModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Pedido de cierre</h2>
+        <button class="x" data-close="closeModal">×</button>
+      </div>
+      <p class="sub" style="margin-bottom:10px">Resumen visual de la jornada antes de solicitar el cierre.</p>
+      <div class="close-summary">
+        <div><span>Efectivo</span><strong id="closeCash">$ 0</strong></div>
+        <div><span>Digital</span><strong id="closeDigital">$ 0</strong></div>
+        <div><span>Total jornada</span><strong id="closeGrand">$ 0</strong></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="secondary" data-close="closeModal">Volver</button>
+        <button id="confirmClose" type="button" class="save">Enviar pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = { cash: [], digital: [] };
+    const $ = (id) => document.getElementById(id);
+
+    const money = (value) => new Intl.NumberFormat('es-AR', {
+      style:'currency', currency:'ARS', maximumFractionDigits:0
+    }).format(value || 0);
+
+    const total = (arr) => arr.reduce((acc,item)=>acc+item.amount,0);
+
+    function refresh(){
+      const cash = total(state.cash);
+      const digital = total(state.digital);
+      const grand = cash + digital;
+
+      $('cashTotal').textContent = money(cash);
+      $('digitalTotal').textContent = money(digital);
+      $('grandTotal').textContent = money(grand);
+      $('centerTotal').textContent = money(grand);
+
+      $('closeCash').textContent = money(cash);
+      $('closeDigital').textContent = money(digital);
+      $('closeGrand').textContent = money(grand);
+
+      renderList('cashList', state.cash, false);
+      renderList('digitalList', state.digital, true);
+    }
+
+    function renderList(containerId, items, isDigital){
+      const box = $(containerId);
+      if(!items.length){
+        box.innerHTML = `<div class="empty">${isDigital
+          ? 'Los cobros digitales y sus comprobantes aparecerán acá.'
+          : 'Los cobros en efectivo aparecerán acá.'}</div>`;
+        return;
+      }
+      box.innerHTML = items.slice().reverse().map(item => `
+        <div class="receipt">
+          <div class="receipt-top">
+            <strong>${item.service}</strong>
+            <div class="amount">${money(item.amount)}</div>
+          </div>
+          <div class="receipt-meta">
+            <span>${item.detail || 'Sin detalle'} · ${item.time}</span>
+            ${isDigital ? `<span class="proof">${item.proof ? 'Comprobante adjunto' : 'Sin archivo'}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    $('loginForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const username = $('user').value.trim();
+      if(!username) return;
+      $('operatorName').textContent = username;
+      $('loginScreen').classList.add('hidden');
+      $('app').classList.remove('hidden');
+    });
+
+    $('logoutBtn').addEventListener('click', ()=>{
+      $('app').classList.add('hidden');
+      $('loginScreen').classList.remove('hidden');
+    });
+
+    document.querySelectorAll('[data-mode]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const mode = btn.dataset.mode;
+        $('chargeMode').value = mode;
+        $('chargeTitle').textContent = mode === 'cash' ? 'Cobro en efectivo' : 'Cobro digital';
+        $('proofField').classList.toggle('hidden', mode !== 'digital');
+        $('chargeForm').reset();
+        $('chargeMode').value = mode;
+        $('chargeModal').classList.remove('hidden');
+      });
+    });
+
+    document.querySelectorAll('[data-close]').forEach(btn=>{
+      btn.addEventListener('click', ()=> $(btn.dataset.close).classList.add('hidden'));
+    });
+
+    $('chargeForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const mode = $('chargeMode').value;
+      const raw = $('amount').value.replace(/[^\d]/g,'');
+      const amount = Number(raw);
+      if(!amount) return;
+
+      const item = {
+        amount,
+        service:$('service').value,
+        detail:$('detail').value.trim(),
+        time:new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
+        proof:$('proof').files?.[0]?.name || ''
+      };
+      state[mode === 'cash' ? 'cash' : 'digital'].push(item);
+      $('chargeModal').classList.add('hidden');
+      refresh();
+    });
+
+    $('closeDayBtn').addEventListener('click', ()=>{
+      refresh();
+      $('closeModal').classList.remove('hidden');
+    });
+
+    $('confirmClose').addEventListener('click', ()=>{
+      alert('Pedido de cierre registrado visualmente. La lógica real se conectará después con Firebase.');
+      $('closeModal').classList.add('hidden');
+    });
+
+    $('todayLabel').textContent = new Intl.DateTimeFormat('es-AR',{
+      weekday:'short', day:'2-digit', month:'short'
+    }).format(new Date());
+
+    refresh();
+  </script>
+</body>
+</html>
