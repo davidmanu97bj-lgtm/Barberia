@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   getFirestore, collection, addDoc, doc, getDoc, setDoc,
-  query, where, orderBy, onSnapshot, serverTimestamp
+  onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {
   getStorage, ref, uploadBytes, getDownloadURL
@@ -108,18 +108,27 @@ async function loadProfile(user) {
 function subscribeToday(user) {
   if (unsubscribePayments) unsubscribePayments();
   const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
-  const q = query(paymentsRef, where("dayKey","==",localDayKey()), orderBy("createdAt","desc"));
   $("syncStatus").textContent = "Sincronizando…";
   $("syncStatus").className = "sync";
 
-  unsubscribePayments = onSnapshot(q, snap => {
-    payments = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  // Escuchamos la colección del usuario en tiempo real y filtramos el día en el navegador.
+  // Así evitamos depender de un índice compuesto de Firestore para dayKey + createdAt.
+  unsubscribePayments = onSnapshot(paymentsRef, snap => {
+    const today = localDayKey();
+    payments = snap.docs
+      .map(d => ({ id:d.id, ...d.data() }))
+      .filter(item => item.dayKey === today)
+      .sort((a, b) => {
+        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bMs - aMs;
+      });
     render();
     $("syncStatus").textContent = "En tiempo real";
     $("syncStatus").className = "sync ok";
   }, err => {
-    console.error(err);
-    $("syncStatus").textContent = "Error de conexión";
+    console.error("Firestore snapshot error:", err);
+    $("syncStatus").textContent = "Error de datos";
     $("syncStatus").className = "sync bad";
   });
 }
@@ -176,11 +185,26 @@ document.querySelectorAll("[data-mode]").forEach(btn => {
     const mode = btn.dataset.mode;
     $("chargeForm").reset();
     $("chargeMode").value = mode;
+    $("selectedService").value = "";
+    $("selectedAmount").value = "";
+    document.querySelectorAll(".service-option").forEach(option => option.classList.remove("selected"));
     $("chargeTitle").textContent = mode === "cash" ? "Cobro en efectivo" : "Cobro digital";
     $("proofField").classList.toggle("hidden", mode !== "digital");
-    $("proof").required = false;
+    $("proof").required = mode === "digital";
     $("chargeStatus").textContent = "";
+    $("chargeStatus").className = "status";
     $("chargeModal").classList.remove("hidden");
+  });
+});
+
+document.querySelectorAll(".service-option").forEach(option => {
+  option.addEventListener("click", () => {
+    document.querySelectorAll(".service-option").forEach(item => item.classList.remove("selected"));
+    option.classList.add("selected");
+    $("selectedService").value = option.dataset.service;
+    $("selectedAmount").value = option.dataset.amount;
+    $("chargeStatus").textContent = "";
+    $("chargeStatus").className = "status";
   });
 });
 
@@ -193,8 +217,21 @@ $("chargeForm").addEventListener("submit", async e => {
   const user = auth.currentUser;
   if (!user) return;
   const mode = $("chargeMode").value;
-  const amount = Number($("amount").value.replace(/[^\d]/g,""));
-  if (!amount) return;
+  const service = $("selectedService").value;
+  const amount = Number($("selectedAmount").value);
+  const file = $("proof").files?.[0];
+
+  if (!service || !amount) {
+    $("chargeStatus").textContent = "Elegí uno de los servicios.";
+    $("chargeStatus").className = "status error";
+    return;
+  }
+
+  if (mode === "digital" && !file) {
+    $("chargeStatus").textContent = "Adjuntá el comprobante del cobro digital.";
+    $("chargeStatus").className = "status error";
+    return;
+  }
 
   $("saveChargeBtn").disabled = true;
   $("saveChargeBtn").textContent = "Guardando…";
@@ -203,8 +240,6 @@ $("chargeForm").addEventListener("submit", async e => {
   try {
     let proofUrl = "";
     let proofPath = "";
-    const file = $("proof").files?.[0];
-
     if (mode === "digital" && file) {
       const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
       proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/${localDayKey()}/${Date.now()}_${cleanName}`;
@@ -217,7 +252,7 @@ $("chargeForm").addEventListener("submit", async e => {
     await addDoc(paymentsRef, {
       method: mode,
       amount,
-      service: $("service").value,
+      service,
       detail: $("detail").value.trim(),
       proofUrl,
       proofPath,

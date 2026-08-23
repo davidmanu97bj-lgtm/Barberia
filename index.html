@@ -48,7 +48,19 @@
 
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:50;display:grid;place-items:end center;padding:16px}.modal-card{width:min(100%,500px);background:#fff;border-radius:24px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
     .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.modal-head h2{font-size:18px;margin:0}.x{border:0;background:var(--soft);width:34px;height:34px;border-radius:10px;font-weight:900}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.file-note{font-size:10px;color:#888;margin-top:6px}.modal-actions{display:flex;gap:9px;margin-top:18px}.modal-actions button{flex:1}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .service-label{font-size:12px;font-weight:800;margin:0 0 10px}
+    .service-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px}
+    .service-option{
+      border:1px solid var(--line);background:#fafaf8;border-radius:16px;padding:15px 12px;
+      text-align:left;min-height:84px;transition:.15s ease;display:flex;flex-direction:column;
+      justify-content:space-between;color:var(--ink)
+    }
+    .service-option strong{font-size:14px;line-height:1.15}
+    .service-option span{font-size:18px;font-weight:900;letter-spacing:-.4px;margin-top:8px}
+    .service-option.selected{background:var(--dark);border-color:var(--dark);color:#fff;transform:translateY(-1px)}
+    .service-option:active{transform:scale(.985)}
+    .file-note{font-size:10px;color:#888;margin-top:6px}.modal-actions{display:flex;gap:9px;margin-top:18px}.modal-actions button{flex:1}
     .secondary{border:1px solid var(--line);background:#fff;border-radius:13px;padding:12px;font-weight:800}.save{border:0;background:var(--dark);color:#fff;border-radius:13px;padding:12px;font-weight:800}
     .save:disabled,.primary:disabled,.collect:disabled,.close-btn:disabled{opacity:.55;cursor:not-allowed}.close-summary{background:var(--soft);border-radius:16px;padding:14px;margin-top:6px}.close-summary div{display:flex;justify-content:space-between;font-size:12px;padding:5px 0}.close-summary strong{font-size:13px}
     @media(max-width:760px){
@@ -59,6 +71,7 @@
       .receipt-meta{display:block;font-size:9px}.proof{display:inline-block;margin-top:5px}.settlement{top:72px;padding:12px 6px}.settle-icon{width:34px;height:34px;border-radius:10px;font-size:14px}
       .settlement h3{font-size:10px}.settle-status{font-size:9px;padding:9px 5px}.settle-status strong{font-size:10px}.mini-total{font-size:9px}.mini-total strong{font-size:14px}
       .close-box{border-radius:16px;padding:14px;align-items:flex-start;flex-direction:column}.close-btn{width:100%}.modal{padding:8px}.row{grid-template-columns:1fr}
+      .service-grid{grid-template-columns:1fr 1fr;gap:8px}.service-option{min-height:78px;padding:12px 10px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
 </head>
@@ -115,10 +128,23 @@
     <div class="modal-head"><h2 id="chargeTitle">Nuevo cobro</h2><button class="x" data-close="chargeModal">×</button></div>
     <form id="chargeForm">
       <input type="hidden" id="chargeMode">
-      <div class="row">
-        <div class="field"><label>Importe</label><input id="amount" inputmode="numeric" placeholder="$ 0" required></div>
-        <div class="field"><label>Servicio</label><select id="service" required><option value="">Seleccionar</option><option>Corte</option><option>Barba</option><option>Corte + barba</option><option>Otro</option></select></div>
+      <div class="service-label">Elegí el servicio</div>
+      <div class="service-grid" id="serviceGrid">
+        <button type="button" class="service-option" data-service="Sombreado" data-amount="12000">
+          <strong>Sombreado</strong><span>$ 12.000</span>
+        </button>
+        <button type="button" class="service-option" data-service="Clásico" data-amount="10000">
+          <strong>Clásico</strong><span>$ 10.000</span>
+        </button>
+        <button type="button" class="service-option" data-service="Corte + barba" data-amount="15000">
+          <strong>Corte + barba</strong><span>$ 15.000</span>
+        </button>
+        <button type="button" class="service-option" data-service="Barba" data-amount="5000">
+          <strong>Barba</strong><span>$ 5.000</span>
+        </button>
       </div>
+      <input type="hidden" id="selectedService">
+      <input type="hidden" id="selectedAmount">
       <div class="field"><label>Detalle / cliente</label><input id="detail" placeholder="Opcional"></div>
       <div id="proofField" class="field hidden"><label>Comprobante digital</label><input id="proof" type="file" accept="image/*,.pdf"><div class="file-note">El comprobante se guardará en Firebase Storage.</div></div>
       <div id="chargeStatus" class="status"></div>
