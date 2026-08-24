@@ -1409,3 +1409,197 @@ a.proof:hover { background: #e3e7f0; }
     animation-duration: .01ms !important;
   }
 }
+
+/* Identidad visual Explora */
+.login-logo-shell,
+.brand-logo-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, #050505, #141414);
+  box-shadow: 0 12px 28px rgba(15, 17, 21, .2);
+}
+
+.login-logo-shell {
+  width: 100%;
+  height: 92px;
+  margin-bottom: 24px;
+  padding: 17px 20px;
+  border: 1px solid rgba(218, 180, 74, .22);
+  border-radius: 22px;
+}
+
+.brand-logo-shell {
+  width: clamp(154px, 18vw, 196px);
+  height: 52px;
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid rgba(218, 180, 74, .22);
+  border-radius: 15px;
+}
+
+.explora-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brandline { min-width: 0; }
+.brandline .brand-sub {
+  max-width: 170px;
+  margin-top: 0;
+  line-height: 1.3;
+}
+
+/* Acción principal de gasto en el encabezado de la jornada */
+.summary-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary-expense-button {
+  min-height: 45px;
+  padding: 11px 16px;
+  border: 1px solid rgba(255, 216, 91, .45);
+  border-radius: 14px;
+  background: linear-gradient(145deg, #ffe477, #efc840);
+  color: #171717;
+  box-shadow: 0 9px 22px rgba(0, 0, 0, .2);
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.summary-expense-button:hover { transform: translateY(-1px); }
+.summary-actions .sync { align-self: center; color: #b9c0ca; }
+.summary-actions .sync.ok { color: #73d7a2; }
+.summary-actions .sync.bad { color: #ff9797; }
+
+/* Tres columnas parejas: seis comprobantes recientes por cada bloque. */
+.workspace { align-items: stretch; }
+
+.money-panel,
+.settlement {
+  height: 100%;
+}
+
+.money-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.proof-list,
+.uber-list {
+  min-height: 720px;
+}
+
+.proof-list { flex: 1; }
+
+.proof-list .empty,
+.uber-list .uber-empty {
+  display: grid;
+  min-height: inherit;
+  place-items: center;
+}
+
+.receipt { min-height: 110px; }
+
+/* Uber permanece en su columna central, pero acompaña el scroll de la página. */
+.settlement {
+  position: static;
+  top: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.uber-list {
+  max-height: none;
+  flex: 1;
+  overflow: visible;
+}
+
+/* Los comprobantes de gastos quedan separados para no desnivelar Digital. */
+.expense-ledger {
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid #dce2ed;
+  border-radius: 27px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.expense-ledger > .records-heading { margin-bottom: 13px; }
+
+.expense-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.expense-list .expense-item { margin-bottom: 0; }
+.expense-list .expense-empty { grid-column: 1 / -1; }
+
+@media (max-width: 760px) {
+  .login-logo-shell {
+    height: 82px;
+    padding: 15px 17px;
+    border-radius: 19px;
+  }
+
+  .brand-logo-shell {
+    width: clamp(130px, 39vw, 154px);
+    height: 45px;
+    padding: 7px 9px;
+    border-radius: 13px;
+  }
+
+  .brandline { gap: 7px; }
+  .brandline .brand-sub {
+    max-width: 84px;
+    font-size: 8px;
+  }
+
+  .summary-actions { align-items: stretch; }
+  .summary-expense-button {
+    min-height: 42px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+  }
+
+  .proof-list,
+  .uber-list { min-height: 760px; }
+
+  .receipt { min-height: 119px; }
+
+  .settlement {
+    position: static;
+    top: auto;
+  }
+
+  .expense-ledger {
+    margin-top: 10px;
+    padding: 14px 8px;
+    border-radius: 22px;
+  }
+
+  .expense-list { grid-template-columns: 1fr; gap: 7px; }
+}
+
+@media (max-width: 380px) {
+  .brand-logo-shell { width: 125px; }
+  .brandline .brand-sub { max-width: 70px; }
+}

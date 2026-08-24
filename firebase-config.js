@@ -1,4 +1,4 @@
-// Configuración Firebase — República Argentina / Barberia
+// Configuración Firebase — Explora
 export const firebaseConfig = {
   apiKey: "AIzaSyA6ENfXp_RNNgMf1bWlkYxlrsUqANlcxf0",
   authDomain: "barberia-c25a1.firebaseapp.com",

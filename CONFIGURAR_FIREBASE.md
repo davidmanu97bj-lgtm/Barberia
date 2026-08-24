@@ -1,4 +1,4 @@
-# Conectar República Argentina con Firebase
+# Conectar Explora con Firebase
 
 Esta versión ya tiene código para:
 
@@ -9,7 +9,7 @@ Esta versión ya tiene código para:
 
 ## 1. Crear o elegir proyecto Firebase
 
-Entrá a Firebase Console y creá un proyecto para la barbería, por ejemplo:
+Entrá a Firebase Console y creá o elegí el proyecto de Explora, por ejemplo:
 
 `republica-argentina-barberia`
 

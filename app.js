@@ -1,6 +1,6 @@
 import {
   firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN, LOGIN_ALIASES
-} from "./firebase-config.js?v=20260824-4";
+} from "./firebase-config.js?v=20260824-5";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
@@ -35,6 +35,7 @@ let closures = [];
 let currentProfile = null;
 let selectedCloseDirection = "";
 let selectedAdminClosureId = "";
+const RECENT_RECEIPTS_LIMIT = 6;
 
 const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
@@ -196,6 +197,8 @@ function render() {
   const model = settlementModel();
   const cashItems = payments.filter(p => p.method === "cash");
   const digitalItems = payments.filter(p => p.method === "digital");
+  const visibleCashItems = cashItems.slice(0, RECENT_RECEIPTS_LIMIT);
+  const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
 
   $("cashTotal").textContent = money(model.cash);
   $("uberCashTotal").textContent = money(model.uber);
@@ -210,14 +213,14 @@ function render() {
 
   $("uberTotal").textContent = money(model.uber);
 
-  $("cashCount").textContent = cashItems.length;
-  $("digitalCount").textContent = digitalItems.length;
-  $("expenseCount").textContent = expenses.length;
-  $("uberCount").textContent = uberClosures.length;
+  $("cashCount").textContent = visibleCashItems.length;
+  $("digitalCount").textContent = visibleDigitalItems.length;
+  $("expenseCount").textContent = Math.min(expenses.length, RECENT_RECEIPTS_LIMIT);
+  $("uberCount").textContent = Math.min(uberClosures.length, RECENT_RECEIPTS_LIMIT);
 
   renderSettlement(model);
-  renderList("cashList", cashItems, false);
-  renderList("digitalList", digitalItems, true);
+  renderList("cashList", visibleCashItems, false);
+  renderList("digitalList", visibleDigitalItems, true);
   renderExpenseList();
   renderUberList();
 }
@@ -266,7 +269,7 @@ function renderExpenseList() {
     return;
   }
 
-  box.innerHTML = expenses.map(item => {
+  box.innerHTML = expenses.slice(0, RECENT_RECEIPTS_LIMIT).map(item => {
     const time = item.createdAt?.toDate
       ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
       : "Ahora";
@@ -291,7 +294,7 @@ function renderUberList() {
     return;
   }
 
-  box.innerHTML = uberClosures.map(item => {
+  box.innerHTML = uberClosures.slice(0, RECENT_RECEIPTS_LIMIT).map(item => {
     const proof = item.proofUrl
       ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
       : `<span class="proof">Sin archivo</span>`;
@@ -1120,7 +1123,3 @@ $("adminPaymentForm").addEventListener("submit", async event => {
     $("confirmAdminPayment").textContent = "Registrar pago";
   }
 });
-
-$("todayLabel").textContent = new Intl.DateTimeFormat("es-AR", {
-  weekday:"short", day:"2-digit", month:"short"
-}).format(new Date());
