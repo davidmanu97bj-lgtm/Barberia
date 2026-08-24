@@ -1,6 +1,6 @@
 import {
   firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN, LOGIN_ALIASES
-} from "./firebase-config.js?v=20260824-5";
+} from "./firebase-config.js?v=20260824-6";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
@@ -28,10 +28,12 @@ let unsubscribePayments = null;
 let unsubscribeExpenses = null;
 let unsubscribeUber = null;
 let unsubscribeClosures = null;
+let unsubscribeDebts = null;
 let payments = [];
 let expenses = [];
 let uberClosures = [];
 let closures = [];
+let debts = [];
 let currentProfile = null;
 let selectedCloseDirection = "";
 let selectedAdminClosureId = "";
@@ -84,6 +86,9 @@ function fallbackProfile(user) {
 function isSettlementAdjustment(item) {
   return item.type === "settlement_adjustment";
 }
+function isAdminDebt(item) {
+  return item.type === "admin_debt";
+}
 function revenueTotalFor(method) {
   return payments
     .filter(p => p.method === method && !isSettlementAdjustment(p))
@@ -96,6 +101,9 @@ function adjustmentTotal(direction) {
 }
 function expensesTotal() {
   return expenses.reduce((a,e)=>a+Number(e.amount||0),0);
+}
+function debtsTotal() {
+  return debts.reduce((a,item)=>a+Number(item.amount||0),0);
 }
 function uberTodayItems() {
   const today = localDayKey();
@@ -132,25 +140,27 @@ function escapeHtml(s="") {
 // - Para equilibrar 50/50, Efectivo + Uber generan deuda del 50% hacia Digital.
 // - Caja chica: 5% completo sobre Efectivo + Uber, porque ambos quedan en manos del chofer.
 // - Gastos: Digital reconoce el 50% de cada gasto pagado por el chofer.
+// - Deuda: el administrador la suma a Efectivo por su valor completo; no genera caja chica.
 function settlementModel() {
   const cashRevenue = revenueTotalFor("cash");
   const uber = uberTodayTotal();
   const digitalRevenue = revenueTotalFor("digital");
   const driverPaid = adjustmentTotal("driver_to_explora");
   const exploraPaid = adjustmentTotal("explora_to_driver");
-  const cash = cashRevenue + exploraPaid;
-  const digital = digitalRevenue + driverPaid;
+  const adminDebt = debtsTotal();
+  const cash = cashRevenue;
+  const digital = digitalRevenue;
   const expense = expensesTotal();
   const driverHeld = cashRevenue + uber;
   const cashBox = driverHeld * 0.05;
   const expenseHalf = expense * 0.50;
 
   // Totales visuales de cada lado.
-  const cashAdjusted = driverHeld + exploraPaid + cashBox;
+  const cashAdjusted = driverHeld + exploraPaid + adminDebt + cashBox;
   const digitalAdjusted = digitalRevenue + driverPaid + expenseHalf;
 
   // Deudas usadas para definir quién paga a quién.
-  const cashDebt = (driverHeld * 0.50) + cashBox;
+  const cashDebt = (driverHeld * 0.50) + cashBox + adminDebt;
   const digitalDebt = (digitalRevenue * 0.50) + expenseHalf;
   const baseBalance = cashDebt - digitalDebt;
   // Los ajustes son transferencias entre las partes, no nueva facturación.
@@ -169,7 +179,7 @@ function settlementModel() {
   }
 
   return {
-    cash, uber, digital, expense, driverHeld, cashBox, expenseHalf,
+    cash, uber, digital, expense, adminDebt, driverHeld, cashBox, expenseHalf,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
     cashAdjusted, digitalAdjusted,
     cashDebt, digitalDebt, balance, amount, from, to,
@@ -195,21 +205,29 @@ function renderSettlement(model) {
 
 function render() {
   const model = settlementModel();
-  const cashItems = payments.filter(p => p.method === "cash");
+  const cashItems = [
+    ...payments.filter(p => p.method === "cash"),
+    ...debts.map(item => ({ ...item, method: "cash", type: "admin_debt", service: "Deuda" }))
+  ].sort((a, b) => {
+    const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return bMs - aMs;
+  });
   const digitalItems = payments.filter(p => p.method === "digital");
   const visibleCashItems = cashItems.slice(0, RECENT_RECEIPTS_LIMIT);
   const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
 
-  $("cashTotal").textContent = money(model.cash);
+  $("cashTotal").textContent = money(model.cashAdjusted);
+  $("cashBaseTotal").textContent = money(model.cash);
   $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
-  $("cashAdjustedTotal").textContent = money(model.cashAdjusted);
+  $("adminDebtTotal").textContent = money(model.adminDebt);
 
-  $("digitalTotal").textContent = money(model.digital);
+  $("digitalTotal").textContent = money(model.digitalAdjusted);
+  $("digitalBaseTotal").textContent = money(model.digital);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   $("expenseHalfTotal").textContent = money(model.expenseHalf);
-  $("digitalAdjustedTotal").textContent = money(model.digitalAdjusted);
 
   $("uberTotal").textContent = money(model.uber);
 
@@ -237,7 +255,7 @@ function renderList(containerId, items, isDigital) {
     const time = item.createdAt?.toDate
       ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
       : "Ahora";
-    const showsProof = isDigital || isSettlementAdjustment(item);
+    const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item);
     const proof = showsProof
       ? (item.proofUrl
           ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
@@ -246,7 +264,7 @@ function renderList(containerId, items, isDigital) {
     const icon = isDigital
       ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
       : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
-    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""}">
+    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""}">
       <div class="receipt-main">
         <span class="receipt-icon">${icon}</span>
         <div class="receipt-copy">
@@ -323,10 +341,12 @@ function subscribeToday(user) {
   if (unsubscribePayments) unsubscribePayments();
   if (unsubscribeExpenses) unsubscribeExpenses();
   if (unsubscribeUber) unsubscribeUber();
+  if (unsubscribeDebts) unsubscribeDebts();
 
   const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
   const expensesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "expenses");
   const uberRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "uber");
+  const debtsRef = collection(db, "businesses", BUSINESS_ID, "debts");
   $("syncStatus").textContent = "Sincronizando…";
   $("syncStatus").className = "sync";
 
@@ -382,6 +402,23 @@ function subscribeToday(user) {
     $("syncStatus").textContent = "Error de Uber";
     $("syncStatus").className = "sync bad";
   });
+
+  unsubscribeDebts = onSnapshot(debtsRef, snap => {
+    const today = localDayKey();
+    debts = snap.docs
+      .map(d => ({ id:d.id, ...d.data() }))
+      .filter(item => item.dayKey === today)
+      .sort((a, b) => {
+        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bMs - aMs;
+      });
+    render();
+  }, err => {
+    console.error("Firestore debts snapshot error:", err);
+    $("syncStatus").textContent = "Error de deudas";
+    $("syncStatus").className = "sync bad";
+  });
 }
 
 function isAdminProfile() {
@@ -390,6 +427,7 @@ function isAdminProfile() {
 
 function applyRoleUI() {
   $("closeDayBtn").textContent = isAdminProfile() ? "Gestionar cierres" : "Pedir cierre";
+  $("addDebtBtn").classList.toggle("hidden", !isAdminProfile());
 }
 
 function closureRemaining(item) {
@@ -491,10 +529,12 @@ onAuthStateChanged(auth, async user => {
     if (unsubscribeExpenses) unsubscribeExpenses();
     if (unsubscribeUber) unsubscribeUber();
     if (unsubscribeClosures) unsubscribeClosures();
+    if (unsubscribeDebts) unsubscribeDebts();
     payments = [];
     expenses = [];
     uberClosures = [];
     closures = [];
+    debts = [];
     currentProfile = null;
     $("app").classList.add("hidden");
     $("loginScreen").classList.remove("hidden");
@@ -628,6 +668,74 @@ $("addExpenseBtn").addEventListener("click", () => {
   $("expenseStatus").textContent = "";
   $("expenseStatus").className = "status";
   $("expenseModal").classList.remove("hidden");
+});
+
+$("addDebtBtn").addEventListener("click", () => {
+  if (!isAdminProfile()) return;
+  $("debtForm").reset();
+  $("debtStatus").textContent = "";
+  $("debtStatus").className = "status";
+  $("debtModal").classList.remove("hidden");
+});
+
+$("debtForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const admin = auth.currentUser;
+  if (!admin || !isAdminProfile()) return;
+
+  const amount = Number($("debtAmount").value);
+  const detail = $("debtDetail").value.trim();
+  const file = $("debtProof").files?.[0];
+
+  if (!amount || amount <= 0) {
+    $("debtStatus").textContent = "Ingresá un importe válido.";
+    $("debtStatus").className = "status error";
+    return;
+  }
+  if (!detail) {
+    $("debtStatus").textContent = "Indicá el motivo de la deuda.";
+    $("debtStatus").className = "status error";
+    return;
+  }
+
+  $("saveDebtBtn").disabled = true;
+  $("saveDebtBtn").textContent = "Guardando…";
+  $("debtStatus").textContent = "";
+
+  try {
+    let proofUrl = "";
+    let proofPath = "";
+    if (file) {
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      proofPath = `businesses/${BUSINESS_ID}/users/${admin.uid}/proofs/debts/${localDayKey()}_${Date.now()}_${cleanName}`;
+      const storageRef = ref(storage, proofPath);
+      await uploadBytes(storageRef, file);
+      proofUrl = await getDownloadURL(storageRef);
+    }
+
+    const debtsRef = collection(db, "businesses", BUSINESS_ID, "debts");
+    await addDoc(debtsRef, {
+      type: "admin_debt",
+      amount,
+      detail,
+      proofUrl,
+      proofPath,
+      dayKey: localDayKey(),
+      businessId: BUSINESS_ID,
+      createdByUid: admin.uid,
+      createdByName: currentProfile?.displayName || currentProfile?.username || "Administrador",
+      createdAt: serverTimestamp()
+    });
+
+    $("debtModal").classList.add("hidden");
+  } catch (err) {
+    console.error(err);
+    $("debtStatus").textContent = "No se pudo registrar la deuda.";
+    $("debtStatus").className = "status error";
+  } finally {
+    $("saveDebtBtn").disabled = false;
+    $("saveDebtBtn").textContent = "Registrar deuda";
+  }
 });
 
 $("expenseForm").addEventListener("submit", async e => {
@@ -976,6 +1084,7 @@ $("driverCloseForm").addEventListener("submit", async event => {
         dayKey: localDayKey(),
         cashTotal: model.cash,
         uberTotal: model.uber,
+        debtTotal: model.adminDebt,
         cashBox5: model.cashBox,
         digitalTotal: model.digital,
         expensesTotal: model.expense,
@@ -1001,6 +1110,7 @@ $("driverCloseForm").addEventListener("submit", async event => {
         dayKey: localDayKey(),
         cashTotal: model.cash,
         uberTotal: model.uber,
+        debtTotal: model.adminDebt,
         cashBox5: model.cashBox,
         digitalTotal: model.digital,
         expensesTotal: model.expense,

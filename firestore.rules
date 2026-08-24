@@ -9,6 +9,11 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function belongsToBusiness(businessId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/businesses/$(businessId)/users/$(request.auth.uid));
+    }
+
     function isAdmin(businessId) {
       return signedIn()
         && get(/databases/$(database)/documents/businesses/$(businessId)/users/$(request.auth.uid)).data.role == 'admin';
@@ -56,6 +61,18 @@ service cloud.firestore {
         && request.resource.data.businessId == businessId;
       allow update: if isAdmin(businessId);
       allow delete: if false;
+    }
+
+    // La deuda diaria es visible para la caja y solamente puede ser creada
+    // por un perfil administrador. El chofer no puede editarla ni eliminarla.
+    match /businesses/{businessId}/debts/{debtId} {
+      allow read: if belongsToBusiness(businessId);
+      allow create: if isAdmin(businessId)
+        && request.resource.data.businessId == businessId
+        && request.resource.data.type == 'admin_debt'
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.amount > 0;
+      allow update, delete: if false;
     }
   }
 }

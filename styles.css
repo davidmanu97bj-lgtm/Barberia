@@ -1416,27 +1416,24 @@ a.proof:hover { background: #e3e7f0; }
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  background: linear-gradient(145deg, #050505, #141414);
-  box-shadow: 0 12px 28px rgba(15, 17, 21, .2);
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .login-logo-shell {
   width: 100%;
-  height: 92px;
+  height: 104px;
   margin-bottom: 24px;
-  padding: 17px 20px;
-  border: 1px solid rgba(218, 180, 74, .22);
-  border-radius: 22px;
+  padding: 5px 4px;
 }
 
 .brand-logo-shell {
-  width: clamp(154px, 18vw, 196px);
-  height: 52px;
+  width: clamp(205px, 24vw, 260px);
+  height: 62px;
   flex: 0 0 auto;
-  padding: 8px 11px;
-  border: 1px solid rgba(218, 180, 74, .22);
-  border-radius: 15px;
+  padding: 2px 0;
 }
 
 .explora-logo {
@@ -1444,14 +1441,11 @@ a.proof:hover { background: #e3e7f0; }
   width: 100%;
   height: 100%;
   object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(130, 95, 12, .18));
 }
 
 .brandline { min-width: 0; }
-.brandline .brand-sub {
-  max-width: 170px;
-  margin-top: 0;
-  line-height: 1.3;
-}
+.operator-name-hidden { display: none; }
 
 /* Acción principal de gasto en el encabezado de la jornada */
 .summary-actions {
@@ -1465,22 +1459,50 @@ a.proof:hover { background: #e3e7f0; }
 }
 
 .summary-expense-button {
-  min-height: 45px;
-  padding: 11px 16px;
-  border: 1px solid rgba(255, 216, 91, .45);
-  border-radius: 14px;
-  background: linear-gradient(145deg, #ffe477, #efc840);
-  color: #171717;
-  box-shadow: 0 9px 22px rgba(0, 0, 0, .2);
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 8px 14px 8px 9px;
+  border: 1px solid #dce2ed;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .94);
+  color: var(--dark);
+  box-shadow: 0 7px 18px rgba(27, 35, 55, .08);
   font-size: 12px;
-  font-weight: 950;
+  font-weight: 900;
   white-space: nowrap;
 }
 
-.summary-expense-button:hover { transform: translateY(-1px); }
+.summary-action-icon {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.summary-action-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.3;
+}
+
+.summary-expense-button:hover {
+  transform: translateY(-1px);
+  border-color: #cbd2df;
+  background: #fff;
+}
 .summary-actions .sync { align-self: center; color: #b9c0ca; }
-.summary-actions .sync.ok { color: #73d7a2; }
-.summary-actions .sync.bad { color: #ff9797; }
+.summary-actions .sync.ok { color: var(--green); }
+.summary-actions .sync.bad { color: var(--red); }
 
 /* Tres columnas parejas: seis comprobantes recientes por cada bloque. */
 .workspace { align-items: stretch; }
@@ -1494,6 +1516,95 @@ a.proof:hover { background: #e3e7f0; }
   display: flex;
   flex-direction: column;
 }
+
+.money-panel .panel-head {
+  display: flex;
+  min-height: 365px;
+  flex-direction: column;
+}
+
+.panel-tag::before { display: none; }
+
+.panel-tag-icon {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.money-panel:last-child .panel-tag-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.panel-tag-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.panel-action {
+  display: inline-flex;
+  width: 100%;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 14px;
+  background: linear-gradient(145deg, #182235, #111a2b);
+  box-shadow: 0 7px 16px rgba(24, 34, 53, .13);
+  font-size: 12px;
+  margin-top: auto;
+}
+
+.collect-icon {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .12);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.adjustment-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.debt-adjustment > span:first-child,
+.debt-adjustment strong { color: var(--red); }
+
+.debt-add {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 17px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.debt-add:hover { background: #fee4e4; }
 
 .panel-body {
   display: flex;
@@ -1516,6 +1627,36 @@ a.proof:hover { background: #e3e7f0; }
 }
 
 .receipt { min-height: 110px; }
+
+.receipt-debt {
+  border-color: #f0c9cb;
+  background: #fffafa;
+}
+
+.receipt-debt .receipt-icon {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.receipt-debt .amount { color: var(--red); }
+
+.debt-modal-note {
+  margin-bottom: 16px;
+  padding: 12px 13px;
+  border: 1px solid #f0d1d3;
+  border-radius: 14px;
+  background: var(--red-soft);
+  color: #8f2b31;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.optional-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
+}
 
 /* Uber permanece en su columna central, pero acompaña el scroll de la página. */
 .settlement {
@@ -1554,30 +1695,66 @@ a.proof:hover { background: #e3e7f0; }
 
 @media (max-width: 760px) {
   .login-logo-shell {
-    height: 82px;
-    padding: 15px 17px;
-    border-radius: 19px;
+    height: 94px;
+    padding: 3px 0;
   }
 
   .brand-logo-shell {
-    width: clamp(130px, 39vw, 154px);
-    height: 45px;
-    padding: 7px 9px;
-    border-radius: 13px;
+    width: clamp(185px, 53vw, 215px);
+    height: 56px;
+    padding: 1px 0;
   }
 
-  .brandline { gap: 7px; }
-  .brandline .brand-sub {
-    max-width: 84px;
-    font-size: 8px;
-  }
+  .brandline { gap: 0; }
 
   .summary-actions { align-items: stretch; }
   .summary-expense-button {
-    min-height: 42px;
-    padding: 9px 10px;
-    border-radius: 12px;
+    min-height: 43px;
+    gap: 7px;
+    padding: 7px 10px 7px 7px;
+    border-radius: 13px;
     font-size: 10px;
+  }
+
+  .summary-action-icon {
+    width: 27px;
+    height: 27px;
+    border-radius: 9px;
+  }
+
+  .money-panel .panel-head { min-height: 326px; }
+
+  .panel-tag-icon {
+    width: 25px;
+    height: 25px;
+    border-radius: 9px;
+  }
+
+  .panel-tag-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .panel-action {
+    min-height: 40px;
+    gap: 5px;
+    padding: 7px 5px;
+    border-radius: 12px;
+    font-size: 9px;
+  }
+
+  .collect-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 7px;
+    font-size: 14px;
+  }
+
+  .debt-add {
+    width: 21px;
+    height: 21px;
+    border-radius: 7px;
+    font-size: 15px;
   }
 
   .proof-list,
@@ -1600,6 +1777,6 @@ a.proof:hover { background: #e3e7f0; }
 }
 
 @media (max-width: 380px) {
-  .brand-logo-shell { width: 125px; }
-  .brandline .brand-sub { max-width: 70px; }
+  .brand-logo-shell { width: 176px; }
+  .money-panel .panel-head { min-height: 318px; }
 }

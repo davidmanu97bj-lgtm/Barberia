@@ -67,7 +67,8 @@ Creá Firestore Database.
 Después publicá el contenido de `firestore.rules`.
 
 Esta versión necesita volver a publicar `firestore.rules`, porque los cierres
-se comparten entre el chofer y el administrador.
+se comparten entre el chofer y el administrador y la nueva deuda solo puede
+ser creada por un perfil administrador.
 
 Los datos se guardan así:
 
@@ -76,6 +77,10 @@ Los datos se guardan así:
 y los cierres en:
 
 `businesses/republica-argentina/closures/{closureId}`
+
+Las deudas administrativas de la jornada se guardan en:
+
+`businesses/republica-argentina/debts/{debtId}`
 
 ### Usuario administrador
 
@@ -113,6 +118,7 @@ Subí estos archivos al repositorio:
 - `app.js`
 - `styles.css`
 - `firebase-config.js`
+- `assets/explora-logo.png`
 
 Los archivos `.rules` y `firebase.json` no necesitan estar publicados en GitHub Pages para que la web funcione, pero conviene guardarlos en el repo.
 
@@ -143,3 +149,11 @@ habilitar la colección compartida de cierres y los ajustes del administrador.
   Efectivo como `Ajuste de Explora`.
 - Los ajustes reducen el saldo por el importe completo. No forman parte de la
   facturación, no se reparten nuevamente 50/50 y no generan caja chica.
+
+## Deuda cargada por el administrador
+
+- Solo un perfil con `role: "admin"` ve el botón `+` junto a “Deuda”.
+- La deuda se suma al total de Chofer/Efectivo por el importe completo.
+- Aumenta el saldo que el chofer debe pagar a Explora sin volver a dividirse
+  50/50 y sin generar el 5% de caja chica.
+- El motivo es obligatorio y el comprobante es opcional.

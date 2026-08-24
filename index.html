@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-5" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-6" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -117,24 +117,25 @@
 
 <section id="app" class="app hidden">
   <header class="topbar">
-    <div class="brandline"><div class="brand-logo-shell"><img src="./assets/explora-logo.png" alt="Explora" class="explora-logo topbar-logo"></div><div class="brand-sub">Control operativo · <span id="operatorName">Chofer</span></div></div>
+    <div class="brandline"><div class="brand-logo-shell"><img src="./assets/explora-logo.png" alt="Explora" class="explora-logo topbar-logo"></div><span id="operatorName" class="operator-name-hidden">Chofer</span></div>
     <button id="logoutBtn" class="ghost logout-text">Salir</button>
   </header>
   <main class="main">
     <section class="summary">
       <div><small>Quién paga a quién</small><div class="summary-payee" id="summarySettlementLabel">Equilibrado</div><div class="value" id="summarySettlementAmount">$ 0</div><div class="summary-when">Se liquida al pedir cierre</div></div>
-      <div class="summary-actions"><button id="addExpenseBtn" class="summary-expense-button" type="button">+ Cargar gasto</button><div id="syncStatus" class="sync">Conectando…</div></div>
+      <div class="summary-actions"><button id="addExpenseBtn" class="summary-expense-button" type="button"><span class="summary-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Cargar gasto</span></button><div id="syncStatus" class="sync">Conectando…</div></div>
     </section>
     <section class="workspace">
       <article class="money-panel">
         <div class="panel-head">
-          <div class="panel-tag">Efectivo</div>
+          <div class="panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"/></svg></span><span>Chofer</span></div>
           <div class="panel-total" id="cashTotal">$ 0</div>
+          <div class="adjustment"><span>+ Efectivo</span><strong id="cashBaseTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Uber</span><strong id="uberCashTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
+          <div class="adjustment debt-adjustment"><span>+ Deuda</span><span class="adjustment-value"><strong id="adminDebtTotal">$ 0</strong><button id="addDebtBtn" class="debt-add hidden" type="button" aria-label="Cargar deuda" title="Cargar deuda">+</button></span></div>
           <div class="adjustment"><span>Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
-          <div class="adjustment-total"><span>Total</span><strong id="cashAdjustedTotal">$ 0</strong></div>
-          <button class="collect" data-mode="cash">+ Cobrar en efectivo</button>
+          <button class="collect panel-action" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
         </div>
         <div class="panel-body">
           <div class="records-heading"><span>Comprobantes</span><b id="cashCount">0</b></div>
@@ -151,12 +152,12 @@
       </aside>
       <article class="money-panel">
         <div class="panel-head">
-          <div class="panel-tag">Digital</div>
+          <div class="panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 20V8l6-4 6 4v12M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></span><span>Explora</span></div>
           <div class="panel-total" id="digitalTotal">$ 0</div>
+          <div class="adjustment"><span>+ Digital</span><strong id="digitalBaseTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Gastos 50%</span><strong id="expenseHalfTotal">$ 0</strong></div>
-          <div class="adjustment-total"><span>Total</span><strong id="digitalAdjustedTotal">$ 0</strong></div>
-          <button class="collect" data-mode="digital">+ Cobrar digital</button>
+          <button class="collect panel-action" data-mode="digital"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar digital</span></button>
         </div>
         <div class="panel-body">
           <div class="records-heading"><span>Comprobantes</span><b id="digitalCount">0</b></div>
@@ -201,6 +202,20 @@
       <div id="proofField" class="field hidden"><label>Comprobante digital</label><input id="proof" type="file" accept="image/*,.pdf"><div class="file-note">El comprobante se guardará en Firebase Storage.</div></div>
       <div id="chargeStatus" class="status"></div>
       <div class="modal-actions"><button type="button" class="secondary" data-close="chargeModal">Cancelar</button><button id="saveChargeBtn" type="submit" class="save">Registrar cobro</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="debtModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Cargar deuda</h2><button class="x" data-close="debtModal">×</button></div>
+    <form id="debtForm">
+      <div class="debt-modal-note">Esta deuda se sumará a Efectivo y modificará el saldo por el importe completo.</div>
+      <div class="field"><label>Importe de la deuda</label><input id="debtAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 10000" required></div>
+      <div class="field"><label>Detalle / motivo</label><input id="debtDetail" placeholder="Ej. Diferencia de caja" required></div>
+      <div class="field"><label>Comprobante <span class="optional-label">opcional</span></label><input id="debtProof" type="file" accept="image/*,.pdf"></div>
+      <div id="debtStatus" class="status"></div>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="debtModal">Cancelar</button><button id="saveDebtBtn" type="submit" class="save">Registrar deuda</button></div>
     </form>
   </div>
 </div>
@@ -297,6 +312,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-5"></script>
+<script type="module" src="./app.js?v=20260824-6"></script>
 </body>
 </html>
