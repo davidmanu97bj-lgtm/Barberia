@@ -1940,3 +1940,134 @@ a.proof:hover { background: #e3e7f0; }
   .brand-logo-shell { width: 176px; }
   .money-panel .panel-head { min-height: 365px; }
 }
+
+/* Resumen central y comprobantes completamente uniformes. */
+.summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  text-align: center;
+}
+
+.summary > div:first-child {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+}
+
+#syncStatus { display: none !important; }
+
+.proof-list .receipt {
+  display: flex;
+  height: 136px;
+  min-height: 136px;
+  max-height: 136px;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.proof-list .receipt-footer { margin-top: auto; }
+
+@media (max-width: 760px) {
+  .proof-list .receipt {
+    height: 150px;
+    min-height: 150px;
+    max-height: 150px;
+  }
+}
+
+/* Cada operación conserva su color desde el botón hasta el formulario. */
+.collect.tone-cash {
+  border-color: #117a43;
+  background: linear-gradient(145deg, #1a9b55, #117a43);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(22, 137, 75, .20);
+}
+
+.collect.tone-digital {
+  border-color: #4441dc;
+  background: linear-gradient(145deg, #5a57f7, #4441dc);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(79, 76, 245, .20);
+}
+
+.collect.tone-uber {
+  border-color: #ead17a;
+  background: #fff4c9;
+  color: #715200;
+  box-shadow: 0 7px 16px rgba(138, 98, 0, .10);
+}
+
+.collect.tone-expense {
+  border-color: #edc4c7;
+  background: #fff0f1;
+  color: var(--red);
+  box-shadow: 0 7px 16px rgba(198, 47, 53, .08);
+}
+
+.collect.tone-uber .collect-icon {
+  background: #f6df8d;
+  color: #715200;
+}
+
+.collect.tone-expense .collect-icon {
+  background: #f7d4d6;
+  color: var(--red);
+}
+
+.collect.tone-cash:hover { background: linear-gradient(145deg, #1a9b55, #117a43); }
+.collect.tone-digital:hover { background: linear-gradient(145deg, #5a57f7, #4441dc); }
+.collect.tone-uber:hover { background: #fbeab0; }
+.collect.tone-expense:hover { background: #fbe1e3; }
+
+.modal[data-tone="cash"] {
+  --operation-tone: var(--green);
+  --operation-soft: var(--green-soft);
+  --operation-ink: #116d3d;
+}
+
+.modal[data-tone="digital"] {
+  --operation-tone: var(--accent);
+  --operation-soft: var(--accent-soft);
+  --operation-ink: #3e3bd4;
+}
+
+.modal[data-tone="uber"] {
+  --operation-tone: #c69105;
+  --operation-soft: var(--amber-soft);
+  --operation-ink: #745400;
+}
+
+.modal[data-tone="expense"] {
+  --operation-tone: var(--red);
+  --operation-soft: var(--red-soft);
+  --operation-ink: #a8272d;
+}
+
+.modal[data-tone] .modal-card {
+  border-top: 5px solid var(--operation-tone);
+  background: linear-gradient(180deg, var(--operation-soft) 0, #fff 118px);
+}
+
+.modal[data-tone] .modal-head h2 { color: var(--operation-ink); }
+
+.modal[data-tone] .x {
+  background: var(--operation-soft);
+  color: var(--operation-ink);
+}
+
+.modal[data-tone] input:focus,
+.modal[data-tone] select:focus,
+.modal[data-tone] textarea:focus,
+.modal[data-tone] .money-entry:focus-within {
+  border-color: var(--operation-tone);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--operation-tone) 13%, transparent);
+}
+
+.modal[data-tone] .save,
+.modal[data-tone] input[type="file"]::file-selector-button {
+  background: var(--operation-tone);
+}

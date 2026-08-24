@@ -1,4 +1,4 @@
-import * as firebaseSettings from "./firebase-config.js?v=20260824-11";
+import * as firebaseSettings from "./firebase-config.js?v=20260824-13";
 
 const { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } = firebaseSettings;
 const LOGIN_ALIASES = firebaseSettings.LOGIN_ALIASES || {};
@@ -622,6 +622,7 @@ document.querySelectorAll("[data-mode]").forEach(btn => {
     const mode = btn.dataset.mode;
     $("chargeForm").reset();
     $("chargeMode").value = mode;
+    $("chargeModal").dataset.tone = mode;
     $("chargeTitle").textContent = mode === "cash" ? "Cobro en efectivo" : "Cobro digital";
     $("proofField").classList.toggle("hidden", mode !== "digital");
     $("proof").required = mode === "digital";

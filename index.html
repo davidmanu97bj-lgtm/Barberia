@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-11" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-13" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -123,7 +123,7 @@
   <main class="main">
     <section class="summary">
       <div><small>Quién paga a quién</small><div class="summary-payee" id="summarySettlementLabel">Equilibrado</div><div class="value" id="summarySettlementAmount">$ 0</div><div class="summary-when">Se liquida al pedir cierre</div></div>
-      <div class="summary-actions"><div id="syncStatus" class="sync">Conectando…</div></div>
+      <div id="syncStatus" class="sync" aria-live="polite" hidden>Conectando…</div>
     </section>
     <section class="workspace">
       <article class="money-panel">
@@ -136,8 +136,8 @@
           <div class="adjustment debt-adjustment"><span>+ Deuda</span><span class="adjustment-value"><strong id="adminDebtTotal">$ 0</strong><button id="addDebtBtn" class="debt-add hidden" type="button" aria-label="Cargar deuda" title="Cargar deuda">+</button></span></div>
           <div class="adjustment"><span>Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
           <div class="panel-action-stack">
-            <button class="collect panel-action" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
-            <button id="addUberBtn" class="collect panel-secondary-action" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar Uber</span></button>
+            <button class="collect panel-action tone-cash" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
+            <button id="addUberBtn" class="collect panel-secondary-action tone-uber" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar Uber</span></button>
           </div>
         </div>
         <div class="panel-body">
@@ -153,8 +153,8 @@
           <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Gastos 50%</span><strong id="expenseHalfTotal">$ 0</strong></div>
           <div class="panel-action-stack">
-            <button class="collect panel-action" data-mode="digital"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar digital</span></button>
-            <button id="addExpenseBtn" class="collect panel-secondary-action" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar gastos</span></button>
+            <button class="collect panel-action tone-digital" data-mode="digital"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar digital</span></button>
+            <button id="addExpenseBtn" class="collect panel-secondary-action tone-expense" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar gastos</span></button>
           </div>
         </div>
         <div class="panel-body">
@@ -164,7 +164,7 @@
       </article>
     </section>
     <section class="close-box">
-      <div><h3>Finalizar jornada</h3><p>Cuando termine el día, enviar el pedido de cierre de caja.</p></div>
+      <div><h3>Pedir un cierre</h3><p>Podés pedir un cierre para equilibrar las cuentas.</p></div>
       <button id="closeDayBtn" class="close-btn">Pedir cierre</button>
     </section>
   </main>
@@ -201,7 +201,7 @@
   </div>
 </div>
 
-<div id="expenseModal" class="modal hidden">
+<div id="expenseModal" class="modal hidden" data-tone="expense">
   <div class="modal-card">
     <div class="modal-head"><h2>Cargar gasto</h2><button class="x" data-close="expenseModal">×</button></div>
     <form id="expenseForm">
@@ -214,7 +214,7 @@
   </div>
 </div>
 
-<div id="uberModal" class="modal hidden">
+<div id="uberModal" class="modal hidden" data-tone="uber">
   <div class="modal-card">
     <div class="modal-head"><h2>Cargar Uber</h2><button class="x" data-close="uberModal">×</button></div>
     <form id="uberForm">
@@ -293,6 +293,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-11"></script>
+<script type="module" src="./app.js?v=20260824-13"></script>
 </body>
 </html>
