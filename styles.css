@@ -910,6 +910,292 @@ a.proof:hover { background: #e3e7f0; }
   font-weight: 850;
 }
 
+.receipt-adjustment {
+  border-color: #cfd2ff;
+  background: linear-gradient(145deg, #fff 0%, #f8f8ff 100%);
+}
+
+.receipt-adjustment .receipt-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.close-balance-message {
+  margin-bottom: 16px;
+  padding: 17px;
+  border: 1px solid #f0d37e;
+  border-radius: 20px;
+  background: var(--amber-soft);
+  color: #594511;
+}
+
+.close-balance-message strong,
+.close-balance-message span {
+  display: block;
+}
+
+.close-balance-message strong {
+  font-size: 17px;
+  font-weight: 950;
+  line-height: 1.25;
+}
+
+.close-balance-message span {
+  margin-top: 6px;
+  color: #816b30;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.close-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+}
+
+.close-choice {
+  min-height: 142px;
+  padding: 17px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 21px;
+  background: #fafbfe;
+  color: var(--ink);
+  text-align: left;
+  transition: .16s ease;
+}
+
+.close-choice:not(:disabled):hover,
+.close-choice.selected {
+  border-color: var(--dark);
+  background: var(--dark);
+  color: #fff;
+  box-shadow: 0 11px 26px rgba(24, 34, 53, .18);
+  transform: translateY(-1px);
+}
+
+.close-choice.required-action:not(.selected) {
+  border-color: #a9acf9;
+  box-shadow: 0 0 0 3px rgba(79, 76, 245, .07);
+}
+
+.close-choice:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+
+.close-choice-icon {
+  display: grid;
+  width: 37px;
+  height: 37px;
+  margin-bottom: 13px;
+  place-items: center;
+  border-radius: 12px;
+  background: #edf0f6;
+  color: #354158;
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.close-choice.selected .close-choice-icon,
+.close-choice:not(:disabled):hover .close-choice-icon {
+  background: rgba(255, 255, 255, .13);
+  color: #fff;
+}
+
+.close-choice strong,
+.close-choice small {
+  display: block;
+}
+
+.close-choice strong {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.close-choice small {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.close-choice.selected small,
+.close-choice:not(:disabled):hover small { color: #c7ceda; }
+
+.close-payment-form,
+.admin-payment-form {
+  margin-top: 17px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+
+.selected-close-summary {
+  margin-bottom: 16px;
+  padding: 15px;
+  border: 1px solid #dfe4ee;
+  border-radius: 18px;
+  background: #f7f8fc;
+}
+
+.selected-close-summary small,
+.selected-close-summary strong,
+.selected-close-summary span { display: block; }
+
+.selected-close-summary small {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.selected-close-summary strong {
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.selected-close-summary span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.amount-with-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.amount-with-action button {
+  min-height: 52px;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.admin-proof-notice {
+  margin-bottom: 15px;
+  padding: 14px;
+  border: 1px solid #cfd2ff;
+  border-radius: 16px;
+  background: #f4f4ff;
+  color: #474b8b;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.close-submit { width: 100%; }
+
+.admin-close-intro {
+  margin: -5px 0 17px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.admin-empty {
+  padding: 25px 14px;
+  border: 1.5px dashed #d8deea;
+  border-radius: 18px;
+  color: #8d96a6;
+  font-size: 12px;
+  text-align: center;
+}
+
+.admin-empty.error { color: var(--red); }
+
+.admin-closure-card {
+  margin-bottom: 10px;
+  padding: 15px;
+  border: 1px solid #dfe4ee;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.admin-closure-card.pending {
+  border-color: #f0d37e;
+  background: linear-gradient(145deg, #fffdf5, #fff9e8);
+}
+
+.admin-closure-card.received {
+  border-color: #bde1cb;
+  background: var(--green-soft);
+}
+
+.admin-closure-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-closure-top small,
+.admin-closure-top strong { display: block; }
+
+.admin-closure-top small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.admin-closure-top strong {
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.admin-closure-top b {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.admin-closure-card p {
+  margin: 11px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.admin-proof-button {
+  width: 100%;
+  min-height: 43px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--dark);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.admin-proof-link {
+  width: 100%;
+  margin-top: 11px;
+}
+
+.admin-history-title {
+  margin: 21px 2px 10px;
+  color: #697286;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 760px) {
   .login-screen { padding: 18px; }
 
@@ -1094,6 +1380,18 @@ a.proof:hover { background: #e3e7f0; }
   .service-option span { font-size: 18px; }
   .close-summary { padding: 13px; }
   .close-summary div { font-size: 11px; }
+
+  .close-balance-message { padding: 14px; border-radius: 17px; }
+  .close-balance-message strong { font-size: 15px; }
+  .close-choice-grid { gap: 8px; }
+  .close-choice { min-height: 129px; padding: 14px 11px; border-radius: 18px; }
+  .close-choice-icon { width: 34px; height: 34px; margin-bottom: 11px; }
+  .close-choice strong { font-size: 12px; }
+  .close-choice small { font-size: 9px; }
+  .amount-with-action { grid-template-columns: minmax(0, 1fr) 91px; }
+  .amount-with-action button { padding: 8px; font-size: 10px; }
+  .selected-close-summary strong { font-size: 16px; }
+  .admin-closure-card { padding: 13px; border-radius: 17px; }
 }
 
 @media (max-width: 380px) {

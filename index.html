@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-3" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-4" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -131,6 +131,7 @@
           <div class="panel-tag">Efectivo</div>
           <div class="panel-total" id="cashTotal">$ 0</div>
           <div class="adjustment"><span>+ Uber</span><strong id="uberCashTotal">$ 0</strong></div>
+          <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
           <div class="adjustment"><span>Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
           <div class="adjustment-total"><span>Total</span><strong id="cashAdjustedTotal">$ 0</strong></div>
           <button class="collect" data-mode="cash">+ Cobrar en efectivo</button>
@@ -152,6 +153,7 @@
         <div class="panel-head">
           <div class="panel-tag">Digital</div>
           <div class="panel-total" id="digitalTotal">$ 0</div>
+          <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Gastos 50%</span><strong id="expenseHalfTotal">$ 0</strong></div>
           <div class="adjustment-total"><span>Total</span><strong id="digitalAdjustedTotal">$ 0</strong></div>
           <button class="collect" data-mode="digital">+ Cobrar digital</button>
@@ -229,26 +231,70 @@
 
 <div id="closeModal" class="modal hidden">
   <div class="modal-card">
-    <div class="modal-head"><h2>Liquidación de la jornada</h2><button class="x" data-close="closeModal">×</button></div>
-    <p class="sub" style="margin-bottom:10px">El cierre toma Efectivo + Uber del lado del chofer, calcula 5% de caja chica sobre ambos y suma el 50% de gastos al lado Digital.</p>
-    <div class="close-summary">
-      <div><span>Efectivo</span><strong id="closeCash">$ 0</strong></div>
-      <div><span>+ Uber</span><strong id="closeUber">$ 0</strong></div>
-      <div><span>Caja chica 5% (Efectivo + Uber)</span><strong id="closeCashBox">$ 0</strong></div>
-      <div><span>Total efectivo</span><strong id="closeCashAdjusted">$ 0</strong></div>
-      <div style="height:1px;background:#ddd;margin:5px 0"></div>
-      <div><span>Digital</span><strong id="closeDigital">$ 0</strong></div>
-      <div><span>+ Gastos 50%</span><strong id="closeExpenseHalf">$ 0</strong></div>
-      <div><span>Total digital</span><strong id="closeDigitalAdjusted">$ 0</strong></div>
-      <div style="height:1px;background:#ddd;margin:5px 0"></div>
-      <div id="closeSettlement"><span>Cuentas equilibradas</span><strong>$ 0</strong></div>
-      <div><span>Total facturado</span><strong id="closeGrand">$ 0</strong></div>
+    <div class="modal-head"><h2 id="closeModalTitle">Pedir cierre</h2><button class="x" data-close="closeModal">×</button></div>
+
+    <div id="closeDriverView">
+      <div id="closeBalanceMessage" class="close-balance-message">Calculando liquidación…</div>
+      <div class="close-choice-grid">
+        <button id="choosePayExplora" type="button" class="close-choice pay">
+          <span class="close-choice-icon">↑</span>
+          <strong>Pagar a Explora</strong>
+          <small>El chofer adjunta el comprobante.</small>
+        </button>
+        <button id="chooseCollectExplora" type="button" class="close-choice collect-choice">
+          <span class="close-choice-icon">↓</span>
+          <strong>Cobrar a Explora</strong>
+          <small>El administrador adjunta el comprobante.</small>
+        </button>
+      </div>
+
+      <form id="driverCloseForm" class="close-payment-form hidden">
+        <div id="driverCloseSelected" class="selected-close-summary"></div>
+        <div id="driverCloseAmountField" class="field hidden">
+          <label for="driverCloseAmount">Importe que va a pagar</label>
+          <div class="amount-with-action">
+            <input id="driverCloseAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ingresar importe">
+            <button id="driverUseFullAmount" type="button">Usar total</button>
+          </div>
+          <div id="driverCloseLimit" class="file-note"></div>
+        </div>
+        <div id="driverCloseProofField" class="field hidden">
+          <label for="driverCloseProof">Comprobante del pago</label>
+          <input id="driverCloseProof" type="file" accept="image/*,.pdf">
+          <div class="file-note">El comprobante aparecerá en Digital como “Ajuste del chofer”.</div>
+        </div>
+        <div id="adminProofNotice" class="admin-proof-notice hidden">El cierre quedará pendiente hasta que el administrador pague y suba su comprobante.</div>
+        <div id="closeStatus" class="status"></div>
+        <button id="confirmClose" type="submit" class="save close-submit">Continuar</button>
+      </form>
     </div>
-    <div id="closeStatus" class="status"></div>
-    <div class="modal-actions"><button type="button" class="secondary" data-close="closeModal">Volver</button><button id="confirmClose" type="button" class="save">Enviar pedido</button></div>
+
+    <div id="closeAdminView" class="hidden">
+      <p class="admin-close-intro">Pagos que Explora debe realizar. Elegí un cierre para pagar el total o un importe parcial.</p>
+      <div id="adminClosureList"><div class="admin-empty">Cargando cierres…</div></div>
+      <form id="adminPaymentForm" class="admin-payment-form hidden">
+        <input id="adminClosureId" type="hidden">
+        <div id="adminPaymentSummary" class="selected-close-summary"></div>
+        <div class="field">
+          <label for="adminPaymentAmount">Importe que paga Explora</label>
+          <div class="amount-with-action">
+            <input id="adminPaymentAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ingresar importe" required>
+            <button id="adminUseFullAmount" type="button">Usar total</button>
+          </div>
+          <div id="adminPaymentLimit" class="file-note"></div>
+        </div>
+        <div class="field">
+          <label for="adminCloseProof">Comprobante de Explora</label>
+          <input id="adminCloseProof" type="file" accept="image/*,.pdf" required>
+          <div class="file-note">Se sumará a Efectivo como “Ajuste de Explora”.</div>
+        </div>
+        <div id="adminPaymentStatus" class="status"></div>
+        <div class="modal-actions"><button id="cancelAdminPayment" type="button" class="secondary">Volver</button><button id="confirmAdminPayment" type="submit" class="save">Registrar pago</button></div>
+      </form>
+    </div>
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-3"></script>
+<script type="module" src="./app.js?v=20260824-4"></script>
 </body>
 </html>

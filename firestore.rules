@@ -1,31 +1,61 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin(businessId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/businesses/$(businessId)/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     match /businesses/{businessId}/users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId) || isAdmin(businessId);
+      allow create: if isOwner(userId) && request.resource.data.role != 'admin';
+      allow update: if isAdmin(businessId)
+        || (isOwner(userId) && request.resource.data.role == resource.data.role);
       allow delete: if false;
 
       match /payments/{paymentId} {
-        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId) || isAdmin(businessId);
+        allow create: if isOwner(userId) || isAdmin(businessId);
         allow update, delete: if false;
       }
 
       match /expenses/{expenseId} {
-        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId) || isAdmin(businessId);
+        allow create: if isOwner(userId);
         allow update, delete: if false;
       }
 
       match /uber/{weekId} {
-        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId) || isAdmin(businessId);
+        allow create: if isOwner(userId);
         allow update, delete: if false;
       }
 
       match /closures/{closureId} {
-        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId) || isAdmin(businessId);
+        allow create: if isOwner(userId);
         allow update, delete: if false;
       }
+    }
+
+    // Cierres compartidos: el chofer crea su pedido y el administrador puede
+    // completar los pagos de Explora y adjuntar el comprobante correspondiente.
+    match /businesses/{businessId}/closures/{closureId} {
+      allow read: if signedIn()
+        && (resource.data.operatorUid == request.auth.uid || isAdmin(businessId));
+      allow create: if signedIn()
+        && request.resource.data.operatorUid == request.auth.uid
+        && request.resource.data.businessId == businessId;
+      allow update: if isAdmin(businessId);
+      allow delete: if false;
     }
   }
 }

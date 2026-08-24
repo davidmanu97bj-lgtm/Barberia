@@ -66,13 +66,30 @@ Creá Firestore Database.
 
 Después publicá el contenido de `firestore.rules`.
 
+Esta versión necesita volver a publicar `firestore.rules`, porque los cierres
+se comparten entre el chofer y el administrador.
+
 Los datos se guardan así:
 
 `businesses/republica-argentina/users/{uid}/payments`
 
 y los cierres en:
 
-`businesses/republica-argentina/users/{uid}/closures`
+`businesses/republica-argentina/closures/{closureId}`
+
+### Usuario administrador
+
+El administrador usa la misma app. Después de crear su usuario en
+Authentication e ingresar una vez, buscá su perfil en Firestore:
+
+`businesses/republica-argentina/users/{uid-del-administrador}`
+
+Y cambiá el campo:
+
+`role: "admin"`
+
+Los usuarios normales conservan `role: "barber"`. El rol administrador debe
+asignarse desde Firebase Console, no desde la aplicación.
 
 ## 5. Storage
 
@@ -113,4 +130,16 @@ La app guarda un comprobante semanal de Uber por usuario en:
 
 El identificador de semana evita que el mismo usuario cargue más de un comprobante para la misma semana. El cierre de Uber impacta el día en que se registra: suma al lado Efectivo/chofer y el 5% de caja chica se calcula sobre `Efectivo + Uber`.
 
-Si ya tenías Firebase configurado, vuelve a desplegar `firestore.rules` para habilitar la colección `uber`.
+Si ya tenías Firebase configurado, volvé a desplegar `firestore.rules` para
+habilitar la colección compartida de cierres y los ajustes del administrador.
+
+## Pagos de cierre y ajustes
+
+- Si el chofer paga a Explora, puede pagar el total o un importe parcial y
+  debe adjuntar el comprobante. El movimiento se suma en Digital como
+  `Ajuste del chofer`.
+- Si Explora paga al chofer, el administrador puede pagar el total o un
+  importe parcial y debe adjuntar el comprobante. El movimiento se suma en
+  Efectivo como `Ajuste de Explora`.
+- Los ajustes reducen el saldo por el importe completo. No forman parte de la
+  facturación, no se reparten nuevamente 50/50 y no generan caja chica.

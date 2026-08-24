@@ -1,6 +1,6 @@
 import {
   firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN, LOGIN_ALIASES
-} from "./firebase-config.js?v=20260824-3";
+} from "./firebase-config.js?v=20260824-4";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
@@ -9,7 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   initializeFirestore, collection, addDoc, doc, getDoc, setDoc,
-  onSnapshot, serverTimestamp
+  onSnapshot, serverTimestamp, query, where, writeBatch
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {
   getStorage, ref, uploadBytes, getDownloadURL
@@ -27,10 +27,14 @@ const $ = id => document.getElementById(id);
 let unsubscribePayments = null;
 let unsubscribeExpenses = null;
 let unsubscribeUber = null;
+let unsubscribeClosures = null;
 let payments = [];
 let expenses = [];
 let uberClosures = [];
+let closures = [];
 let currentProfile = null;
+let selectedCloseDirection = "";
+let selectedAdminClosureId = "";
 
 const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
@@ -76,8 +80,18 @@ function fallbackProfile(user) {
   const username = user.email?.split("@")[0] || "barberia";
   return { username, displayName: username, role: "barber", active: true };
 }
-function totalFor(method) {
-  return payments.filter(p => p.method === method).reduce((a,p)=>a+Number(p.amount||0),0);
+function isSettlementAdjustment(item) {
+  return item.type === "settlement_adjustment";
+}
+function revenueTotalFor(method) {
+  return payments
+    .filter(p => p.method === method && !isSettlementAdjustment(p))
+    .reduce((a,p)=>a+Number(p.amount||0),0);
+}
+function adjustmentTotal(direction) {
+  return payments
+    .filter(p => isSettlementAdjustment(p) && p.adjustmentDirection === direction)
+    .reduce((a,p)=>a+Number(p.amount||0),0);
 }
 function expensesTotal() {
   return expenses.reduce((a,e)=>a+Number(e.amount||0),0);
@@ -118,22 +132,29 @@ function escapeHtml(s="") {
 // - Caja chica: 5% completo sobre Efectivo + Uber, porque ambos quedan en manos del chofer.
 // - Gastos: Digital reconoce el 50% de cada gasto pagado por el chofer.
 function settlementModel() {
-  const cash = totalFor("cash");
+  const cashRevenue = revenueTotalFor("cash");
   const uber = uberTodayTotal();
-  const digital = totalFor("digital");
+  const digitalRevenue = revenueTotalFor("digital");
+  const driverPaid = adjustmentTotal("driver_to_explora");
+  const exploraPaid = adjustmentTotal("explora_to_driver");
+  const cash = cashRevenue + exploraPaid;
+  const digital = digitalRevenue + driverPaid;
   const expense = expensesTotal();
-  const driverHeld = cash + uber;
+  const driverHeld = cashRevenue + uber;
   const cashBox = driverHeld * 0.05;
   const expenseHalf = expense * 0.50;
 
   // Totales visuales de cada lado.
-  const cashAdjusted = driverHeld + cashBox;
-  const digitalAdjusted = digital + expenseHalf;
+  const cashAdjusted = driverHeld + exploraPaid + cashBox;
+  const digitalAdjusted = digitalRevenue + driverPaid + expenseHalf;
 
   // Deudas usadas para definir quién paga a quién.
   const cashDebt = (driverHeld * 0.50) + cashBox;
-  const digitalDebt = (digital * 0.50) + expenseHalf;
-  const balance = cashDebt - digitalDebt;
+  const digitalDebt = (digitalRevenue * 0.50) + expenseHalf;
+  const baseBalance = cashDebt - digitalDebt;
+  // Los ajustes son transferencias entre las partes, no nueva facturación.
+  // Por eso reducen el saldo por su valor completo y no vuelven a dividirse 50/50.
+  const balance = baseBalance - driverPaid + exploraPaid;
   const amount = Math.abs(balance);
 
   let from = "balanced";
@@ -148,29 +169,27 @@ function settlementModel() {
 
   return {
     cash, uber, digital, expense, driverHeld, cashBox, expenseHalf,
+    cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
     cashAdjusted, digitalAdjusted,
     cashDebt, digitalDebt, balance, amount, from, to,
-    grand: cash + uber + digital
+    grand: cashRevenue + uber + digitalRevenue
   };
 }
 
 function renderSettlement(model) {
   const label = $("summarySettlementLabel");
   const amount = $("summarySettlementAmount");
-  const closeSettlement = $("closeSettlement");
 
   if (model.from === "balanced") {
     label.textContent = "Equilibrado";
     amount.textContent = money(0);
-    closeSettlement.innerHTML = `<span>Cuentas equilibradas</span><strong>${money(0)}</strong>`;
     return;
   }
 
-  const fromLabel = model.from === "cash" ? "Efectivo" : "Digital";
-  const toLabel = model.to === "cash" ? "Efectivo" : "Digital";
-  label.textContent = `${fromLabel} paga a ${toLabel}`;
+  label.textContent = model.from === "cash"
+    ? "Chofer paga a Explora"
+    : "Explora paga al chofer";
   amount.textContent = money(model.amount);
-  closeSettlement.innerHTML = `<span>${fromLabel} paga a ${toLabel}</span><strong>${money(model.amount)}</strong>`;
 }
 
 function render() {
@@ -181,22 +200,16 @@ function render() {
   $("cashTotal").textContent = money(model.cash);
   $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
+  $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
   $("cashAdjustedTotal").textContent = money(model.cashAdjusted);
 
   $("digitalTotal").textContent = money(model.digital);
+  $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   $("expenseHalfTotal").textContent = money(model.expenseHalf);
   $("digitalAdjustedTotal").textContent = money(model.digitalAdjusted);
 
   $("uberTotal").textContent = money(model.uber);
 
-  $("closeCash").textContent = money(model.cash);
-  $("closeUber").textContent = money(model.uber);
-  $("closeCashBox").textContent = money(model.cashBox);
-  $("closeCashAdjusted").textContent = money(model.cashAdjusted);
-  $("closeDigital").textContent = money(model.digital);
-  $("closeExpenseHalf").textContent = money(model.expenseHalf);
-  $("closeDigitalAdjusted").textContent = money(model.digitalAdjusted);
-  $("closeGrand").textContent = money(model.grand);
   $("cashCount").textContent = cashItems.length;
   $("digitalCount").textContent = digitalItems.length;
   $("expenseCount").textContent = expenses.length;
@@ -221,7 +234,8 @@ function renderList(containerId, items, isDigital) {
     const time = item.createdAt?.toDate
       ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
       : "Ahora";
-    const proof = isDigital
+    const showsProof = isDigital || isSettlementAdjustment(item);
+    const proof = showsProof
       ? (item.proofUrl
           ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
           : `<span class="proof">Sin archivo</span>`)
@@ -229,7 +243,7 @@ function renderList(containerId, items, isDigital) {
     const icon = isDigital
       ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
       : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
-    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"}">
+    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""}">
       <div class="receipt-main">
         <span class="receipt-icon">${icon}</span>
         <div class="receipt-copy">
@@ -367,6 +381,79 @@ function subscribeToday(user) {
   });
 }
 
+function isAdminProfile() {
+  return currentProfile?.role === "admin";
+}
+
+function applyRoleUI() {
+  $("closeDayBtn").textContent = isAdminProfile() ? "Gestionar cierres" : "Pedir cierre";
+}
+
+function closureRemaining(item) {
+  const original = Number(item.settlementAmount || item.requestedAmount || 0);
+  const paid = Number(item.paidAmountTotal || 0);
+  return Math.max(0, Number(item.remainingAmount ?? (original - paid)) || 0);
+}
+
+function renderAdminClosures() {
+  if (!isAdminProfile()) return;
+  const box = $("adminClosureList");
+  const pending = closures.filter(item =>
+    item.direction === "explora_pays_driver" && closureRemaining(item) > 0 && item.status !== "completed"
+  );
+  const driverPayments = closures.filter(item => item.direction === "driver_pays_explora").slice(0, 6);
+
+  const pendingHtml = pending.length ? pending.map(item => `
+    <article class="admin-closure-card pending">
+      <div class="admin-closure-top">
+        <div><small>Cobrar a Explora</small><strong>${escapeHtml(item.operatorName || "Chofer")}</strong></div>
+        <b>${money(closureRemaining(item))}</b>
+      </div>
+      <p>Explora debe pagar este saldo al chofer. Puede abonarlo completo o parcialmente.</p>
+      <button type="button" class="admin-proof-button" data-admin-closure="${escapeHtml(item.id)}">Pagar y subir comprobante</button>
+    </article>`).join("") : `<div class="admin-empty">No hay pagos pendientes de Explora.</div>`;
+
+  const receivedHtml = driverPayments.length ? `
+    <div class="admin-history-title">Pagos recibidos de choferes</div>
+    ${driverPayments.map(item => `
+      <article class="admin-closure-card received">
+        <div class="admin-closure-top">
+          <div><small>Ajuste del chofer</small><strong>${escapeHtml(item.operatorName || "Chofer")}</strong></div>
+          <b>${money(item.paidAmountTotal || item.settlementAmount || 0)}</b>
+        </div>
+        ${item.proofUrl ? `<a class="proof admin-proof-link" target="_blank" rel="noopener" href="${item.proofUrl}">Ver comprobante</a>` : ""}
+      </article>`).join("")}` : "";
+
+  box.innerHTML = pendingHtml + receivedHtml;
+  box.querySelectorAll("[data-admin-closure]").forEach(button => {
+    button.addEventListener("click", () => openAdminPayment(button.dataset.adminClosure));
+  });
+}
+
+function subscribeClosures(user) {
+  if (unsubscribeClosures) unsubscribeClosures();
+  const baseRef = collection(db, "businesses", BUSINESS_ID, "closures");
+  const source = isAdminProfile()
+    ? baseRef
+    : query(baseRef, where("operatorUid", "==", user.uid));
+
+  unsubscribeClosures = onSnapshot(source, snap => {
+    closures = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const aMs = a.requestedAt?.toMillis ? a.requestedAt.toMillis() : 0;
+        const bMs = b.requestedAt?.toMillis ? b.requestedAt.toMillis() : 0;
+        return bMs - aMs;
+      });
+    renderAdminClosures();
+  }, err => {
+    console.error("Firestore closures snapshot error:", err);
+    if (isAdminProfile()) {
+      $("adminClosureList").innerHTML = `<div class="admin-empty error">No se pudieron cargar los cierres.</div>`;
+    }
+  });
+}
+
 $("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
   $("loginStatus").textContent = "";
@@ -400,9 +487,11 @@ onAuthStateChanged(auth, async user => {
     if (unsubscribePayments) unsubscribePayments();
     if (unsubscribeExpenses) unsubscribeExpenses();
     if (unsubscribeUber) unsubscribeUber();
+    if (unsubscribeClosures) unsubscribeClosures();
     payments = [];
     expenses = [];
     uberClosures = [];
+    closures = [];
     currentProfile = null;
     $("app").classList.add("hidden");
     $("loginScreen").classList.remove("hidden");
@@ -416,6 +505,8 @@ onAuthStateChanged(auth, async user => {
   $("loginScreen").classList.add("hidden");
   $("app").classList.remove("hidden");
   subscribeToday(user);
+  applyRoleUI();
+  subscribeClosures(user);
 
   try {
     currentProfile = await loadProfile(user);
@@ -426,6 +517,8 @@ onAuthStateChanged(auth, async user => {
       return;
     }
     $("operatorName").textContent = currentProfile.displayName || currentProfile.username || user.email.split("@")[0];
+    applyRoleUI();
+    subscribeClosures(user);
   } catch (err) {
     console.warn("Se inició sesión usando el perfil básico:", err);
     $("syncStatus").textContent = "Sesión activa · revisando datos";
@@ -676,55 +769,355 @@ $("uberForm").addEventListener("submit", async e => {
   }
 });
 
-$("closeDayBtn").addEventListener("click", () => {
-  render();
+function resetDriverClose() {
+  selectedCloseDirection = "";
+  $("driverCloseForm").reset();
+  $("driverCloseForm").classList.add("hidden");
+  $("driverCloseAmountField").classList.add("hidden");
+  $("driverCloseProofField").classList.add("hidden");
+  $("adminProofNotice").classList.add("hidden");
+  $("driverCloseProof").required = false;
   $("closeStatus").textContent = "";
   $("closeStatus").className = "status";
+  document.querySelectorAll(".close-choice").forEach(button => button.classList.remove("selected"));
+}
+
+function prepareDriverClose() {
+  resetDriverClose();
+  const model = settlementModel();
+  const payButton = $("choosePayExplora");
+  const collectButton = $("chooseCollectExplora");
+
+  if (model.from === "balanced") {
+    $("closeBalanceMessage").innerHTML = `<strong>Las cuentas ya están equilibradas.</strong><span>No hay ningún importe pendiente.</span>`;
+    payButton.disabled = true;
+    collectButton.disabled = true;
+    return;
+  }
+
+  if (model.from === "cash") {
+    $("closeBalanceMessage").innerHTML = `<strong>Debe pagar a Explora ${money(model.amount)}.</strong><span>Ese es el total necesario para que ambos queden equilibrados.</span>`;
+    payButton.disabled = false;
+    collectButton.disabled = true;
+    payButton.classList.add("required-action");
+    collectButton.classList.remove("required-action");
+  } else {
+    $("closeBalanceMessage").innerHTML = `<strong>Debe cobrar a Explora ${money(model.amount)}.</strong><span>Ese es el total necesario para que ambos queden equilibrados.</span>`;
+    payButton.disabled = true;
+    collectButton.disabled = false;
+    collectButton.classList.add("required-action");
+    payButton.classList.remove("required-action");
+  }
+}
+
+function selectDriverClose(direction) {
+  const model = settlementModel();
+  const expected = model.from === "cash" ? "driver_to_explora" : model.from === "digital" ? "explora_to_driver" : "";
+  if (!expected || direction !== expected) return;
+
+  selectedCloseDirection = direction;
+  $("driverCloseForm").reset();
+  $("driverCloseForm").classList.remove("hidden");
+  $("closeStatus").textContent = "";
+  $("closeStatus").className = "status";
+  document.querySelectorAll(".close-choice").forEach(button => button.classList.remove("selected"));
+
+  if (direction === "driver_to_explora") {
+    $("choosePayExplora").classList.add("selected");
+    $("driverCloseSelected").innerHTML = `<small>Pagar a Explora</small><strong>${money(model.amount)} pendientes</strong><span>Podés pagar el total o ingresar un importe menor.</span>`;
+    $("driverCloseAmount").value = String(Math.round(model.amount));
+    $("driverCloseAmount").max = String(Math.round(model.amount));
+    $("driverCloseLimit").textContent = `Máximo disponible: ${money(model.amount)}.`;
+    $("driverCloseAmountField").classList.remove("hidden");
+    $("driverCloseProofField").classList.remove("hidden");
+    $("driverCloseProof").required = true;
+    $("adminProofNotice").classList.add("hidden");
+    $("confirmClose").textContent = "Registrar pago";
+  } else {
+    $("chooseCollectExplora").classList.add("selected");
+    $("driverCloseSelected").innerHTML = `<small>Cobrar a Explora</small><strong>${money(model.amount)} pendientes</strong><span>El administrador decidirá si paga el total o un importe parcial.</span>`;
+    $("driverCloseAmountField").classList.add("hidden");
+    $("driverCloseProofField").classList.add("hidden");
+    $("driverCloseProof").required = false;
+    $("adminProofNotice").classList.remove("hidden");
+    $("confirmClose").textContent = "Solicitar cobro";
+  }
+}
+
+function openAdminPayment(closureId) {
+  const item = closures.find(closure => closure.id === closureId);
+  if (!item) return;
+  const remaining = closureRemaining(item);
+  if (remaining <= 0) return;
+
+  selectedAdminClosureId = closureId;
+  $("adminClosureId").value = closureId;
+  $("adminPaymentForm").reset();
+  $("adminPaymentAmount").value = String(Math.round(remaining));
+  $("adminPaymentAmount").max = String(Math.round(remaining));
+  $("adminPaymentLimit").textContent = `Saldo máximo: ${money(remaining)}.`;
+  $("adminPaymentSummary").innerHTML = `<small>Explora paga a</small><strong>${escapeHtml(item.operatorName || "Chofer")} · ${money(remaining)}</strong><span>Podés abonar el total o un importe menor.</span>`;
+  $("adminPaymentStatus").textContent = "";
+  $("adminPaymentStatus").className = "status";
+  $("adminClosureList").classList.add("hidden");
+  $("adminPaymentForm").classList.remove("hidden");
+}
+
+$("closeDayBtn").addEventListener("click", () => {
+  render();
   $("closeModal").classList.remove("hidden");
+  if (isAdminProfile()) {
+    $("closeModalTitle").textContent = "Gestionar cierres";
+    $("closeDriverView").classList.add("hidden");
+    $("closeAdminView").classList.remove("hidden");
+    $("adminPaymentForm").classList.add("hidden");
+    $("adminClosureList").classList.remove("hidden");
+    selectedAdminClosureId = "";
+    renderAdminClosures();
+  } else {
+    $("closeModalTitle").textContent = "Pedir cierre";
+    $("closeAdminView").classList.add("hidden");
+    $("closeDriverView").classList.remove("hidden");
+    prepareDriverClose();
+  }
 });
 
-$("confirmClose").addEventListener("click", async () => {
+$("choosePayExplora").addEventListener("click", () => selectDriverClose("driver_to_explora"));
+$("chooseCollectExplora").addEventListener("click", () => selectDriverClose("explora_to_driver"));
+$("driverUseFullAmount").addEventListener("click", () => {
+  const model = settlementModel();
+  $("driverCloseAmount").value = String(Math.round(model.amount));
+});
+
+$("driverCloseForm").addEventListener("submit", async event => {
+  event.preventDefault();
   const user = auth.currentUser;
-  if (!user) return;
+  if (!user || !selectedCloseDirection || isAdminProfile()) return;
+
+  const model = settlementModel();
+  const expected = model.from === "cash" ? "driver_to_explora" : model.from === "digital" ? "explora_to_driver" : "";
+  if (expected !== selectedCloseDirection) {
+    $("closeStatus").textContent = "El saldo cambió. Volvé a abrir el cierre para recalcularlo.";
+    $("closeStatus").className = "status error";
+    return;
+  }
+
+  const isDriverPayment = selectedCloseDirection === "driver_to_explora";
+  const amount = isDriverPayment ? Number($("driverCloseAmount").value) : model.amount;
+  const file = $("driverCloseProof").files?.[0];
+  if (!amount || amount <= 0 || amount > model.amount + 0.5) {
+    $("closeStatus").textContent = `Ingresá un importe entre $1 y ${money(model.amount)}.`;
+    $("closeStatus").className = "status error";
+    return;
+  }
+  if (isDriverPayment && !file) {
+    $("closeStatus").textContent = "Adjuntá el comprobante del pago a Explora.";
+    $("closeStatus").className = "status error";
+    return;
+  }
+  if (!isDriverPayment) {
+    const alreadyPending = closures.some(item =>
+      item.operatorUid === user.uid && item.direction === "explora_pays_driver" && closureRemaining(item) > 0 && item.status !== "completed"
+    );
+    if (alreadyPending) {
+      $("closeStatus").textContent = "Ya tenés un cobro pendiente de Explora.";
+      $("closeStatus").className = "status error";
+      return;
+    }
+  }
+
   $("confirmClose").disabled = true;
-  $("confirmClose").textContent = "Enviando…";
+  $("confirmClose").textContent = isDriverPayment ? "Guardando pago…" : "Enviando pedido…";
   try {
-    const model = settlementModel();
-    const closuresRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "closures");
-    await addDoc(closuresRef, {
-      dayKey: localDayKey(),
-      cashTotal: model.cash,
-      uberTotal: model.uber,
-      cashPlusUber: model.driverHeld,
-      cashBox5: model.cashBox,
-      cashAdjustedTotal: model.cashAdjusted,
-      digitalTotal: model.digital,
-      expensesTotal: model.expense,
-      expensesShare50: model.expenseHalf,
-      digitalAdjustedTotal: model.digitalAdjusted,
-      cashDebt: model.cashDebt,
-      digitalDebt: model.digitalDebt,
-      settlementAmount: model.from === "balanced" ? 0 : model.amount,
-      settlementFrom: model.from,
-      settlementTo: model.to,
-      total: model.grand,
-      status: "pending",
-      operatorUid: user.uid,
-      operatorName: currentProfile?.displayName || currentProfile?.username || "",
-      requestedAt: serverTimestamp()
-    });
-    $("closeStatus").textContent = model.from === "balanced"
-      ? "Cierre enviado. Las cuentas quedaron equilibradas."
-      : `Cierre enviado. Liquidación: ${money(model.amount)}.`;
-    $("closeStatus").className = "status";
-    setTimeout(() => $("closeModal").classList.add("hidden"), 1100);
+    const closureRef = doc(collection(db, "businesses", BUSINESS_ID, "closures"));
+    let proofUrl = "";
+    let proofPath = "";
+    const remainingAmount = Math.max(0, model.amount - amount);
+
+    if (isDriverPayment) {
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/closures/${closureRef.id}_${Date.now()}_${cleanName}`;
+      const storageRef = ref(storage, proofPath);
+      await uploadBytes(storageRef, file);
+      proofUrl = await getDownloadURL(storageRef);
+
+      const paymentRef = doc(collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments"));
+      const batch = writeBatch(db);
+      batch.set(paymentRef, {
+        method: "digital",
+        type: "settlement_adjustment",
+        adjustmentDirection: "driver_to_explora",
+        amount,
+        service: "Ajuste del chofer",
+        detail: remainingAmount <= 0.5 ? "Pago total a Explora" : "Pago parcial a Explora",
+        proofUrl,
+        proofPath,
+        closureId: closureRef.id,
+        dayKey: localDayKey(),
+        operatorUid: user.uid,
+        operatorName: currentProfile?.displayName || currentProfile?.username || "",
+        businessId: BUSINESS_ID,
+        createdAt: serverTimestamp()
+      });
+      batch.set(closureRef, {
+        direction: "driver_pays_explora",
+        requestedAmount: model.amount,
+        settlementAmount: model.amount,
+        paidAmountTotal: amount,
+        remainingAmount,
+        proofUrl,
+        proofPath,
+        proofUploadedByUid: user.uid,
+        proofUploadedByRole: "driver",
+        status: remainingAmount <= 0.5 ? "completed" : "partial",
+        dayKey: localDayKey(),
+        cashTotal: model.cash,
+        uberTotal: model.uber,
+        cashBox5: model.cashBox,
+        digitalTotal: model.digital,
+        expensesTotal: model.expense,
+        total: model.grand,
+        operatorUid: user.uid,
+        operatorName: currentProfile?.displayName || currentProfile?.username || "",
+        businessId: BUSINESS_ID,
+        requestedAt: serverTimestamp(),
+        completedAt: remainingAmount <= 0.5 ? serverTimestamp() : null
+      });
+      await batch.commit();
+      $("closeStatus").textContent = remainingAmount <= 0.5
+        ? "Pago registrado. Las partes quedaron equilibradas."
+        : `Pago parcial registrado. Quedan ${money(remainingAmount)} pendientes.`;
+    } else {
+      await setDoc(closureRef, {
+        direction: "explora_pays_driver",
+        requestedAmount: model.amount,
+        settlementAmount: model.amount,
+        paidAmountTotal: 0,
+        remainingAmount: model.amount,
+        status: "awaiting_admin_proof",
+        dayKey: localDayKey(),
+        cashTotal: model.cash,
+        uberTotal: model.uber,
+        cashBox5: model.cashBox,
+        digitalTotal: model.digital,
+        expensesTotal: model.expense,
+        total: model.grand,
+        operatorUid: user.uid,
+        operatorName: currentProfile?.displayName || currentProfile?.username || "",
+        businessId: BUSINESS_ID,
+        requestedAt: serverTimestamp()
+      });
+      $("closeStatus").textContent = "Cobro solicitado. Falta el pago y comprobante del administrador.";
+    }
+    $("closeStatus").className = "status success";
+    setTimeout(() => $("closeModal").classList.add("hidden"), 1500);
   } catch (err) {
     console.error(err);
-    $("closeStatus").textContent = "No se pudo enviar el cierre.";
+    $("closeStatus").textContent = "No se pudo registrar el cierre.";
     $("closeStatus").className = "status error";
   } finally {
     $("confirmClose").disabled = false;
-    $("confirmClose").textContent = "Enviar pedido";
+    $("confirmClose").textContent = isDriverPayment ? "Registrar pago" : "Solicitar cobro";
+  }
+});
+
+$("adminUseFullAmount").addEventListener("click", () => {
+  const item = closures.find(closure => closure.id === selectedAdminClosureId);
+  if (item) $("adminPaymentAmount").value = String(Math.round(closureRemaining(item)));
+});
+
+$("cancelAdminPayment").addEventListener("click", () => {
+  selectedAdminClosureId = "";
+  $("adminPaymentForm").classList.add("hidden");
+  $("adminClosureList").classList.remove("hidden");
+  renderAdminClosures();
+});
+
+$("adminPaymentForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const admin = auth.currentUser;
+  if (!admin || !isAdminProfile() || !selectedAdminClosureId) return;
+  const item = closures.find(closure => closure.id === selectedAdminClosureId);
+  if (!item) return;
+
+  const remaining = closureRemaining(item);
+  const amount = Number($("adminPaymentAmount").value);
+  const file = $("adminCloseProof").files?.[0];
+  if (!amount || amount <= 0 || amount > remaining + 0.5) {
+    $("adminPaymentStatus").textContent = `Ingresá un importe entre $1 y ${money(remaining)}.`;
+    $("adminPaymentStatus").className = "status error";
+    return;
+  }
+  if (!file) {
+    $("adminPaymentStatus").textContent = "Adjuntá el comprobante del pago de Explora.";
+    $("adminPaymentStatus").className = "status error";
+    return;
+  }
+
+  $("confirmAdminPayment").disabled = true;
+  $("confirmAdminPayment").textContent = "Guardando pago…";
+  try {
+    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const proofPath = `businesses/${BUSINESS_ID}/users/${admin.uid}/proofs/closures/admin_${item.id}_${Date.now()}_${cleanName}`;
+    const storageRef = ref(storage, proofPath);
+    await uploadBytes(storageRef, file);
+    const proofUrl = await getDownloadURL(storageRef);
+
+    const paymentRef = doc(collection(db, "businesses", BUSINESS_ID, "users", item.operatorUid, "payments"));
+    const closureRef = doc(db, "businesses", BUSINESS_ID, "closures", item.id);
+    const newPaidTotal = Number(item.paidAmountTotal || 0) + amount;
+    const newRemaining = Math.max(0, remaining - amount);
+    const batch = writeBatch(db);
+    batch.set(paymentRef, {
+      method: "cash",
+      type: "settlement_adjustment",
+      adjustmentDirection: "explora_to_driver",
+      amount,
+      service: "Ajuste de Explora",
+      detail: newRemaining <= 0.5 ? "Pago total de Explora" : "Pago parcial de Explora",
+      proofUrl,
+      proofPath,
+      closureId: item.id,
+      dayKey: localDayKey(),
+      operatorUid: item.operatorUid,
+      operatorName: item.operatorName || "",
+      createdByUid: admin.uid,
+      createdByName: currentProfile?.displayName || currentProfile?.username || "Administrador",
+      businessId: BUSINESS_ID,
+      createdAt: serverTimestamp()
+    });
+    batch.update(closureRef, {
+      paidAmountTotal: newPaidTotal,
+      remainingAmount: newRemaining,
+      lastProofUrl: proofUrl,
+      lastProofPath: proofPath,
+      proofUrl,
+      proofPath,
+      proofUploadedByUid: admin.uid,
+      proofUploadedByRole: "admin",
+      status: newRemaining <= 0.5 ? "completed" : "partially_paid",
+      lastPaymentAt: serverTimestamp(),
+      completedAt: newRemaining <= 0.5 ? serverTimestamp() : null
+    });
+    await batch.commit();
+
+    $("adminPaymentStatus").textContent = newRemaining <= 0.5
+      ? "Pago registrado. El cierre quedó equilibrado."
+      : `Pago parcial registrado. Quedan ${money(newRemaining)} pendientes.`;
+    $("adminPaymentStatus").className = "status success";
+    setTimeout(() => {
+      selectedAdminClosureId = "";
+      $("adminPaymentForm").classList.add("hidden");
+      $("adminClosureList").classList.remove("hidden");
+      renderAdminClosures();
+    }, 1300);
+  } catch (err) {
+    console.error(err);
+    $("adminPaymentStatus").textContent = "No se pudo registrar el pago de Explora.";
+    $("adminPaymentStatus").className = "status error";
+  } finally {
+    $("confirmAdminPayment").disabled = false;
+    $("confirmAdminPayment").textContent = "Registrar pago";
   }
 });
 
