@@ -20,8 +20,10 @@ const storage = getStorage(app);
 const $ = id => document.getElementById(id);
 let unsubscribePayments = null;
 let unsubscribeExpenses = null;
+let unsubscribeUber = null;
 let payments = [];
 let expenses = [];
+let uberClosures = [];
 let currentProfile = null;
 
 const money = value => new Intl.NumberFormat("es-AR", {
@@ -48,6 +50,28 @@ function totalFor(method) {
 function expensesTotal() {
   return expenses.reduce((a,e)=>a+Number(e.amount||0),0);
 }
+function uberTodayItems() {
+  const today = localDayKey();
+  return uberClosures.filter(item => item.dayKey === today);
+}
+function uberTodayTotal() {
+  return uberTodayItems().reduce((a,item)=>a+Number(item.amount||0),0);
+}
+function isoWeekKey(dateString) {
+  const [y,m,d] = String(dateString).split("-").map(Number);
+  if (!y || !m || !d) return "";
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return `${date.getUTCFullYear()}-W${String(week).padStart(2,"0")}`;
+}
+function formatDate(dateString) {
+  const [y,m,d] = String(dateString || "").split("-").map(Number);
+  if (!y || !m || !d) return "Sin fecha";
+  return new Intl.DateTimeFormat("es-AR", {day:"2-digit", month:"2-digit", year:"2-digit"}).format(new Date(y,m-1,d));
+}
 function escapeHtml(s="") {
   return String(s).replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -55,24 +79,27 @@ function escapeHtml(s="") {
 }
 
 // Lógica de equilibrio de la barbería:
-// - El lado Efectivo conserva el 100% del efectivo cobrado.
-// - El lado Digital conserva el 100% de lo cobrado digital.
-// - Para repartir la facturación 50/50, cada lado genera una deuda del 50% de sus cobros.
-// - Caja chica: Efectivo suma además el 5% completo de sus cobros como deuda.
-// - Gastos: como los paga Efectivo, Digital suma el 50% del gasto como deuda a favor de Efectivo.
+// - Efectivo conserva el 100% de los cobros en efectivo.
+// - El chofer conserva también el 100% de Uber.
+// - Digital conserva el 100% de los cobros digitales.
+// - Para equilibrar 50/50, Efectivo + Uber generan deuda del 50% hacia Digital.
+// - Caja chica: 5% completo sobre Efectivo + Uber, porque ambos quedan en manos del chofer.
+// - Gastos: Digital reconoce el 50% de cada gasto pagado por el chofer.
 function settlementModel() {
   const cash = totalFor("cash");
+  const uber = uberTodayTotal();
   const digital = totalFor("digital");
   const expense = expensesTotal();
-  const cashBox = cash * 0.05;
+  const driverHeld = cash + uber;
+  const cashBox = driverHeld * 0.05;
   const expenseHalf = expense * 0.50;
 
-  // Totales visuales pedidos para cada columna.
-  const cashAdjusted = cash + cashBox;
+  // Totales visuales de cada lado.
+  const cashAdjusted = driverHeld + cashBox;
   const digitalAdjusted = digital + expenseHalf;
 
-  // Deudas reales usadas para definir quién paga a quién.
-  const cashDebt = (cash * 0.50) + cashBox;
+  // Deudas usadas para definir quién paga a quién.
+  const cashDebt = (driverHeld * 0.50) + cashBox;
   const digitalDebt = (digital * 0.50) + expenseHalf;
   const balance = cashDebt - digitalDebt;
   const amount = Math.abs(balance);
@@ -88,26 +115,29 @@ function settlementModel() {
   }
 
   return {
-    cash, digital, expense, cashBox, expenseHalf,
+    cash, uber, digital, expense, driverHeld, cashBox, expenseHalf,
     cashAdjusted, digitalAdjusted,
     cashDebt, digitalDebt, balance, amount, from, to,
-    grand: cash + digital
+    grand: cash + uber + digital
   };
 }
 
 function renderSettlement(model) {
-  const status = $("settleStatus");
+  const label = $("summarySettlementLabel");
+  const amount = $("summarySettlementAmount");
   const closeSettlement = $("closeSettlement");
 
   if (model.from === "balanced") {
-    status.innerHTML = `<strong>Equilibrado</strong><span>No hay pagos pendientes entre Efectivo y Digital.</span>`;
+    label.textContent = "Equilibrado";
+    amount.textContent = money(0);
     closeSettlement.innerHTML = `<span>Cuentas equilibradas</span><strong>${money(0)}</strong>`;
     return;
   }
 
   const fromLabel = model.from === "cash" ? "Efectivo" : "Digital";
   const toLabel = model.to === "cash" ? "Efectivo" : "Digital";
-  status.innerHTML = `<strong>${fromLabel} paga a ${toLabel}</strong><span>${money(model.amount)} · al cerrar la jornada</span>`;
+  label.textContent = `${fromLabel} paga a ${toLabel}`;
+  amount.textContent = money(model.amount);
   closeSettlement.innerHTML = `<span>${fromLabel} paga a ${toLabel}</span><strong>${money(model.amount)}</strong>`;
 }
 
@@ -115,6 +145,7 @@ function render() {
   const model = settlementModel();
 
   $("cashTotal").textContent = money(model.cash);
+  $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
   $("cashAdjustedTotal").textContent = money(model.cashAdjusted);
 
@@ -122,10 +153,10 @@ function render() {
   $("expenseHalfTotal").textContent = money(model.expenseHalf);
   $("digitalAdjustedTotal").textContent = money(model.digitalAdjusted);
 
-  $("grandTotal").textContent = money(model.grand);
-  $("centerTotal").textContent = money(model.grand);
+  $("uberTotal").textContent = money(model.uber);
 
   $("closeCash").textContent = money(model.cash);
+  $("closeUber").textContent = money(model.uber);
   $("closeCashBox").textContent = money(model.cashBox);
   $("closeCashAdjusted").textContent = money(model.cashAdjusted);
   $("closeDigital").textContent = money(model.digital);
@@ -137,6 +168,7 @@ function render() {
   renderList("cashList", payments.filter(p=>p.method==="cash"), false);
   renderList("digitalList", payments.filter(p=>p.method==="digital"), true);
   renderExpenseList();
+  renderUberList();
 }
 
 function renderList(containerId, items, isDigital) {
@@ -190,6 +222,26 @@ function renderExpenseList() {
   }).join("");
 }
 
+function renderUberList() {
+  const box = $("uberList");
+  if (!uberClosures.length) {
+    box.innerHTML = `<div class="uber-empty">Los cierres semanales aparecerán acá.</div>`;
+    return;
+  }
+
+  box.innerHTML = uberClosures.map(item => {
+    const proof = item.proofUrl
+      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver comprobante</a>`
+      : `<span class="proof">Sin archivo</span>`;
+    const todayMark = item.dayKey === localDayKey() ? " · suma hoy" : "";
+    return `<div class="uber-receipt">
+      <strong>${money(item.amount)}</strong>
+      <small>${escapeHtml(item.weekKey || "Semana")} · cierre ${formatDate(item.weekCloseDate)}${todayMark}</small>
+      ${proof}
+    </div>`;
+  }).join("");
+}
+
 async function loadProfile(user) {
   const profileRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid);
   const snap = await getDoc(profileRef);
@@ -204,9 +256,11 @@ async function loadProfile(user) {
 function subscribeToday(user) {
   if (unsubscribePayments) unsubscribePayments();
   if (unsubscribeExpenses) unsubscribeExpenses();
+  if (unsubscribeUber) unsubscribeUber();
 
   const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
   const expensesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "expenses");
+  const uberRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "uber");
   $("syncStatus").textContent = "Sincronizando…";
   $("syncStatus").className = "sync";
 
@@ -245,6 +299,23 @@ function subscribeToday(user) {
     $("syncStatus").textContent = "Error de gastos";
     $("syncStatus").className = "sync bad";
   });
+
+  unsubscribeUber = onSnapshot(uberRef, snap => {
+    uberClosures = snap.docs
+      .map(d => ({ id:d.id, ...d.data() }))
+      .sort((a, b) => {
+        const dateCmp = String(b.weekCloseDate || "").localeCompare(String(a.weekCloseDate || ""));
+        if (dateCmp) return dateCmp;
+        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bMs - aMs;
+      });
+    render();
+  }, err => {
+    console.error("Firestore Uber snapshot error:", err);
+    $("syncStatus").textContent = "Error de Uber";
+    $("syncStatus").className = "sync bad";
+  });
 }
 
 $("loginForm").addEventListener("submit", async e => {
@@ -273,8 +344,10 @@ onAuthStateChanged(auth, async user => {
   if (!user) {
     if (unsubscribePayments) unsubscribePayments();
     if (unsubscribeExpenses) unsubscribeExpenses();
+    if (unsubscribeUber) unsubscribeUber();
     payments = [];
     expenses = [];
+    uberClosures = [];
     currentProfile = null;
     $("app").classList.add("hidden");
     $("loginScreen").classList.remove("hidden");
@@ -457,6 +530,88 @@ $("expenseForm").addEventListener("submit", async e => {
   }
 });
 
+$("addUberBtn").addEventListener("click", () => {
+  $("uberForm").reset();
+  $("uberCloseDate").value = localDayKey();
+  $("uberStatus").textContent = "";
+  $("uberStatus").className = "status";
+  $("uberModal").classList.remove("hidden");
+});
+
+$("uberForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const amount = Number($("uberAmount").value);
+  const weekCloseDate = $("uberCloseDate").value;
+  const weekKey = isoWeekKey(weekCloseDate);
+  const file = $("uberProof").files?.[0];
+
+  if (!amount || amount <= 0) {
+    $("uberStatus").textContent = "Ingresá el total semanal de Uber.";
+    $("uberStatus").className = "status error";
+    return;
+  }
+  if (!weekCloseDate || !weekKey) {
+    $("uberStatus").textContent = "Elegí la fecha de cierre de Uber.";
+    $("uberStatus").className = "status error";
+    return;
+  }
+  if (weekCloseDate > localDayKey()) {
+    $("uberStatus").textContent = "La fecha de cierre no puede estar en el futuro.";
+    $("uberStatus").className = "status error";
+    return;
+  }
+  if (!file) {
+    $("uberStatus").textContent = "Adjuntá el comprobante semanal de Uber.";
+    $("uberStatus").className = "status error";
+    return;
+  }
+
+  $("saveUberBtn").disabled = true;
+  $("saveUberBtn").textContent = "Guardando…";
+  $("uberStatus").textContent = "";
+
+  try {
+    const uberDocRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "uber", weekKey);
+    const existing = await getDoc(uberDocRef);
+    if (existing.exists()) {
+      $("uberStatus").textContent = `Ya existe un comprobante para ${weekKey}.`;
+      $("uberStatus").className = "status error";
+      return;
+    }
+
+    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/uber/${weekKey}_${Date.now()}_${cleanName}`;
+    const storageRef = ref(storage, proofPath);
+    await uploadBytes(storageRef, file);
+    const proofUrl = await getDownloadURL(storageRef);
+
+    await setDoc(uberDocRef, {
+      amount,
+      weekCloseDate,
+      weekKey,
+      proofUrl,
+      proofPath,
+      dayKey: localDayKey(),
+      operatorUid: user.uid,
+      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      businessId: BUSINESS_ID,
+      createdAt: serverTimestamp()
+    });
+
+    $("uberModal").classList.add("hidden");
+  } catch (err) {
+    console.error(err);
+    $("uberStatus").textContent = "No se pudo registrar el cierre de Uber.";
+    $("uberStatus").className = "status error";
+  } finally {
+    $("saveUberBtn").disabled = false;
+    $("saveUberBtn").textContent = "Registrar Uber";
+  }
+});
+
 $("closeDayBtn").addEventListener("click", () => {
   render();
   $("closeStatus").textContent = "";
@@ -475,6 +630,8 @@ $("confirmClose").addEventListener("click", async () => {
     await addDoc(closuresRef, {
       dayKey: localDayKey(),
       cashTotal: model.cash,
+      uberTotal: model.uber,
+      cashPlusUber: model.driverHeld,
       cashBox5: model.cashBox,
       cashAdjustedTotal: model.cashAdjusted,
       digitalTotal: model.digital,

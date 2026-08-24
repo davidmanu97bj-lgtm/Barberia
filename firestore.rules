@@ -17,6 +17,11 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
+      match /uber/{weekId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow update, delete: if false;
+      }
+
       match /closures/{closureId} {
         allow read, create: if request.auth != null && request.auth.uid == userId;
         allow update, delete: if false;

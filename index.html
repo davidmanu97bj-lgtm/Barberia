@@ -31,7 +31,7 @@
     .ghost{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font-weight:700;font-size:12px}
     .main{max-width:1380px;margin:auto;padding:24px clamp(12px,3vw,30px) 40px}
     .summary{background:var(--dark);color:#fff;border-radius:24px;padding:20px 22px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}
-    .summary small{color:#bfbfbf;font-weight:650}.summary .value{font-size:clamp(24px,4vw,38px);font-weight:900;letter-spacing:-1.2px;margin-top:5px}.summary .day{font-size:12px;color:#c8c8c8;text-align:right}
+    .summary small{color:#bfbfbf;font-weight:650}.summary .summary-payee{font-size:13px;color:#d8d8d8;font-weight:800;margin-top:6px}.summary .summary-when{font-size:10px;color:#a9a9a9;margin-top:3px}.summary .value{font-size:clamp(24px,4vw,38px);font-weight:900;letter-spacing:-1.2px;margin-top:2px}.summary .day{font-size:12px;color:#c8c8c8;text-align:right}
     .workspace{display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);gap:14px;align-items:start}
     .money-panel,.settlement{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 5px 20px rgba(0,0,0,.03);overflow:hidden}
     .panel-head{padding:18px;border-bottom:1px solid var(--line)}.panel-tag{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:800}
@@ -45,9 +45,9 @@
     .expense-empty{font-size:10px;color:#aaa;padding:8px 0}.expense-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:11px}.expense-item:last-child{border-bottom:0}.expense-item strong{font-size:11px}.expense-item small{display:block;color:var(--muted);font-size:9px;margin-top:2px}.expense-item .proof{grid-column:1/-1;justify-self:start;margin-top:3px}.expense-amount{font-weight:900}
     .receipt{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px;background:#fcfcfa}.receipt-top{display:flex;justify-content:space-between;gap:10px}.receipt strong{font-size:14px}.receipt .amount{font-weight:900}
     .receipt-meta{font-size:11px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between;gap:8px}.proof{font-size:10px;background:var(--soft);padding:3px 7px;border-radius:999px;color:#555;text-decoration:none}
-    .settlement{position:sticky;top:88px;padding:17px 14px;text-align:center}.settle-icon{width:42px;height:42px;border-radius:14px;background:var(--soft);display:grid;place-items:center;margin:0 auto 12px;font-size:18px}
-    .settlement h3{font-size:13px;margin:0 0 8px}.settle-status{border-radius:12px;background:#f4f4f1;padding:12px 8px;font-size:11px;line-height:1.4;color:#555}.settle-status strong{display:block;color:#111;font-size:13px;margin-bottom:4px}
-    .divider{height:1px;background:var(--line);margin:14px 0}.mini-total{font-size:11px;color:var(--muted)}.mini-total strong{display:block;color:var(--ink);font-size:18px;margin-top:3px}
+    .settlement{position:sticky;top:88px;padding:17px 14px;text-align:center}.settle-icon{width:42px;height:42px;border-radius:14px;background:var(--soft);display:grid;place-items:center;margin:0 auto 12px;font-size:18px;font-weight:900}
+    .settlement h3{font-size:13px;margin:0 0 8px}.divider{height:1px;background:var(--line);margin:12px 0}.mini-total{font-size:11px;color:var(--muted)}.mini-total strong{display:block;color:var(--ink);font-size:18px;margin-top:3px}
+    .uber-button{margin-top:10px;padding:10px 7px;font-size:10px}.uber-list{margin-top:10px;text-align:left;max-height:290px;overflow:auto}.uber-empty{font-size:9px;color:#aaa;text-align:center;padding:10px 2px}.uber-receipt{padding:8px 0;border-top:1px solid var(--line)}.uber-receipt:first-child{border-top:0}.uber-receipt strong{display:block;font-size:10px;line-height:1.2}.uber-receipt small{display:block;color:var(--muted);font-size:8px;margin:3px 0}.uber-receipt .proof{font-size:8px;padding:2px 5px}
     .close-box{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
     .close-box h3{margin:0 0 5px;font-size:15px}.close-box p{margin:0;color:var(--muted);font-size:12px}.close-btn{border:0;background:var(--dark);color:#fff;padding:13px 18px;border-radius:14px;font-weight:850;white-space:nowrap}
     .sync{font-size:10px;color:#777;margin-top:8px}.sync.ok{color:#327a4d}.sync.bad{color:#b42318}
@@ -74,8 +74,8 @@
       .topbar{padding:12px}.logout-text{display:none}.main{padding:14px 8px 28px}.summary{padding:16px;border-radius:18px}.summary .value{font-size:25px}
       .workspace{grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);gap:6px}.money-panel,.settlement{border-radius:16px}.panel-head{padding:12px 9px}.panel-tag{font-size:9px;letter-spacing:.08em}
       .panel-total{font-size:20px;margin:6px 0 5px}.adjustment{font-size:8px;padding:5px 0}.adjustment strong{font-size:9px}.adjustment-total{padding:6px 0 9px}.adjustment-total span{font-size:8px}.adjustment-total strong{font-size:13px}.collect{font-size:10px;padding:10px 5px}.collect.secondary-action{margin-top:6px}.panel-body{padding:8px 6px}.receipt{padding:8px;border-radius:11px}.receipt-top{display:block}.receipt .amount{margin-top:3px}
-      .receipt-meta{display:block;font-size:9px}.proof{display:inline-block;margin-top:5px}.settlement{top:72px;padding:12px 6px}.settle-icon{width:34px;height:34px;border-radius:10px;font-size:14px}
-      .settlement h3{font-size:10px}.settle-status{font-size:9px;padding:9px 5px}.settle-status strong{font-size:10px}.mini-total{font-size:9px}.mini-total strong{font-size:14px}
+      .receipt-meta{display:block;font-size:9px}.proof{display:inline-block;margin-top:5px}.settlement{top:72px;padding:12px 6px}.settle-icon{width:34px;height:34px;border-radius:10px;font-size:14px;margin-bottom:8px}
+      .settlement h3{font-size:10px}.mini-total{font-size:8px}.mini-total strong{font-size:12px}.uber-button{font-size:8px;padding:8px 3px}.uber-list{max-height:220px}.uber-receipt{padding:6px 0}.uber-receipt strong{font-size:8px}.uber-receipt small{font-size:7px}.uber-receipt .proof{font-size:7px;padding:2px 4px}
       .close-box{border-radius:16px;padding:14px;align-items:flex-start;flex-direction:column}.close-btn{width:100%}.modal{padding:8px}.row{grid-template-columns:1fr}
       .service-grid{grid-template-columns:1fr 1fr;gap:8px}.service-option{min-height:78px;padding:12px 10px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
@@ -104,7 +104,7 @@
   </header>
   <main class="main">
     <section class="summary">
-      <div><small>Total facturado hoy</small><div class="value" id="grandTotal">$ 0</div></div>
+      <div><small>Quién paga a quién</small><div class="summary-payee" id="summarySettlementLabel">Equilibrado</div><div class="value" id="summarySettlementAmount">$ 0</div><div class="summary-when">Se liquida al pedir cierre</div></div>
       <div class="day">Caja abierta<br><strong id="todayLabel"></strong><div id="syncStatus" class="sync">Conectando…</div></div>
     </section>
     <section class="workspace">
@@ -112,6 +112,7 @@
         <div class="panel-head">
           <div class="panel-tag">Efectivo</div>
           <div class="panel-total" id="cashTotal">$ 0</div>
+          <div class="adjustment"><span>+ Uber</span><strong id="uberCashTotal">$ 0</strong></div>
           <div class="adjustment"><span>Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
           <div class="adjustment-total"><span>Total</span><strong id="cashAdjustedTotal">$ 0</strong></div>
           <button class="collect" data-mode="cash">+ Cobrar en efectivo</button>
@@ -119,9 +120,11 @@
         <div class="panel-body" id="cashList"><div class="empty">Los cobros en efectivo aparecerán acá.</div></div>
       </article>
       <aside class="settlement">
-        <div class="settle-icon">⇄</div><h3>Quién paga a quién</h3>
-        <div class="settle-status" id="settleStatus"><strong>Equilibrado</strong><span>No hay pagos pendientes.</span></div>
-        <div class="divider"></div><div class="mini-total">Facturado hoy<strong id="centerTotal">$ 0</strong></div>
+        <div class="settle-icon">U</div><h3>Uber</h3>
+        <div class="mini-total">Cargado hoy<strong id="uberTotal">$ 0</strong></div>
+        <button id="addUberBtn" class="collect secondary-action uber-button" type="button">+ Cargar Uber</button>
+        <div class="divider"></div>
+        <div id="uberList" class="uber-list"><div class="uber-empty">Los cierres semanales aparecerán acá.</div></div>
       </aside>
       <article class="money-panel">
         <div class="panel-head">
@@ -188,13 +191,27 @@
   </div>
 </div>
 
+<div id="uberModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Cargar Uber</h2><button class="x" data-close="uberModal">×</button></div>
+    <form id="uberForm">
+      <div class="field"><label>Total de la semana de Uber</label><input id="uberAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 85000" required></div>
+      <div class="field"><label>Fecha de cierre semanal de Uber</label><input id="uberCloseDate" type="date" required><div class="file-note">Se permite un solo comprobante por semana.</div></div>
+      <div class="field"><label>Comprobante semanal</label><input id="uberProof" type="file" accept="image/*,.pdf" required><div class="file-note">Uber queda 100% en manos del chofer y también genera 5% de caja chica.</div></div>
+      <div id="uberStatus" class="status"></div>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="uberModal">Cancelar</button><button id="saveUberBtn" type="submit" class="save">Registrar Uber</button></div>
+    </form>
+  </div>
+</div>
+
 <div id="closeModal" class="modal hidden">
   <div class="modal-card">
     <div class="modal-head"><h2>Liquidación de la jornada</h2><button class="x" data-close="closeModal">×</button></div>
-    <p class="sub" style="margin-bottom:10px">El cierre toma la facturación 50/50, suma caja chica al lado Efectivo y el 50% de gastos al lado Digital.</p>
+    <p class="sub" style="margin-bottom:10px">El cierre toma Efectivo + Uber del lado del chofer, calcula 5% de caja chica sobre ambos y suma el 50% de gastos al lado Digital.</p>
     <div class="close-summary">
       <div><span>Efectivo</span><strong id="closeCash">$ 0</strong></div>
-      <div><span>Caja chica 5%</span><strong id="closeCashBox">$ 0</strong></div>
+      <div><span>+ Uber</span><strong id="closeUber">$ 0</strong></div>
+      <div><span>Caja chica 5% (Efectivo + Uber)</span><strong id="closeCashBox">$ 0</strong></div>
       <div><span>Total efectivo</span><strong id="closeCashAdjusted">$ 0</strong></div>
       <div style="height:1px;background:#ddd;margin:5px 0"></div>
       <div><span>Digital</span><strong id="closeDigital">$ 0</strong></div>

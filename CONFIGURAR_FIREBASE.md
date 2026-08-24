@@ -97,3 +97,13 @@ Los archivos `.rules` y `firebase.json` no necesitan estar publicados en GitHub 
 La configuración web de Firebase no es una contraseña secreta. La seguridad real está en Authentication y en las Rules.
 
 Esta primera versión hace que cada empleado vea únicamente sus propios cobros y cierres. Después se puede agregar un usuario administrador para ver toda la barbería.
+
+## Cierres semanales de Uber
+
+La app guarda un comprobante semanal de Uber por usuario en:
+
+`businesses/{businessId}/users/{uid}/uber/{YYYY-Www}`
+
+El identificador de semana evita que el mismo usuario cargue más de un comprobante para la misma semana. El cierre de Uber impacta el día en que se registra: suma al lado Efectivo/chofer y el 5% de caja chica se calcula sobre `Efectivo + Uber`.
+
+Si ya tenías Firebase configurado, vuelve a desplegar `firestore.rules` para habilitar la colección `uber`.
