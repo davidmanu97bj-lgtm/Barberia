@@ -238,6 +238,9 @@ function fallbackProfile(user) {
 function isSettlementAdjustment(item) {
   return item.type === "settlement_adjustment";
 }
+function isDebtCompensation(item) {
+  return item.type === "debt_compensation";
+}
 function isAdminDebt(item) {
   return item.type === "admin_debt";
 }
@@ -249,7 +252,7 @@ function isUberReceipt(item) {
 }
 function revenueTotalFor(method) {
   return payments
-    .filter(p => p.method === method && !isSettlementAdjustment(p))
+    .filter(p => p.method === method && !isSettlementAdjustment(p) && !isDebtCompensation(p))
     .reduce((a,p)=>a+Number(p.amount||0),0);
 }
 function adjustmentTotal(direction) {
@@ -262,6 +265,11 @@ function expensesTotal() {
 }
 function debtsTotal() {
   return debts.reduce((a,item)=>a+Number(item.amount||0),0);
+}
+function debtCompensationTotal() {
+  return payments
+    .filter(isDebtCompensation)
+    .reduce((a,item)=>a+Number(item.amount||0),0);
 }
 function uberTodayItems() {
   const today = localDayKey();
@@ -302,7 +310,7 @@ function settlementModel() {
   const digitalRevenue = revenueTotalFor("digital");
   const driverPaid = adjustmentTotal("driver_to_explora");
   const exploraPaid = adjustmentTotal("explora_to_driver");
-  const adminDebt = debtsTotal();
+  const adminDebtGross = debtsTotal();
   const cash = cashRevenue;
   const digital = digitalRevenue;
   const expense = expensesTotal();
@@ -312,10 +320,15 @@ function settlementModel() {
   const digitalShare = digitalRevenue * 0.50;
   const cashBox = driverHeld * 0.05;
   const expenseHalf = expense * 0.50;
+  const compensationRecorded = debtCompensationTotal();
+  const debtCompensated = Math.min(compensationRecorded, adminDebtGross, expenseHalf);
+  const adminDebt = Math.max(0, adminDebtGross - debtCompensated);
+  const expenseReimbursement = Math.max(0, expenseHalf - debtCompensated);
+  const compensationAvailable = Math.min(adminDebt, expenseReimbursement);
 
   // Obligaciones base antes de pagos compensatorios anteriores.
   const cashDebt = cashShare + uberShare + cashBox + adminDebt;
-  const digitalDebt = digitalShare + expenseHalf;
+  const digitalDebt = digitalShare + expenseReimbursement;
   // Un pago del chofer completa Explora; uno de Explora completa Chofer.
   const cashAdjusted = cashDebt + exploraPaid;
   const digitalAdjusted = digitalDebt + driverPaid;
@@ -337,8 +350,9 @@ function settlementModel() {
   }
 
   return {
-    cash, uber, digital, expense, adminDebt, driverHeld,
+    cash, uber, digital, expense, adminDebt, adminDebtGross, driverHeld,
     cashShare, uberShare, digitalShare, cashBox, expenseHalf,
+    expenseReimbursement, debtCompensated, compensationAvailable,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
     cashAdjusted, digitalAdjusted,
     cashDebt, digitalDebt, balance: normalizedBalance, amount: Math.abs(normalizedBalance),
@@ -366,6 +380,29 @@ function renderWalletStatus(elementId, walletBalance) {
 
 function renderBilledTotal(model) {
   setAnimatedMoney("summaryBilledAmount", model.grand);
+  $("summaryReimbursementAmount").textContent = money(model.expenseReimbursement);
+  const button = $("compensateDebtBtn");
+  button.disabled = model.compensationAvailable <= 0.5;
+  button.title = model.expenseReimbursement <= 0.5
+    ? "No hay reintegros disponibles."
+    : model.adminDebt <= 0.5
+      ? "No hay deuda pendiente para compensar."
+      : "Utilizar el reintegro para reducir la deuda.";
+}
+
+function openDebtCompensationModal() {
+  const model = settlementModel();
+  if (model.compensationAvailable <= 0.5) return;
+
+  $("compensationReimbursementAvailable").textContent = money(model.expenseReimbursement);
+  $("compensationDebtAvailable").textContent = money(model.adminDebt);
+  $("compensationMaximum").textContent = money(model.compensationAvailable);
+  $("compensationOutcome").textContent = `Se utilizarán ${money(model.compensationAvailable)}. La deuda quedará en ${money(model.adminDebt - model.compensationAvailable)} y el reintegro pendiente en ${money(model.expenseReimbursement - model.compensationAvailable)}.`;
+  $("debtCompensationStatus").textContent = "";
+  $("debtCompensationStatus").className = "status";
+  $("confirmDebtCompensation").disabled = false;
+  $("confirmDebtCompensation").textContent = "Aceptar";
+  $("debtCompensationModal").classList.remove("hidden");
 }
 
 function render() {
@@ -407,17 +444,17 @@ function render() {
   $("cashBaseTotal").textContent = money(model.cashRevenue);
   $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
-  $("cashExpenseTotal").textContent = money(model.expense);
-  $("driverExpenseHalfTotal").textContent = money(model.expenseHalf);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
-  $("adminDebtTotal").textContent = money(model.adminDebt);
+  $("adminDebtTotal").textContent = money(model.adminDebtGross);
+  $("cashDebtCompensationTotal").textContent = money(model.debtCompensated);
+  $("cashDebtCompensationRow").classList.toggle("hidden", model.debtCompensated <= 0.5);
 
   setAnimatedMoney("digitalTotal", model.exploraWallet);
   renderWalletStatus("digitalWalletStatus", model.exploraWallet);
   $("digitalBaseTotal").textContent = money(model.digitalRevenue);
-  $("digitalExpenseTotal").textContent = money(model.expense);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
-  $("expenseHalfTotal").textContent = money(model.expenseHalf);
+  $("digitalDebtCompensationTotal").textContent = money(model.debtCompensated);
+  $("digitalDebtCompensationRow").classList.toggle("hidden", model.debtCompensated <= 0.5);
 
   $("cashCount").textContent = visibleCashItems.length;
   $("digitalCount").textContent = visibleDigitalItems.length;
@@ -440,9 +477,12 @@ function renderList(containerId, items, isDigital) {
       ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
       : "Ahora";
     const uberReceipt = isUberReceipt(item);
+    const debtCompensation = isDebtCompensation(item);
     const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item) || uberReceipt;
     const proof = showsProof
-      ? (item.proofUrl
+      ? (debtCompensation
+          ? `<span class="proof internal-proof">Comprobante interno</span>`
+          : item.proofUrl
           ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
           : `<span class="proof">Sin archivo</span>`)
       : "";
@@ -451,14 +491,16 @@ function renderList(containerId, items, isDigital) {
       ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`
       : uberReceipt
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h14M7 16l1-5h8l1 5M8 11l1.2-3h5.6l1.2 3M6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>`
+      : debtCompensation
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-9M5 20h14"/></svg>`
       : isDigital
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
         : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
-    const amountPrefix = "+";
+    const amountPrefix = debtCompensation ? "−" : "+";
     const footerLabel = uberReceipt
       ? `${escapeHtml(item.weekKey || "Semana")} · cierre ${formatDate(item.weekCloseDate)}`
       : `Hoy · ${time}`;
-    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""} ${uberReceipt ? "receipt-uber" : ""}">
+    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""} ${uberReceipt ? "receipt-uber" : ""} ${debtCompensation ? "receipt-debt-compensation" : ""}">
       <div class="receipt-main">
         <span class="receipt-icon">${icon}</span>
         <div class="receipt-copy">
@@ -734,6 +776,78 @@ document.querySelectorAll("[data-mode]").forEach(btn => {
 
 document.querySelectorAll("[data-close]").forEach(btn => {
   btn.addEventListener("click", () => $(btn.dataset.close).classList.add("hidden"));
+});
+
+$("compensateDebtBtn").addEventListener("click", openDebtCompensationModal);
+
+$("confirmDebtCompensation").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // Se vuelve a calcular al confirmar para no utilizar un saldo desactualizado.
+  const model = settlementModel();
+  const amount = model.compensationAvailable;
+  if (amount <= 0.5) {
+    $("debtCompensationStatus").textContent = "Ya no hay saldo disponible para compensar.";
+    $("debtCompensationStatus").className = "status error";
+    return;
+  }
+
+  const remainingDebt = Math.max(0, model.adminDebt - amount);
+  const remainingReimbursement = Math.max(0, model.expenseReimbursement - amount);
+  const button = $("confirmDebtCompensation");
+  button.disabled = true;
+  button.textContent = "Compensando…";
+  $("debtCompensationStatus").textContent = "";
+
+  try {
+    // El identificador determinístico evita que dos dispositivos registren
+    // dos veces la misma compensación antes de recibir la actualización.
+    const compensationId = [
+      "debt_comp",
+      localDayKey(),
+      Math.round(model.adminDebtGross),
+      Math.round(model.expenseHalf),
+      Math.round(model.debtCompensated)
+    ].join("_");
+    const compensationRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "payments", compensationId);
+    await setDoc(compensationRef, {
+      method: "digital",
+      type: "debt_compensation",
+      amount,
+      service: "Achique de deuda",
+      detail: `Se utilizaron ${money(amount)} del reintegro de gastos. Deuda restante: ${money(remainingDebt)}.`,
+      compensationSource: "expense_reimbursement",
+      reimbursementBefore: model.expenseReimbursement,
+      reimbursementAfter: remainingReimbursement,
+      debtBefore: model.adminDebt,
+      debtAfter: remainingDebt,
+      internalReceipt: true,
+      proofUrl: "",
+      proofPath: "",
+      dayKey: localDayKey(),
+      operatorUid: user.uid,
+      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      businessId: BUSINESS_ID,
+      createdAt: serverTimestamp()
+    });
+
+    $("debtCompensationStatus").textContent = `Se aplicaron ${money(amount)} para achicar la deuda.`;
+    $("debtCompensationStatus").className = "status success";
+    setTimeout(() => $("debtCompensationModal").classList.add("hidden"), 1200);
+  } catch (err) {
+    console.error(err);
+    if (err?.code === "permission-denied") {
+      $("debtCompensationStatus").textContent = "Esta compensación ya fue registrada. Actualizando los saldos…";
+      $("debtCompensationStatus").className = "status success";
+      setTimeout(() => $("debtCompensationModal").classList.add("hidden"), 1200);
+    } else {
+      $("debtCompensationStatus").textContent = "No se pudo compensar la deuda. Intentá nuevamente.";
+      $("debtCompensationStatus").className = "status error";
+      button.disabled = false;
+      button.textContent = "Aceptar";
+    }
+  }
 });
 
 $("chargeForm").addEventListener("submit", async e => {

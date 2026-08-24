@@ -1596,7 +1596,7 @@ a.proof:hover { background: #e3e7f0; }
 
 .money-panel .panel-head {
   display: flex;
-  min-height: 500px;
+  min-height: 420px;
   flex-direction: column;
 }
 
@@ -1696,6 +1696,9 @@ a.proof:hover { background: #e3e7f0; }
 .debt-adjustment > span:first-child,
 .debt-adjustment strong { color: var(--red); }
 
+.debt-compensation-adjustment > span:first-child,
+.debt-compensation-adjustment strong { color: #8a6200; }
+
 .debt-add {
   display: grid;
   width: 24px;
@@ -1763,6 +1766,23 @@ a.proof:hover { background: #e3e7f0; }
 .receipt-uber .receipt-icon {
   background: var(--amber-soft);
   color: var(--amber);
+}
+
+.receipt-debt-compensation {
+  border-color: #e7d7a4;
+  background: #fffdf7;
+}
+
+.receipt-debt-compensation .receipt-icon {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.receipt-debt-compensation .amount { color: var(--amber); }
+
+.internal-proof {
+  background: var(--amber-soft);
+  color: #745400;
 }
 
 .debt-modal-note {
@@ -1875,7 +1895,7 @@ a.proof:hover { background: #e3e7f0; }
     border-radius: 9px;
   }
 
-  .money-panel .panel-head { min-height: 420px; }
+  .money-panel .panel-head { min-height: 365px; }
 
   .panel-tag-icon {
     width: 25px;
@@ -1964,27 +1984,122 @@ a.proof:hover { background: #e3e7f0; }
 
 @media (max-width: 380px) {
   .brand-logo-shell { width: 176px; }
-  .money-panel .panel-head { min-height: 420px; }
+  .money-panel .panel-head { min-height: 365px; }
 }
 
 /* Resumen central y comprobantes completamente uniformes. */
 .summary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  place-items: center;
-  text-align: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  place-items: stretch;
+  padding: 0;
+  text-align: left;
 }
 
-.summary > div:first-child {
+.summary .summary-metric {
   position: relative;
   z-index: 1;
   display: flex;
   width: 100%;
-  align-items: center;
+  min-width: 0;
+  align-items: flex-start;
   flex-direction: column;
+  justify-content: center;
+  padding: 23px 24px;
+}
+
+.summary-refund {
+  border-left: 1px solid #e1e5ee;
+  background: linear-gradient(135deg, rgba(79, 76, 245, .025), rgba(79, 76, 245, .065));
+}
+
+.summary-compensate {
+  min-height: 35px;
+  margin-top: 12px;
+  padding: 8px 11px;
+  border: 1px solid rgba(79, 76, 245, .20);
+  border-radius: 11px;
+  background: rgba(79, 76, 245, .07);
+  color: #4441cd;
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.summary-compensate:hover:not(:disabled) { background: rgba(79, 76, 245, .11); }
+
+.summary-compensate:disabled {
+  cursor: not-allowed;
+  opacity: .42;
 }
 
 #syncStatus { display: none !important; }
+
+.compensation-question {
+  margin: 0 0 16px;
+  color: #4b5568;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.48;
+}
+
+.compensation-breakdown {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fafbfe;
+}
+
+.compensation-breakdown > div {
+  display: flex;
+  min-height: 47px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.compensation-breakdown > div:first-child { border-top: 0; }
+.compensation-breakdown strong { color: var(--ink); font-size: 13px; white-space: nowrap; }
+
+.compensation-breakdown .compensation-maximum {
+  background: var(--accent-soft);
+  color: #4643d8;
+}
+
+.compensation-breakdown .compensation-maximum strong {
+  color: #3f3ccc;
+  font-size: 18px;
+}
+
+.compensation-outcome {
+  margin-top: 13px;
+  padding: 12px 13px;
+  border: 1px solid #e6d7a7;
+  border-radius: 14px;
+  background: var(--amber-soft);
+  color: #715200;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .summary .summary-metric { padding: 15px 12px; }
+  .summary small { font-size: 8px; letter-spacing: .07em; }
+  .summary .summary-when { font-size: 8px; }
+  .summary-compensate { min-height: 33px; margin-top: 9px; padding: 7px 8px; font-size: 8px; }
+  .compensation-question { font-size: 12px; }
+  .compensation-breakdown > div { min-height: 43px; padding: 10px 11px; font-size: 10px; }
+  .compensation-breakdown strong { font-size: 12px; }
+  .compensation-breakdown .compensation-maximum strong { font-size: 16px; }
+}
 
 .proof-list .receipt {
   display: flex;
