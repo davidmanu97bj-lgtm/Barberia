@@ -35,8 +35,14 @@
     .workspace{display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);gap:14px;align-items:start}
     .money-panel,.settlement{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 5px 20px rgba(0,0,0,.03);overflow:hidden}
     .panel-head{padding:18px;border-bottom:1px solid var(--line)}.panel-tag{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:800}
-    .panel-total{font-size:clamp(24px,3.5vw,34px);font-weight:900;letter-spacing:-1px;margin:7px 0 14px}.collect{border:0;border-radius:14px;padding:13px 14px;width:100%;background:var(--dark);color:#fff;font-weight:850}
+    .panel-total{font-size:clamp(24px,3.5vw,34px);font-weight:900;letter-spacing:-1px;margin:7px 0 7px}
+    .adjustment{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);padding:7px 0;border-top:1px solid var(--line)}
+    .adjustment strong{color:var(--ink);font-size:12px}.adjustment-total{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;padding:9px 0 13px;border-top:1px solid var(--line);margin-top:1px}
+    .adjustment-total span{font-size:11px;color:var(--muted);font-weight:750}.adjustment-total strong{font-size:19px;letter-spacing:-.4px}
+    .collect{border:0;border-radius:14px;padding:13px 14px;width:100%;background:var(--dark);color:#fff;font-weight:850}.collect.secondary-action{margin-top:8px;background:#fff;color:var(--ink);border:1px solid var(--line)}
     .panel-body{padding:14px}.empty{padding:34px 14px;text-align:center;color:#aaa;font-size:12px;border:1px dashed #ddd;border-radius:14px}
+    .expense-section{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.expense-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:850;margin-bottom:8px}
+    .expense-empty{font-size:10px;color:#aaa;padding:8px 0}.expense-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:11px}.expense-item:last-child{border-bottom:0}.expense-item strong{font-size:11px}.expense-item small{display:block;color:var(--muted);font-size:9px;margin-top:2px}.expense-item .proof{grid-column:1/-1;justify-self:start;margin-top:3px}.expense-amount{font-weight:900}
     .receipt{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px;background:#fcfcfa}.receipt-top{display:flex;justify-content:space-between;gap:10px}.receipt strong{font-size:14px}.receipt .amount{font-weight:900}
     .receipt-meta{font-size:11px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between;gap:8px}.proof{font-size:10px;background:var(--soft);padding:3px 7px;border-radius:999px;color:#555;text-decoration:none}
     .settlement{position:sticky;top:88px;padding:17px 14px;text-align:center}.settle-icon{width:42px;height:42px;border-radius:14px;background:var(--soft);display:grid;place-items:center;margin:0 auto 12px;font-size:18px}
@@ -67,7 +73,7 @@
       .login-screen{padding:18px}.login-card{padding:26px 22px}
       .topbar{padding:12px}.logout-text{display:none}.main{padding:14px 8px 28px}.summary{padding:16px;border-radius:18px}.summary .value{font-size:25px}
       .workspace{grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);gap:6px}.money-panel,.settlement{border-radius:16px}.panel-head{padding:12px 9px}.panel-tag{font-size:9px;letter-spacing:.08em}
-      .panel-total{font-size:20px;margin:6px 0 10px}.collect{font-size:11px;padding:11px 6px}.panel-body{padding:8px 6px}.receipt{padding:8px;border-radius:11px}.receipt-top{display:block}.receipt .amount{margin-top:3px}
+      .panel-total{font-size:20px;margin:6px 0 5px}.adjustment{font-size:8px;padding:5px 0}.adjustment strong{font-size:9px}.adjustment-total{padding:6px 0 9px}.adjustment-total span{font-size:8px}.adjustment-total strong{font-size:13px}.collect{font-size:10px;padding:10px 5px}.collect.secondary-action{margin-top:6px}.panel-body{padding:8px 6px}.receipt{padding:8px;border-radius:11px}.receipt-top{display:block}.receipt .amount{margin-top:3px}
       .receipt-meta{display:block;font-size:9px}.proof{display:inline-block;margin-top:5px}.settlement{top:72px;padding:12px 6px}.settle-icon{width:34px;height:34px;border-radius:10px;font-size:14px}
       .settlement h3{font-size:10px}.settle-status{font-size:9px;padding:9px 5px}.settle-status strong{font-size:10px}.mini-total{font-size:9px}.mini-total strong{font-size:14px}
       .close-box{border-radius:16px;padding:14px;align-items:flex-start;flex-direction:column}.close-btn{width:100%}.modal{padding:8px}.row{grid-template-columns:1fr}
@@ -103,17 +109,33 @@
     </section>
     <section class="workspace">
       <article class="money-panel">
-        <div class="panel-head"><div class="panel-tag">Efectivo</div><div class="panel-total" id="cashTotal">$ 0</div><button class="collect" data-mode="cash">+ Cobrar en efectivo</button></div>
+        <div class="panel-head">
+          <div class="panel-tag">Efectivo</div>
+          <div class="panel-total" id="cashTotal">$ 0</div>
+          <div class="adjustment"><span>Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
+          <div class="adjustment-total"><span>Total</span><strong id="cashAdjustedTotal">$ 0</strong></div>
+          <button class="collect" data-mode="cash">+ Cobrar en efectivo</button>
+        </div>
         <div class="panel-body" id="cashList"><div class="empty">Los cobros en efectivo aparecerán acá.</div></div>
       </article>
       <aside class="settlement">
         <div class="settle-icon">⇄</div><h3>Quién paga a quién</h3>
-        <div class="settle-status"><strong>Sin calcular</strong>La lógica de liquidación se agregará en la siguiente etapa.</div>
-        <div class="divider"></div><div class="mini-total">Jornada<strong id="centerTotal">$ 0</strong></div>
+        <div class="settle-status" id="settleStatus"><strong>Equilibrado</strong><span>No hay pagos pendientes.</span></div>
+        <div class="divider"></div><div class="mini-total">Facturado hoy<strong id="centerTotal">$ 0</strong></div>
       </aside>
       <article class="money-panel">
-        <div class="panel-head"><div class="panel-tag">Digital</div><div class="panel-total" id="digitalTotal">$ 0</div><button class="collect" data-mode="digital">+ Cobrar digital</button></div>
-        <div class="panel-body" id="digitalList"><div class="empty">Los cobros digitales y sus comprobantes aparecerán acá.</div></div>
+        <div class="panel-head">
+          <div class="panel-tag">Digital</div>
+          <div class="panel-total" id="digitalTotal">$ 0</div>
+          <div class="adjustment"><span>+ Gastos 50%</span><strong id="expenseHalfTotal">$ 0</strong></div>
+          <div class="adjustment-total"><span>Total</span><strong id="digitalAdjustedTotal">$ 0</strong></div>
+          <button class="collect" data-mode="digital">+ Cobrar digital</button>
+          <button id="addExpenseBtn" class="collect secondary-action" type="button">+ Cargar gasto</button>
+        </div>
+        <div class="panel-body">
+          <div id="digitalList"><div class="empty">Los cobros digitales y sus comprobantes aparecerán acá.</div></div>
+          <div class="expense-section"><div class="expense-title">Gastos de hoy</div><div id="expenseList"><div class="expense-empty">Sin gastos cargados hoy.</div></div></div>
+        </div>
       </article>
     </section>
     <section class="close-box">
@@ -153,11 +175,35 @@
   </div>
 </div>
 
+<div id="expenseModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Cargar gasto</h2><button class="x" data-close="expenseModal">×</button></div>
+    <form id="expenseForm">
+      <div class="field"><label>Importe total del gasto</label><input id="expenseAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 20000" required></div>
+      <div class="field"><label>Detalle / motivo</label><input id="expenseDetail" placeholder="Ej. Productos de limpieza" required></div>
+      <div class="field"><label>Comprobante</label><input id="expenseProof" type="file" accept="image/*,.pdf" required><div class="file-note">Digital reconocerá automáticamente el 50% del gasto.</div></div>
+      <div id="expenseStatus" class="status"></div>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="expenseModal">Cancelar</button><button id="saveExpenseBtn" type="submit" class="save">Registrar gasto</button></div>
+    </form>
+  </div>
+</div>
+
 <div id="closeModal" class="modal hidden">
   <div class="modal-card">
-    <div class="modal-head"><h2>Pedido de cierre</h2><button class="x" data-close="closeModal">×</button></div>
-    <p class="sub" style="margin-bottom:10px">Resumen de la jornada antes de solicitar el cierre.</p>
-    <div class="close-summary"><div><span>Efectivo</span><strong id="closeCash">$ 0</strong></div><div><span>Digital</span><strong id="closeDigital">$ 0</strong></div><div><span>Total jornada</span><strong id="closeGrand">$ 0</strong></div></div>
+    <div class="modal-head"><h2>Liquidación de la jornada</h2><button class="x" data-close="closeModal">×</button></div>
+    <p class="sub" style="margin-bottom:10px">El cierre toma la facturación 50/50, suma caja chica al lado Efectivo y el 50% de gastos al lado Digital.</p>
+    <div class="close-summary">
+      <div><span>Efectivo</span><strong id="closeCash">$ 0</strong></div>
+      <div><span>Caja chica 5%</span><strong id="closeCashBox">$ 0</strong></div>
+      <div><span>Total efectivo</span><strong id="closeCashAdjusted">$ 0</strong></div>
+      <div style="height:1px;background:#ddd;margin:5px 0"></div>
+      <div><span>Digital</span><strong id="closeDigital">$ 0</strong></div>
+      <div><span>+ Gastos 50%</span><strong id="closeExpenseHalf">$ 0</strong></div>
+      <div><span>Total digital</span><strong id="closeDigitalAdjusted">$ 0</strong></div>
+      <div style="height:1px;background:#ddd;margin:5px 0"></div>
+      <div id="closeSettlement"><span>Cuentas equilibradas</span><strong>$ 0</strong></div>
+      <div><span>Total facturado</span><strong id="closeGrand">$ 0</strong></div>
+    </div>
     <div id="closeStatus" class="status"></div>
     <div class="modal-actions"><button type="button" class="secondary" data-close="closeModal">Volver</button><button id="confirmClose" type="button" class="save">Enviar pedido</button></div>
   </div>

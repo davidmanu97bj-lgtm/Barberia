@@ -19,7 +19,9 @@ const storage = getStorage(app);
 
 const $ = id => document.getElementById(id);
 let unsubscribePayments = null;
+let unsubscribeExpenses = null;
 let payments = [];
+let expenses = [];
 let currentProfile = null;
 
 const money = value => new Intl.NumberFormat("es-AR", {
@@ -43,25 +45,98 @@ function usernameToEmail(usernameOrEmail) {
 function totalFor(method) {
   return payments.filter(p => p.method === method).reduce((a,p)=>a+Number(p.amount||0),0);
 }
+function expensesTotal() {
+  return expenses.reduce((a,e)=>a+Number(e.amount||0),0);
+}
 function escapeHtml(s="") {
   return String(s).replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
 }
 
-function render() {
+// Lógica de equilibrio de la barbería:
+// - El lado Efectivo conserva el 100% del efectivo cobrado.
+// - El lado Digital conserva el 100% de lo cobrado digital.
+// - Para repartir la facturación 50/50, cada lado genera una deuda del 50% de sus cobros.
+// - Caja chica: Efectivo suma además el 5% completo de sus cobros como deuda.
+// - Gastos: como los paga Efectivo, Digital suma el 50% del gasto como deuda a favor de Efectivo.
+function settlementModel() {
   const cash = totalFor("cash");
   const digital = totalFor("digital");
-  const grand = cash + digital;
-  $("cashTotal").textContent = money(cash);
-  $("digitalTotal").textContent = money(digital);
-  $("grandTotal").textContent = money(grand);
-  $("centerTotal").textContent = money(grand);
-  $("closeCash").textContent = money(cash);
-  $("closeDigital").textContent = money(digital);
-  $("closeGrand").textContent = money(grand);
+  const expense = expensesTotal();
+  const cashBox = cash * 0.05;
+  const expenseHalf = expense * 0.50;
+
+  // Totales visuales pedidos para cada columna.
+  const cashAdjusted = cash + cashBox;
+  const digitalAdjusted = digital + expenseHalf;
+
+  // Deudas reales usadas para definir quién paga a quién.
+  const cashDebt = (cash * 0.50) + cashBox;
+  const digitalDebt = (digital * 0.50) + expenseHalf;
+  const balance = cashDebt - digitalDebt;
+  const amount = Math.abs(balance);
+
+  let from = "balanced";
+  let to = "balanced";
+  if (balance > 0.5) {
+    from = "cash";
+    to = "digital";
+  } else if (balance < -0.5) {
+    from = "digital";
+    to = "cash";
+  }
+
+  return {
+    cash, digital, expense, cashBox, expenseHalf,
+    cashAdjusted, digitalAdjusted,
+    cashDebt, digitalDebt, balance, amount, from, to,
+    grand: cash + digital
+  };
+}
+
+function renderSettlement(model) {
+  const status = $("settleStatus");
+  const closeSettlement = $("closeSettlement");
+
+  if (model.from === "balanced") {
+    status.innerHTML = `<strong>Equilibrado</strong><span>No hay pagos pendientes entre Efectivo y Digital.</span>`;
+    closeSettlement.innerHTML = `<span>Cuentas equilibradas</span><strong>${money(0)}</strong>`;
+    return;
+  }
+
+  const fromLabel = model.from === "cash" ? "Efectivo" : "Digital";
+  const toLabel = model.to === "cash" ? "Efectivo" : "Digital";
+  status.innerHTML = `<strong>${fromLabel} paga a ${toLabel}</strong><span>${money(model.amount)} · al cerrar la jornada</span>`;
+  closeSettlement.innerHTML = `<span>${fromLabel} paga a ${toLabel}</span><strong>${money(model.amount)}</strong>`;
+}
+
+function render() {
+  const model = settlementModel();
+
+  $("cashTotal").textContent = money(model.cash);
+  $("cashBoxTotal").textContent = money(model.cashBox);
+  $("cashAdjustedTotal").textContent = money(model.cashAdjusted);
+
+  $("digitalTotal").textContent = money(model.digital);
+  $("expenseHalfTotal").textContent = money(model.expenseHalf);
+  $("digitalAdjustedTotal").textContent = money(model.digitalAdjusted);
+
+  $("grandTotal").textContent = money(model.grand);
+  $("centerTotal").textContent = money(model.grand);
+
+  $("closeCash").textContent = money(model.cash);
+  $("closeCashBox").textContent = money(model.cashBox);
+  $("closeCashAdjusted").textContent = money(model.cashAdjusted);
+  $("closeDigital").textContent = money(model.digital);
+  $("closeExpenseHalf").textContent = money(model.expenseHalf);
+  $("closeDigitalAdjusted").textContent = money(model.digitalAdjusted);
+  $("closeGrand").textContent = money(model.grand);
+
+  renderSettlement(model);
   renderList("cashList", payments.filter(p=>p.method==="cash"), false);
   renderList("digitalList", payments.filter(p=>p.method==="digital"), true);
+  renderExpenseList();
 }
 
 function renderList(containerId, items, isDigital) {
@@ -93,12 +168,33 @@ function renderList(containerId, items, isDigital) {
   }).join("");
 }
 
+function renderExpenseList() {
+  const box = $("expenseList");
+  if (!expenses.length) {
+    box.innerHTML = `<div class="expense-empty">Sin gastos cargados hoy.</div>`;
+    return;
+  }
+
+  box.innerHTML = expenses.map(item => {
+    const time = item.createdAt?.toDate
+      ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+      : "Ahora";
+    const proof = item.proofUrl
+      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Comprobante</a>`
+      : `<span class="proof">Sin archivo</span>`;
+    return `<div class="expense-item">
+      <div><strong>${escapeHtml(item.detail || "Gasto")}</strong><small>${time} · 50% a Digital: ${money(Number(item.amount||0)*0.5)}</small></div>
+      <div class="expense-amount">${money(item.amount)}</div>
+      ${proof}
+    </div>`;
+  }).join("");
+}
+
 async function loadProfile(user) {
   const profileRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid);
   const snap = await getDoc(profileRef);
   if (snap.exists()) return snap.data();
 
-  // First-login fallback. Creates a basic profile if rules permit.
   const username = user.email?.split("@")[0] || "barbero";
   const profile = { username, displayName: username, role: "barber", active: true, createdAt: serverTimestamp() };
   await setDoc(profileRef, profile, { merge: true });
@@ -107,12 +203,13 @@ async function loadProfile(user) {
 
 function subscribeToday(user) {
   if (unsubscribePayments) unsubscribePayments();
+  if (unsubscribeExpenses) unsubscribeExpenses();
+
   const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
+  const expensesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "expenses");
   $("syncStatus").textContent = "Sincronizando…";
   $("syncStatus").className = "sync";
 
-  // Escuchamos la colección del usuario en tiempo real y filtramos el día en el navegador.
-  // Así evitamos depender de un índice compuesto de Firestore para dayKey + createdAt.
   unsubscribePayments = onSnapshot(paymentsRef, snap => {
     const today = localDayKey();
     payments = snap.docs
@@ -127,8 +224,25 @@ function subscribeToday(user) {
     $("syncStatus").textContent = "En tiempo real";
     $("syncStatus").className = "sync ok";
   }, err => {
-    console.error("Firestore snapshot error:", err);
+    console.error("Firestore payments snapshot error:", err);
     $("syncStatus").textContent = "Error de datos";
+    $("syncStatus").className = "sync bad";
+  });
+
+  unsubscribeExpenses = onSnapshot(expensesRef, snap => {
+    const today = localDayKey();
+    expenses = snap.docs
+      .map(d => ({ id:d.id, ...d.data() }))
+      .filter(item => item.dayKey === today)
+      .sort((a, b) => {
+        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bMs - aMs;
+      });
+    render();
+  }, err => {
+    console.error("Firestore expenses snapshot error:", err);
+    $("syncStatus").textContent = "Error de gastos";
     $("syncStatus").className = "sync bad";
   });
 }
@@ -158,7 +272,9 @@ $("logoutBtn").addEventListener("click", () => signOut(auth));
 onAuthStateChanged(auth, async user => {
   if (!user) {
     if (unsubscribePayments) unsubscribePayments();
+    if (unsubscribeExpenses) unsubscribeExpenses();
     payments = [];
+    expenses = [];
     currentProfile = null;
     $("app").classList.add("hidden");
     $("loginScreen").classList.remove("hidden");
@@ -274,9 +390,77 @@ $("chargeForm").addEventListener("submit", async e => {
   }
 });
 
+$("addExpenseBtn").addEventListener("click", () => {
+  $("expenseForm").reset();
+  $("expenseStatus").textContent = "";
+  $("expenseStatus").className = "status";
+  $("expenseModal").classList.remove("hidden");
+});
+
+$("expenseForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const amount = Number($("expenseAmount").value);
+  const detail = $("expenseDetail").value.trim();
+  const file = $("expenseProof").files?.[0];
+
+  if (!amount || amount <= 0) {
+    $("expenseStatus").textContent = "Ingresá un importe válido.";
+    $("expenseStatus").className = "status error";
+    return;
+  }
+  if (!detail) {
+    $("expenseStatus").textContent = "Indicá el motivo del gasto.";
+    $("expenseStatus").className = "status error";
+    return;
+  }
+  if (!file) {
+    $("expenseStatus").textContent = "Adjuntá el comprobante del gasto.";
+    $("expenseStatus").className = "status error";
+    return;
+  }
+
+  $("saveExpenseBtn").disabled = true;
+  $("saveExpenseBtn").textContent = "Guardando…";
+  $("expenseStatus").textContent = "";
+
+  try {
+    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/${localDayKey()}/expense_${Date.now()}_${cleanName}`;
+    const storageRef = ref(storage, proofPath);
+    await uploadBytes(storageRef, file);
+    const proofUrl = await getDownloadURL(storageRef);
+
+    const expensesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "expenses");
+    await addDoc(expensesRef, {
+      amount,
+      detail,
+      proofUrl,
+      proofPath,
+      dayKey: localDayKey(),
+      operatorUid: user.uid,
+      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      businessId: BUSINESS_ID,
+      createdAt: serverTimestamp()
+    });
+
+    $("expenseModal").classList.add("hidden");
+  } catch (err) {
+    console.error(err);
+    $("expenseStatus").textContent = "No se pudo registrar el gasto.";
+    $("expenseStatus").className = "status error";
+  } finally {
+    $("saveExpenseBtn").disabled = false;
+    $("saveExpenseBtn").textContent = "Registrar gasto";
+  }
+});
+
 $("closeDayBtn").addEventListener("click", () => {
   render();
   $("closeStatus").textContent = "";
+  $("closeStatus").className = "status";
   $("closeModal").classList.remove("hidden");
 });
 
@@ -286,22 +470,33 @@ $("confirmClose").addEventListener("click", async () => {
   $("confirmClose").disabled = true;
   $("confirmClose").textContent = "Enviando…";
   try {
-    const cash = totalFor("cash");
-    const digital = totalFor("digital");
+    const model = settlementModel();
     const closuresRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "closures");
     await addDoc(closuresRef, {
       dayKey: localDayKey(),
-      cashTotal: cash,
-      digitalTotal: digital,
-      total: cash + digital,
+      cashTotal: model.cash,
+      cashBox5: model.cashBox,
+      cashAdjustedTotal: model.cashAdjusted,
+      digitalTotal: model.digital,
+      expensesTotal: model.expense,
+      expensesShare50: model.expenseHalf,
+      digitalAdjustedTotal: model.digitalAdjusted,
+      cashDebt: model.cashDebt,
+      digitalDebt: model.digitalDebt,
+      settlementAmount: model.from === "balanced" ? 0 : model.amount,
+      settlementFrom: model.from,
+      settlementTo: model.to,
+      total: model.grand,
       status: "pending",
       operatorUid: user.uid,
       operatorName: currentProfile?.displayName || currentProfile?.username || "",
       requestedAt: serverTimestamp()
     });
-    $("closeStatus").textContent = "Pedido de cierre enviado.";
+    $("closeStatus").textContent = model.from === "balanced"
+      ? "Cierre enviado. Las cuentas quedaron equilibradas."
+      : `Cierre enviado. Liquidación: ${money(model.amount)}.`;
     $("closeStatus").className = "status";
-    setTimeout(() => $("closeModal").classList.add("hidden"), 900);
+    setTimeout(() => $("closeModal").classList.add("hidden"), 1100);
   } catch (err) {
     console.error(err);
     $("closeStatus").textContent = "No se pudo enviar el cierre.";
