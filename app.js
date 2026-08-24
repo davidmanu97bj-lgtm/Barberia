@@ -1,4 +1,4 @@
-import * as firebaseSettings from "./firebase-config.js?v=20260824-15";
+import * as firebaseSettings from "./firebase-config.js?v=20260824-13";
 
 const { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } = firebaseSettings;
 const LOGIN_ALIASES = firebaseSettings.LOGIN_ALIASES || {};
@@ -47,7 +47,18 @@ const money = value => new Intl.NumberFormat("es-AR", {
 }).format(value || 0);
 const moneyInputFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
 const moneyAnimationFrames = new WeakMap();
-const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function canAnimateMoney() {
+  try {
+    const reducesMotion = typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return !reducesMotion
+      && typeof window.requestAnimationFrame === "function"
+      && typeof window.cancelAnimationFrame === "function";
+  } catch {
+    return false;
+  }
+}
 
 function setAnimatedMoney(elementOrId, targetValue) {
   const element = typeof elementOrId === "string" ? $(elementOrId) : elementOrId;
@@ -60,48 +71,59 @@ function setAnimatedMoney(elementOrId, targetValue) {
   const activeFrame = moneyAnimationFrames.get(element);
 
   if (activeFrame !== undefined) {
-    cancelAnimationFrame(activeFrame);
+    window.cancelAnimationFrame(activeFrame);
     moneyAnimationFrames.delete(element);
   }
 
+  // El valor correcto se muestra primero. La animación es una mejora visual y
+  // nunca debe impedir el inicio de sesión ni dejar una cifra desactualizada.
+  element.textContent = money(target);
+  element.dataset.moneyCurrent = String(target);
   element.setAttribute("aria-label", money(target));
 
-  if (!hasPreviousValue || Math.abs(target - previous) < 0.5 || reducedMotionQuery.matches) {
-    element.textContent = money(target);
-    element.dataset.moneyCurrent = String(target);
+  if (!hasPreviousValue || Math.abs(target - previous) < 0.5 || !canAnimateMoney()) {
     element.classList.remove("money-rolling");
     return;
   }
 
-  element.classList.remove("money-rolling");
-  void element.offsetWidth;
-  element.classList.add("money-rolling");
-  element.addEventListener("animationend", () => {
+  try {
     element.classList.remove("money-rolling");
-  }, { once: true });
+    void element.offsetWidth;
+    element.classList.add("money-rolling");
+    element.addEventListener("animationend", () => {
+      element.classList.remove("money-rolling");
+    }, { once: true });
 
-  const startedAt = performance.now();
-  const duration = 760;
+    let startedAt;
+    const duration = 760;
 
-  const tick = now => {
-    const progress = Math.min(1, (now - startedAt) / duration);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const current = previous + (target - previous) * eased;
+    const tick = now => {
+      if (startedAt === undefined) startedAt = now;
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = previous + (target - previous) * eased;
 
-    element.textContent = money(Math.round(current));
-    element.dataset.moneyCurrent = String(current);
+      element.textContent = money(Math.round(current));
+      element.dataset.moneyCurrent = String(current);
 
-    if (progress < 1) {
-      moneyAnimationFrames.set(element, requestAnimationFrame(tick));
-      return;
-    }
+      if (progress < 1) {
+        moneyAnimationFrames.set(element, window.requestAnimationFrame(tick));
+        return;
+      }
 
+      element.textContent = money(target);
+      element.dataset.moneyCurrent = String(target);
+      moneyAnimationFrames.delete(element);
+    };
+
+    moneyAnimationFrames.set(element, window.requestAnimationFrame(tick));
+  } catch (err) {
+    console.warn("Animación de importes desactivada:", err);
+    element.classList.remove("money-rolling");
     element.textContent = money(target);
     element.dataset.moneyCurrent = String(target);
     moneyAnimationFrames.delete(element);
-  };
-
-  moneyAnimationFrames.set(element, requestAnimationFrame(tick));
+  }
 }
 
 function moneyInputDigits(value) {
