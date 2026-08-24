@@ -40,7 +40,10 @@ Activá:
 
 - Email/Password
 
-La interfaz permite ingresar con un usuario simple, por ejemplo `barbero01`.
+La interfaz permite ingresar con el correo completo o con un usuario simple.
+
+Para el usuario principal de esta versión, tanto `barberia` como
+`barberia@gmail.com` intentan acceder al mismo usuario de Authentication.
 
 Internamente se convierte en:
 
@@ -53,6 +56,9 @@ Ejemplo:
 - Usuario en la app: `barbero01`
 - Email que creás en Firebase: `barbero01@republica-argentina.local`
 - Contraseña: la que vos elijas
+
+El alias principal se configura en `LOGIN_ALIASES`, dentro de
+`firebase-config.js`. No se guarda ninguna contraseña en los archivos de la app.
 
 ## 4. Firestore
 
@@ -88,6 +94,7 @@ Subí estos archivos al repositorio:
 
 - `index.html`
 - `app.js`
+- `styles.css`
 - `firebase-config.js`
 
 Los archivos `.rules` y `firebase.json` no necesitan estar publicados en GitHub Pages para que la web funcione, pero conviene guardarlos en el repo.

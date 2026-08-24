@@ -1,11 +1,14 @@
-import { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } from "./firebase-config.js";
+import {
+  firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN, LOGIN_ALIASES
+} from "./firebase-config.js?v=20260824-3";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
+  setPersistence, browserLocalPersistence, browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
-  getFirestore, collection, addDoc, doc, getDoc, setDoc,
+  initializeFirestore, collection, addDoc, doc, getDoc, setDoc,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {
@@ -14,8 +17,11 @@ import {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 const storage = getStorage(app);
+const authReady = setPersistence(auth, browserLocalPersistence)
+  .catch(() => setPersistence(auth, browserSessionPersistence))
+  .catch(err => console.warn("No se pudo guardar la persistencia de sesión:", err));
 
 const $ = id => document.getElementById(id);
 let unsubscribePayments = null;
@@ -42,7 +48,33 @@ function safeUsername(value) {
 function usernameToEmail(usernameOrEmail) {
   const value = usernameOrEmail.trim().toLowerCase();
   if (value.includes("@")) return value;
+  if (LOGIN_ALIASES[value]) return LOGIN_ALIASES[value];
   return `${safeUsername(value)}@${USER_EMAIL_DOMAIN}`;
+}
+
+function loginErrorMessage(err) {
+  const code = String(err?.code || "");
+  if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"].includes(code)) {
+    return "El usuario o la contraseña no son correctos.";
+  }
+  if (code === "auth/too-many-requests") {
+    return "Hubo varios intentos. Esperá un momento y volvé a probar.";
+  }
+  if (code === "auth/network-request-failed") {
+    return "No hay conexión con Firebase. Revisá internet e intentá nuevamente.";
+  }
+  if (code === "auth/unauthorized-domain") {
+    return "Este dominio todavía no está autorizado en Firebase.";
+  }
+  if (code === "auth/operation-not-allowed") {
+    return "Activá el acceso con correo y contraseña en Firebase Authentication.";
+  }
+  return "No se pudo iniciar sesión. Intentá nuevamente.";
+}
+
+function fallbackProfile(user) {
+  const username = user.email?.split("@")[0] || "barberia";
+  return { username, displayName: username, role: "barber", active: true };
 }
 function totalFor(method) {
   return payments.filter(p => p.method === method).reduce((a,p)=>a+Number(p.amount||0),0);
@@ -143,6 +175,8 @@ function renderSettlement(model) {
 
 function render() {
   const model = settlementModel();
+  const cashItems = payments.filter(p => p.method === "cash");
+  const digitalItems = payments.filter(p => p.method === "digital");
 
   $("cashTotal").textContent = money(model.cash);
   $("uberCashTotal").textContent = money(model.uber);
@@ -163,10 +197,14 @@ function render() {
   $("closeExpenseHalf").textContent = money(model.expenseHalf);
   $("closeDigitalAdjusted").textContent = money(model.digitalAdjusted);
   $("closeGrand").textContent = money(model.grand);
+  $("cashCount").textContent = cashItems.length;
+  $("digitalCount").textContent = digitalItems.length;
+  $("expenseCount").textContent = expenses.length;
+  $("uberCount").textContent = uberClosures.length;
 
   renderSettlement(model);
-  renderList("cashList", payments.filter(p=>p.method==="cash"), false);
-  renderList("digitalList", payments.filter(p=>p.method==="digital"), true);
+  renderList("cashList", cashItems, false);
+  renderList("digitalList", digitalItems, true);
   renderExpenseList();
   renderUberList();
 }
@@ -185,18 +223,25 @@ function renderList(containerId, items, isDigital) {
       : "Ahora";
     const proof = isDigital
       ? (item.proofUrl
-          ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver comprobante</a>`
+          ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
           : `<span class="proof">Sin archivo</span>`)
       : "";
-    return `<div class="receipt">
-      <div class="receipt-top">
-        <strong>${escapeHtml(item.service || "Cobro")}</strong>
-        <div class="amount">${money(item.amount)}</div>
+    const icon = isDigital
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
+      : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"}">
+      <div class="receipt-main">
+        <span class="receipt-icon">${icon}</span>
+        <div class="receipt-copy">
+          <strong>${escapeHtml(item.service || "Cobro")}</strong>
+          <small>${escapeHtml(item.detail || "Servicio registrado")}</small>
+        </div>
+        <div class="amount">+${money(item.amount)}</div>
       </div>
-      <div class="receipt-meta">
-        <span>${escapeHtml(item.detail || "Sin detalle")} · ${time}</span>${proof}
+      <div class="receipt-footer">
+        <span>Hoy · ${time}</span>${proof}
       </div>
-    </div>`;
+    </article>`;
   }).join("");
 }
 
@@ -212,13 +257,16 @@ function renderExpenseList() {
       ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
       : "Ahora";
     const proof = item.proofUrl
-      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Comprobante</a>`
+      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
       : `<span class="proof">Sin archivo</span>`;
-    return `<div class="expense-item">
-      <div><strong>${escapeHtml(item.detail || "Gasto")}</strong><small>${time} · 50% a Digital: ${money(Number(item.amount||0)*0.5)}</small></div>
-      <div class="expense-amount">${money(item.amount)}</div>
-      ${proof}
-    </div>`;
+    return `<article class="expense-item">
+      <div class="expense-main">
+        <span class="receipt-icon expense-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+        <div class="receipt-copy"><strong>${escapeHtml(item.detail || "Gasto")}</strong><small>50% reconocido: ${money(Number(item.amount||0)*0.5)}</small></div>
+        <div class="expense-amount">-${money(item.amount)}</div>
+      </div>
+      <div class="receipt-footer"><span>Hoy · ${time}</span>${proof}</div>
+    </article>`;
   }).join("");
 }
 
@@ -231,14 +279,15 @@ function renderUberList() {
 
   box.innerHTML = uberClosures.map(item => {
     const proof = item.proofUrl
-      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver comprobante</a>`
+      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
       : `<span class="proof">Sin archivo</span>`;
     const todayMark = item.dayKey === localDayKey() ? " · suma hoy" : "";
-    return `<div class="uber-receipt">
+    return `<article class="uber-receipt ${item.proofUrl ? "completed" : "pending"}">
+      <span class="uber-week">${escapeHtml(item.weekKey || "Semana")}</span>
       <strong>${money(item.amount)}</strong>
-      <small>${escapeHtml(item.weekKey || "Semana")} · cierre ${formatDate(item.weekCloseDate)}${todayMark}</small>
+      <small>Cierre ${formatDate(item.weekCloseDate)}${todayMark}</small>
       ${proof}
-    </div>`;
+    </article>`;
   }).join("");
 }
 
@@ -327,10 +376,16 @@ $("loginForm").addEventListener("submit", async e => {
   try {
     const usernameOrEmail = $("user").value.trim();
     const password = $("pass").value;
+    if (!usernameOrEmail || !password) {
+      throw Object.assign(new Error("Faltan credenciales"), { code: "auth/invalid-credential" });
+    }
+    await authReady;
     await signInWithEmailAndPassword(auth, usernameToEmail(usernameOrEmail), password);
+    $("loginStatus").textContent = "Acceso correcto. Cargando caja…";
+    $("loginStatus").className = "status success";
   } catch (err) {
     console.error(err);
-    $("loginStatus").textContent = "Usuario o contraseña incorrectos.";
+    $("loginStatus").textContent = loginErrorMessage(err);
     $("loginStatus").className = "status error";
   } finally {
     $("loginBtn").disabled = false;
@@ -354,18 +409,27 @@ onAuthStateChanged(auth, async user => {
     return;
   }
 
+  // Authentication ya fue validada. Mostramos la caja inmediatamente para
+  // que una lectura lenta o una regla pendiente de Firestore no expulse al usuario.
+  currentProfile = fallbackProfile(user);
+  $("operatorName").textContent = currentProfile.displayName;
+  $("loginScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  subscribeToday(user);
+
   try {
     currentProfile = await loadProfile(user);
-    if (currentProfile.active === false) throw new Error("Usuario desactivado");
+    if (currentProfile.active === false) {
+      await signOut(auth);
+      $("loginStatus").textContent = "Este usuario está desactivado.";
+      $("loginStatus").className = "status error";
+      return;
+    }
     $("operatorName").textContent = currentProfile.displayName || currentProfile.username || user.email.split("@")[0];
-    $("loginScreen").classList.add("hidden");
-    $("app").classList.remove("hidden");
-    subscribeToday(user);
   } catch (err) {
-    console.error(err);
-    await signOut(auth);
-    $("loginStatus").textContent = "No se pudo cargar el usuario.";
-    $("loginStatus").className = "status error";
+    console.warn("Se inició sesión usando el perfil básico:", err);
+    $("syncStatus").textContent = "Sesión activa · revisando datos";
+    $("syncStatus").className = "sync warn";
   }
 });
 

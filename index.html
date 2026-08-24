@@ -96,6 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
+  <link rel="stylesheet" href="./styles.css?v=20260824-3" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -105,10 +106,11 @@
     <h1>República Argentina</h1>
     <p class="sub">Acceso al control diario de caja.</p>
     <form id="loginForm">
-      <div class="field"><label>Usuario o correo</label><input id="user" autocomplete="username" placeholder="Ej. barberia@gmail.com" required></div>
+      <div class="field"><label>Usuario o correo</label><input id="user" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="barberia o barberia@gmail.com" required></div>
       <div class="field"><label>Contraseña</label><input id="pass" type="password" autocomplete="current-password" placeholder="••••••••" required></div>
       <button id="loginBtn" class="primary" type="submit">Ingresar</button>
     </form>
+    <p class="login-help">Podés ingresar con <strong>barberia</strong> o con el correo completo.</p>
     <div id="loginStatus" class="status"></div>
   </div>
 </section>
@@ -133,13 +135,17 @@
           <div class="adjustment-total"><span>Total</span><strong id="cashAdjustedTotal">$ 0</strong></div>
           <button class="collect" data-mode="cash">+ Cobrar en efectivo</button>
         </div>
-        <div class="panel-body" id="cashList"><div class="empty">Los cobros en efectivo aparecerán acá.</div></div>
+        <div class="panel-body">
+          <div class="records-heading"><span>Movimientos</span><b id="cashCount">0</b></div>
+          <div id="cashList"><div class="empty">Los cobros en efectivo aparecerán acá.</div></div>
+        </div>
       </article>
       <aside class="settlement">
         <div class="settle-icon">U</div><h3>Uber</h3>
         <div class="mini-total">Cargado hoy<strong id="uberTotal">$ 0</strong></div>
         <button id="addUberBtn" class="collect secondary-action uber-button" type="button">+ Cargar Uber</button>
         <div class="divider"></div>
+        <div class="records-heading records-heading-uber"><span>Comprobantes</span><b id="uberCount">0</b></div>
         <div id="uberList" class="uber-list"><div class="uber-empty">Los cierres semanales aparecerán acá.</div></div>
       </aside>
       <article class="money-panel">
@@ -152,8 +158,9 @@
           <button id="addExpenseBtn" class="collect secondary-action" type="button">+ Cargar gasto</button>
         </div>
         <div class="panel-body">
+          <div class="records-heading"><span>Comprobantes</span><b id="digitalCount">0</b></div>
           <div id="digitalList"><div class="empty">Los cobros digitales y sus comprobantes aparecerán acá.</div></div>
-          <div class="expense-section"><div class="expense-title">Gastos de hoy</div><div id="expenseList"><div class="expense-empty">Sin gastos cargados hoy.</div></div></div>
+          <div class="expense-section"><div class="records-heading"><span>Gastos de hoy</span><b id="expenseCount">0</b></div><div id="expenseList"><div class="expense-empty">Sin gastos cargados hoy.</div></div></div>
         </div>
       </article>
     </section>
@@ -242,6 +249,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js"></script>
+<script type="module" src="./app.js?v=20260824-3"></script>
 </body>
 </html>

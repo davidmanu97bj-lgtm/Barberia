@@ -10,3 +10,10 @@ export const firebaseConfig = {
 
 export const BUSINESS_ID = "republica-argentina";
 export const USER_EMAIL_DOMAIN = "republica-argentina.local";
+
+// Alias de acceso para que el usuario pueda ingresar escribiendo solamente
+// "barberia", además de usar el correo completo creado en Authentication.
+export const LOGIN_ALIASES = {
+  barberia: "barberia@gmail.com",
+  "barbería": "barberia@gmail.com"
+};
