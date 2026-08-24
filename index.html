@@ -131,7 +131,7 @@
         <small>Total a reintegrar por Explora</small>
         <div class="value" id="summaryReimbursementAmount">$ 0</div>
         <div class="summary-when">50% de los gastos cargados.</div>
-        <button id="compensateDebtBtn" class="summary-compensate" type="button">Compensar deuda con este dinero</button>
+        <button id="compensateDebtBtn" class="summary-compensate" type="button">Compensar diferencia con este dinero</button>
       </div>
       <div id="syncStatus" class="sync" aria-live="polite" hidden>Conectando…</div>
     </section>
@@ -145,7 +145,7 @@
           <div class="adjustment"><span>Uber cobrado</span><strong id="uberCashTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
           <div class="adjustment debt-adjustment"><span>+ Deuda agregada</span><span class="adjustment-value"><strong id="adminDebtTotal">$ 0</strong><button id="addDebtBtn" class="debt-add hidden" type="button" aria-label="Cargar deuda" title="Cargar deuda">+</button></span></div>
-          <div id="cashDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>− Achique de deuda</span><strong id="cashDebtCompensationTotal">$ 0</strong></div>
+          <div id="cashDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>− Reintegro aplicado</span><strong id="cashDebtCompensationTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
           <div class="panel-action-stack">
             <button class="collect panel-action tone-cash" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
@@ -163,7 +163,7 @@
           <div class="panel-direction is-balanced" id="digitalWalletStatus">Billetera equilibrada</div>
           <div class="panel-total" id="digitalTotal" data-money-format="signed">$ 0</div>
           <div class="adjustment"><span>Digital cobrado</span><strong id="digitalBaseTotal">$ 0</strong></div>
-          <div id="digitalDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>+ Achique de deuda</span><strong id="digitalDebtCompensationTotal">$ 0</strong></div>
+          <div id="digitalDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>+ Reintegro utilizado</span><strong id="digitalDebtCompensationTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
           <div class="panel-action-stack">
             <button class="collect panel-action tone-digital" data-mode="digital"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar digital</span></button>
@@ -242,11 +242,11 @@
 
 <div id="debtCompensationModal" class="modal hidden" data-tone="expense">
   <div class="modal-card">
-    <div class="modal-head"><h2>Compensar deuda</h2><button class="x" data-close="debtCompensationModal">×</button></div>
-    <p class="compensation-question">¿Querés utilizar el dinero que Explora debe reintegrarte para pagar o achicar tu deuda?</p>
+    <div class="modal-head"><h2>Compensar diferencia</h2><button class="x" data-close="debtCompensationModal">×</button></div>
+    <p class="compensation-question">¿Querés utilizar el dinero que Explora debe reintegrarte para achicar el saldo que el chofer debe compensar?</p>
     <div class="compensation-breakdown">
       <div><span>Reintegro disponible</span><strong id="compensationReimbursementAvailable">$ 0</strong></div>
-      <div><span>Deuda pendiente</span><strong id="compensationDebtAvailable">$ 0</strong></div>
+      <div><span>Saldo pendiente del chofer</span><strong id="compensationDebtAvailable">$ 0</strong></div>
       <div class="compensation-maximum"><span>Máximo que podés utilizar</span><strong id="compensationMaximum">$ 0</strong></div>
     </div>
     <div id="compensationOutcome" class="compensation-outcome"></div>
@@ -321,6 +321,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-22"></script>
+<script type="module" src="./app.js?v=20260824-23"></script>
 </body>
 </html>

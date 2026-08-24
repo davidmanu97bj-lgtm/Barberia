@@ -238,8 +238,10 @@ function fallbackProfile(user) {
 function isSettlementAdjustment(item) {
   return item.type === "settlement_adjustment";
 }
-function isDebtCompensation(item) {
-  return item.type === "debt_compensation";
+function isReimbursementCompensation(item) {
+  // El tipo anterior se conserva para interpretar correctamente cualquier
+  // comprobante que ya se haya generado antes de esta corrección.
+  return item.type === "reimbursement_compensation" || item.type === "debt_compensation";
 }
 function isAdminDebt(item) {
   return item.type === "admin_debt";
@@ -252,7 +254,7 @@ function isUberReceipt(item) {
 }
 function revenueTotalFor(method) {
   return payments
-    .filter(p => p.method === method && !isSettlementAdjustment(p) && !isDebtCompensation(p))
+    .filter(p => p.method === method && !isSettlementAdjustment(p) && !isReimbursementCompensation(p))
     .reduce((a,p)=>a+Number(p.amount||0),0);
 }
 function adjustmentTotal(direction) {
@@ -266,9 +268,9 @@ function expensesTotal() {
 function debtsTotal() {
   return debts.reduce((a,item)=>a+Number(item.amount||0),0);
 }
-function debtCompensationTotal() {
+function reimbursementCompensationTotal() {
   return payments
-    .filter(isDebtCompensation)
+    .filter(isReimbursementCompensation)
     .reduce((a,item)=>a+Number(item.amount||0),0);
 }
 function uberTodayItems() {
@@ -310,7 +312,7 @@ function settlementModel() {
   const digitalRevenue = revenueTotalFor("digital");
   const driverPaid = adjustmentTotal("driver_to_explora");
   const exploraPaid = adjustmentTotal("explora_to_driver");
-  const adminDebtGross = debtsTotal();
+  const adminDebt = debtsTotal();
   const cash = cashRevenue;
   const digital = digitalRevenue;
   const expense = expensesTotal();
@@ -320,22 +322,22 @@ function settlementModel() {
   const digitalShare = digitalRevenue * 0.50;
   const cashBox = driverHeld * 0.05;
   const expenseHalf = expense * 0.50;
-  const compensationRecorded = debtCompensationTotal();
-  const debtCompensated = Math.min(compensationRecorded, adminDebtGross, expenseHalf);
-  const adminDebt = Math.max(0, adminDebtGross - debtCompensated);
-  const expenseReimbursement = Math.max(0, expenseHalf - debtCompensated);
-  const compensationAvailable = Math.min(adminDebt, expenseReimbursement);
+  const reimbursementApplied = Math.min(reimbursementCompensationTotal(), expenseHalf);
+  const expenseReimbursement = Math.max(0, expenseHalf - reimbursementApplied);
 
   // Obligaciones base antes de pagos compensatorios anteriores.
   const cashDebt = cashShare + uberShare + cashBox + adminDebt;
-  const digitalDebt = digitalShare + expenseReimbursement;
+  // El reintegro de gastos se mantiene separado hasta que el chofer decide
+  // utilizarlo para reducir su diferencia pendiente con Explora.
+  const digitalDebt = digitalShare;
   // Un pago del chofer completa Explora; uno de Explora completa Chofer.
   const cashAdjusted = cashDebt + exploraPaid;
   const digitalAdjusted = digitalDebt + driverPaid;
   const baseBalance = cashDebt - digitalDebt;
-  const balance = baseBalance - driverPaid + exploraPaid;
+  const balance = baseBalance - driverPaid + exploraPaid - reimbursementApplied;
   const amount = Math.abs(balance);
   const normalizedBalance = amount > 0.5 ? balance : 0;
+  const compensationAvailable = Math.min(expenseReimbursement, Math.max(0, normalizedBalance));
   const driverWallet = normalizedBalance;
   const exploraWallet = -normalizedBalance;
 
@@ -350,9 +352,9 @@ function settlementModel() {
   }
 
   return {
-    cash, uber, digital, expense, adminDebt, adminDebtGross, driverHeld,
+    cash, uber, digital, expense, adminDebt, driverHeld,
     cashShare, uberShare, digitalShare, cashBox, expenseHalf,
-    expenseReimbursement, debtCompensated, compensationAvailable,
+    expenseReimbursement, reimbursementApplied, compensationAvailable,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
     cashAdjusted, digitalAdjusted,
     cashDebt, digitalDebt, balance: normalizedBalance, amount: Math.abs(normalizedBalance),
@@ -380,36 +382,40 @@ function renderWalletStatus(elementId, walletBalance) {
 
 function renderBilledTotal(model) {
   setAnimatedMoney("summaryBilledAmount", model.grand);
-  $("summaryReimbursementAmount").textContent = money(model.expenseReimbursement);
+  const reimbursementAmount = $("summaryReimbursementAmount");
+  if (reimbursementAmount) reimbursementAmount.textContent = money(model.expenseReimbursement);
   const button = $("compensateDebtBtn");
+  if (!button) return;
   // El botón siempre abre el detalle. Si no hay saldo aplicable, el modal
   // explica el motivo en lugar de parecer que la aplicación no responde.
   button.disabled = false;
   button.title = model.expenseReimbursement <= 0.5
     ? "No hay reintegros disponibles."
-    : model.adminDebt <= 0.5
-      ? "No hay deuda pendiente para compensar."
-      : "Utilizar el reintegro para reducir la deuda.";
+    : model.balance <= 0.5
+      ? "El chofer no tiene una diferencia pendiente a favor de Explora."
+      : "Utilizar el reintegro para reducir la diferencia Chofer–Explora.";
 }
 
 function openDebtCompensationModal() {
+  const modal = $("debtCompensationModal");
+  if (!modal) return;
   const model = settlementModel();
 
   $("compensationReimbursementAvailable").textContent = money(model.expenseReimbursement);
-  $("compensationDebtAvailable").textContent = money(model.adminDebt);
+  $("compensationDebtAvailable").textContent = money(Math.max(0, model.balance));
   $("compensationMaximum").textContent = money(model.compensationAvailable);
   if (model.compensationAvailable > 0.5) {
-    $("compensationOutcome").textContent = `Se utilizarán ${money(model.compensationAvailable)}. La nueva deuda será de ${money(model.adminDebt - model.compensationAvailable)} y el reintegro pendiente quedará en ${money(model.expenseReimbursement - model.compensationAvailable)}.`;
+    $("compensationOutcome").textContent = `Se utilizarán ${money(model.compensationAvailable)}. El nuevo saldo que el chofer deberá compensar será de ${money(model.balance - model.compensationAvailable)} y el reintegro pendiente quedará en ${money(model.expenseReimbursement - model.compensationAvailable)}.`;
   } else if (model.expenseReimbursement <= 0.5) {
     $("compensationOutcome").textContent = "Todavía no hay dinero pendiente de reintegro para utilizar en una compensación.";
   } else {
-    $("compensationOutcome").textContent = "No hay una deuda pendiente para compensar con este reintegro.";
+    $("compensationOutcome").textContent = "El chofer no tiene una diferencia pendiente a favor de Explora para compensar con este reintegro.";
   }
   $("debtCompensationStatus").textContent = "";
   $("debtCompensationStatus").className = "status";
   $("confirmDebtCompensation").disabled = model.compensationAvailable <= 0.5;
   $("confirmDebtCompensation").textContent = model.compensationAvailable > 0.5 ? "OK, compensar" : "Sin saldo para compensar";
-  $("debtCompensationModal").classList.remove("hidden");
+  modal.classList.remove("hidden");
 }
 
 function render() {
@@ -452,16 +458,20 @@ function render() {
   $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
-  $("adminDebtTotal").textContent = money(model.adminDebtGross);
-  $("cashDebtCompensationTotal").textContent = money(model.debtCompensated);
-  $("cashDebtCompensationRow").classList.toggle("hidden", model.debtCompensated <= 0.5);
+  $("adminDebtTotal").textContent = money(model.adminDebt);
+  const cashCompensationTotal = $("cashDebtCompensationTotal");
+  const cashCompensationRow = $("cashDebtCompensationRow");
+  if (cashCompensationTotal) cashCompensationTotal.textContent = money(model.reimbursementApplied);
+  if (cashCompensationRow) cashCompensationRow.classList.toggle("hidden", model.reimbursementApplied <= 0.5);
 
   setAnimatedMoney("digitalTotal", model.exploraWallet);
   renderWalletStatus("digitalWalletStatus", model.exploraWallet);
   $("digitalBaseTotal").textContent = money(model.digitalRevenue);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
-  $("digitalDebtCompensationTotal").textContent = money(model.debtCompensated);
-  $("digitalDebtCompensationRow").classList.toggle("hidden", model.debtCompensated <= 0.5);
+  const digitalCompensationTotal = $("digitalDebtCompensationTotal");
+  const digitalCompensationRow = $("digitalDebtCompensationRow");
+  if (digitalCompensationTotal) digitalCompensationTotal.textContent = money(model.reimbursementApplied);
+  if (digitalCompensationRow) digitalCompensationRow.classList.toggle("hidden", model.reimbursementApplied <= 0.5);
 
   $("cashCount").textContent = visibleCashItems.length;
   $("digitalCount").textContent = visibleDigitalItems.length;
@@ -484,7 +494,7 @@ function renderList(containerId, items, isDigital) {
       ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
       : "Ahora";
     const uberReceipt = isUberReceipt(item);
-    const debtCompensation = isDebtCompensation(item);
+    const debtCompensation = isReimbursementCompensation(item);
     const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item) || uberReceipt;
     const proof = showsProof
       ? (debtCompensation
@@ -692,7 +702,7 @@ function subscribeClosures(user) {
   });
 }
 
-$("loginForm").addEventListener("submit", async e => {
+$("loginForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   $("loginStatus").textContent = "";
   $("loginStatus").className = "status";
@@ -718,7 +728,7 @@ $("loginForm").addEventListener("submit", async e => {
   }
 });
 
-$("logoutBtn").addEventListener("click", () => signOut(auth));
+$("logoutBtn")?.addEventListener("click", () => signOut(auth));
 
 onAuthStateChanged(auth, async user => {
   if (!user) {
@@ -785,9 +795,9 @@ document.querySelectorAll("[data-close]").forEach(btn => {
   btn.addEventListener("click", () => $(btn.dataset.close).classList.add("hidden"));
 });
 
-$("compensateDebtBtn").addEventListener("click", openDebtCompensationModal);
+$("compensateDebtBtn")?.addEventListener("click", openDebtCompensationModal);
 
-$("confirmDebtCompensation").addEventListener("click", async () => {
+$("confirmDebtCompensation")?.addEventListener("click", async () => {
   const user = auth.currentUser;
   if (!user) return;
 
@@ -800,7 +810,7 @@ $("confirmDebtCompensation").addEventListener("click", async () => {
     return;
   }
 
-  const remainingDebt = Math.max(0, model.adminDebt - amount);
+  const remainingBalance = Math.max(0, model.balance - amount);
   const remainingReimbursement = Math.max(0, model.expenseReimbursement - amount);
   const button = $("confirmDebtCompensation");
   button.disabled = true;
@@ -811,24 +821,24 @@ $("confirmDebtCompensation").addEventListener("click", async () => {
     // El identificador determinístico evita que dos dispositivos registren
     // dos veces la misma compensación antes de recibir la actualización.
     const compensationId = [
-      "debt_comp",
+      "balance_comp",
       localDayKey(),
-      Math.round(model.adminDebtGross),
+      Math.round(model.balance),
       Math.round(model.expenseHalf),
-      Math.round(model.debtCompensated)
+      Math.round(model.reimbursementApplied)
     ].join("_");
     const compensationRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "payments", compensationId);
     await setDoc(compensationRef, {
       method: "digital",
-      type: "debt_compensation",
+      type: "reimbursement_compensation",
       amount,
-      service: "Achique de deuda",
-      detail: `Se utilizaron ${money(amount)} del reintegro de gastos. Deuda restante: ${money(remainingDebt)}.`,
+      service: "Reintegro aplicado",
+      detail: `Se utilizaron ${money(amount)} del reintegro de gastos para reducir la diferencia Chofer–Explora. Saldo restante: ${money(remainingBalance)}.`,
       compensationSource: "expense_reimbursement",
       reimbursementBefore: model.expenseReimbursement,
       reimbursementAfter: remainingReimbursement,
-      debtBefore: model.adminDebt,
-      debtAfter: remainingDebt,
+      settlementBefore: model.balance,
+      settlementAfter: remainingBalance,
       internalReceipt: true,
       proofUrl: "",
       proofPath: "",
@@ -839,7 +849,7 @@ $("confirmDebtCompensation").addEventListener("click", async () => {
       createdAt: serverTimestamp()
     });
 
-    $("debtCompensationStatus").textContent = `Se aplicaron ${money(amount)} para achicar la deuda.`;
+    $("debtCompensationStatus").textContent = `Se aplicaron ${money(amount)} para reducir la diferencia Chofer–Explora.`;
     $("debtCompensationStatus").className = "status success";
     setTimeout(() => $("debtCompensationModal").classList.add("hidden"), 1200);
   } catch (err) {
@@ -849,7 +859,7 @@ $("confirmDebtCompensation").addEventListener("click", async () => {
       $("debtCompensationStatus").className = "status success";
       setTimeout(() => $("debtCompensationModal").classList.add("hidden"), 1200);
     } else {
-      $("debtCompensationStatus").textContent = "No se pudo compensar la deuda. Intentá nuevamente.";
+      $("debtCompensationStatus").textContent = "No se pudo compensar la diferencia. Intentá nuevamente.";
       $("debtCompensationStatus").className = "status error";
       button.disabled = false;
       button.textContent = "OK, compensar";
@@ -857,7 +867,7 @@ $("confirmDebtCompensation").addEventListener("click", async () => {
   }
 });
 
-$("chargeForm").addEventListener("submit", async e => {
+$("chargeForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   const user = auth.currentUser;
   if (!user) return;
@@ -919,14 +929,14 @@ $("chargeForm").addEventListener("submit", async e => {
   }
 });
 
-$("addExpenseBtn").addEventListener("click", () => {
+$("addExpenseBtn")?.addEventListener("click", () => {
   $("expenseForm").reset();
   $("expenseStatus").textContent = "";
   $("expenseStatus").className = "status";
   $("expenseModal").classList.remove("hidden");
 });
 
-$("addDebtBtn").addEventListener("click", () => {
+$("addDebtBtn")?.addEventListener("click", () => {
   if (!isAdminProfile()) return;
   $("debtForm").reset();
   $("debtStatus").textContent = "";
@@ -934,7 +944,7 @@ $("addDebtBtn").addEventListener("click", () => {
   $("debtModal").classList.remove("hidden");
 });
 
-$("debtForm").addEventListener("submit", async event => {
+$("debtForm")?.addEventListener("submit", async event => {
   event.preventDefault();
   const admin = auth.currentUser;
   if (!admin || !isAdminProfile()) return;
@@ -994,7 +1004,7 @@ $("debtForm").addEventListener("submit", async event => {
   }
 });
 
-$("expenseForm").addEventListener("submit", async e => {
+$("expenseForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   const user = auth.currentUser;
   if (!user) return;
@@ -1054,7 +1064,7 @@ $("expenseForm").addEventListener("submit", async e => {
   }
 });
 
-$("addUberBtn").addEventListener("click", () => {
+$("addUberBtn")?.addEventListener("click", () => {
   $("uberForm").reset();
   $("uberCloseDate").value = localDayKey();
   $("uberStatus").textContent = "";
@@ -1062,7 +1072,7 @@ $("addUberBtn").addEventListener("click", () => {
   $("uberModal").classList.remove("hidden");
 });
 
-$("uberForm").addEventListener("submit", async e => {
+$("uberForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   const user = auth.currentUser;
   if (!user) return;
@@ -1228,7 +1238,7 @@ function openAdminPayment(closureId) {
   $("adminPaymentForm").classList.remove("hidden");
 }
 
-$("closeDayBtn").addEventListener("click", () => {
+$("closeDayBtn")?.addEventListener("click", () => {
   render();
   $("closeModal").classList.remove("hidden");
   if (isAdminProfile()) {
@@ -1247,14 +1257,14 @@ $("closeDayBtn").addEventListener("click", () => {
   }
 });
 
-$("choosePayExplora").addEventListener("click", () => selectDriverClose("driver_to_explora"));
-$("chooseCollectExplora").addEventListener("click", () => selectDriverClose("explora_to_driver"));
-$("driverUseFullAmount").addEventListener("click", () => {
+$("choosePayExplora")?.addEventListener("click", () => selectDriverClose("driver_to_explora"));
+$("chooseCollectExplora")?.addEventListener("click", () => selectDriverClose("explora_to_driver"));
+$("driverUseFullAmount")?.addEventListener("click", () => {
   const model = settlementModel();
   setMoneyInput("driverCloseAmount", model.amount);
 });
 
-$("driverCloseForm").addEventListener("submit", async event => {
+$("driverCloseForm")?.addEventListener("submit", async event => {
   event.preventDefault();
   const user = auth.currentUser;
   if (!user || !selectedCloseDirection || isAdminProfile()) return;
@@ -1388,19 +1398,19 @@ $("driverCloseForm").addEventListener("submit", async event => {
   }
 });
 
-$("adminUseFullAmount").addEventListener("click", () => {
+$("adminUseFullAmount")?.addEventListener("click", () => {
   const item = closures.find(closure => closure.id === selectedAdminClosureId);
   if (item) setMoneyInput("adminPaymentAmount", closureRemaining(item));
 });
 
-$("cancelAdminPayment").addEventListener("click", () => {
+$("cancelAdminPayment")?.addEventListener("click", () => {
   selectedAdminClosureId = "";
   $("adminPaymentForm").classList.add("hidden");
   $("adminClosureList").classList.remove("hidden");
   renderAdminClosures();
 });
 
-$("adminPaymentForm").addEventListener("submit", async event => {
+$("adminPaymentForm")?.addEventListener("submit", async event => {
   event.preventDefault();
   const admin = auth.currentUser;
   if (!admin || !isAdminProfile() || !selectedAdminClosureId) return;
