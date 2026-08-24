@@ -1,6 +1,6 @@
 import {
   firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN, LOGIN_ALIASES
-} from "./firebase-config.js?v=20260824-7";
+} from "./firebase-config.js?v=20260824-8";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
@@ -42,6 +42,33 @@ const RECENT_RECEIPTS_LIMIT = 6;
 const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
 }).format(value || 0);
+const moneyInputFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+
+function moneyInputDigits(value) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function parseMoneyInput(value) {
+  const digits = moneyInputDigits(value);
+  return digits ? Number(digits) : 0;
+}
+
+function formattedMoneyInput(value) {
+  const amount = typeof value === "number" ? Math.round(value) : parseMoneyInput(value);
+  return amount > 0 ? moneyInputFormatter.format(amount) : "";
+}
+
+function setMoneyInput(inputOrId, value) {
+  const input = typeof inputOrId === "string" ? $(inputOrId) : inputOrId;
+  if (input) input.value = formattedMoneyInput(value);
+}
+
+document.querySelectorAll("[data-money-input]").forEach(input => {
+  input.addEventListener("input", () => {
+    const digits = moneyInputDigits(input.value);
+    input.value = digits ? moneyInputFormatter.format(Number(digits)) : "";
+  });
+});
 
 function localDayKey(d = new Date()) {
   const y = d.getFullYear();
@@ -277,11 +304,11 @@ function renderList(containerId, items, isDigital) {
       : "";
     const expenseReceipt = isExpenseReceipt(item);
     const icon = expenseReceipt
-      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>`
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`
       : isDigital
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
         : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
-    const amountPrefix = expenseReceipt ? "-" : "+";
+    const amountPrefix = "+";
     return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""}">
       <div class="receipt-main">
         <span class="receipt-icon">${icon}</span>
@@ -567,26 +594,12 @@ document.querySelectorAll("[data-mode]").forEach(btn => {
     const mode = btn.dataset.mode;
     $("chargeForm").reset();
     $("chargeMode").value = mode;
-    $("selectedService").value = "";
-    $("selectedAmount").value = "";
-    document.querySelectorAll(".service-option").forEach(option => option.classList.remove("selected"));
     $("chargeTitle").textContent = mode === "cash" ? "Cobro en efectivo" : "Cobro digital";
     $("proofField").classList.toggle("hidden", mode !== "digital");
     $("proof").required = mode === "digital";
     $("chargeStatus").textContent = "";
     $("chargeStatus").className = "status";
     $("chargeModal").classList.remove("hidden");
-  });
-});
-
-document.querySelectorAll(".service-option").forEach(option => {
-  option.addEventListener("click", () => {
-    document.querySelectorAll(".service-option").forEach(item => item.classList.remove("selected"));
-    option.classList.add("selected");
-    $("selectedService").value = option.dataset.service;
-    $("selectedAmount").value = option.dataset.amount;
-    $("chargeStatus").textContent = "";
-    $("chargeStatus").className = "status";
   });
 });
 
@@ -599,12 +612,12 @@ $("chargeForm").addEventListener("submit", async e => {
   const user = auth.currentUser;
   if (!user) return;
   const mode = $("chargeMode").value;
-  const service = $("selectedService").value;
-  const amount = Number($("selectedAmount").value);
+  const service = mode === "cash" ? "Cobro en efectivo" : "Cobro digital";
+  const amount = parseMoneyInput($("chargeAmount").value);
   const file = $("proof").files?.[0];
 
-  if (!service || !amount) {
-    $("chargeStatus").textContent = "Elegí uno de los servicios.";
+  if (!amount || amount <= 0) {
+    $("chargeStatus").textContent = "Ingresá un importe válido.";
     $("chargeStatus").className = "status error";
     return;
   }
@@ -676,7 +689,7 @@ $("debtForm").addEventListener("submit", async event => {
   const admin = auth.currentUser;
   if (!admin || !isAdminProfile()) return;
 
-  const amount = Number($("debtAmount").value);
+  const amount = parseMoneyInput($("debtAmount").value);
   const detail = $("debtDetail").value.trim();
   const file = $("debtProof").files?.[0];
 
@@ -736,7 +749,7 @@ $("expenseForm").addEventListener("submit", async e => {
   const user = auth.currentUser;
   if (!user) return;
 
-  const amount = Number($("expenseAmount").value);
+  const amount = parseMoneyInput($("expenseAmount").value);
   const detail = $("expenseDetail").value.trim();
   const file = $("expenseProof").files?.[0];
 
@@ -804,7 +817,7 @@ $("uberForm").addEventListener("submit", async e => {
   const user = auth.currentUser;
   if (!user) return;
 
-  const amount = Number($("uberAmount").value);
+  const amount = parseMoneyInput($("uberAmount").value);
   const weekCloseDate = $("uberCloseDate").value;
   const weekKey = isoWeekKey(weekCloseDate);
   const file = $("uberProof").files?.[0];
@@ -929,8 +942,7 @@ function selectDriverClose(direction) {
   if (direction === "driver_to_explora") {
     $("choosePayExplora").classList.add("selected");
     $("driverCloseSelected").innerHTML = `<small>Pagar a Explora</small><strong>${money(model.amount)} pendientes</strong><span>Podés pagar el total o ingresar un importe menor.</span>`;
-    $("driverCloseAmount").value = String(Math.round(model.amount));
-    $("driverCloseAmount").max = String(Math.round(model.amount));
+    setMoneyInput("driverCloseAmount", model.amount);
     $("driverCloseLimit").textContent = `Máximo disponible: ${money(model.amount)}.`;
     $("driverCloseAmountField").classList.remove("hidden");
     $("driverCloseProofField").classList.remove("hidden");
@@ -957,8 +969,7 @@ function openAdminPayment(closureId) {
   selectedAdminClosureId = closureId;
   $("adminClosureId").value = closureId;
   $("adminPaymentForm").reset();
-  $("adminPaymentAmount").value = String(Math.round(remaining));
-  $("adminPaymentAmount").max = String(Math.round(remaining));
+  setMoneyInput("adminPaymentAmount", remaining);
   $("adminPaymentLimit").textContent = `Saldo máximo: ${money(remaining)}.`;
   $("adminPaymentSummary").innerHTML = `<small>Explora paga a</small><strong>${escapeHtml(item.operatorName || "Chofer")} · ${money(remaining)}</strong><span>Podés abonar el total o un importe menor.</span>`;
   $("adminPaymentStatus").textContent = "";
@@ -990,7 +1001,7 @@ $("choosePayExplora").addEventListener("click", () => selectDriverClose("driver_
 $("chooseCollectExplora").addEventListener("click", () => selectDriverClose("explora_to_driver"));
 $("driverUseFullAmount").addEventListener("click", () => {
   const model = settlementModel();
-  $("driverCloseAmount").value = String(Math.round(model.amount));
+  setMoneyInput("driverCloseAmount", model.amount);
 });
 
 $("driverCloseForm").addEventListener("submit", async event => {
@@ -1007,7 +1018,7 @@ $("driverCloseForm").addEventListener("submit", async event => {
   }
 
   const isDriverPayment = selectedCloseDirection === "driver_to_explora";
-  const amount = isDriverPayment ? Number($("driverCloseAmount").value) : model.amount;
+  const amount = isDriverPayment ? parseMoneyInput($("driverCloseAmount").value) : model.amount;
   const file = $("driverCloseProof").files?.[0];
   if (!amount || amount <= 0 || amount > model.amount + 0.5) {
     $("closeStatus").textContent = `Ingresá un importe entre $1 y ${money(model.amount)}.`;
@@ -1129,7 +1140,7 @@ $("driverCloseForm").addEventListener("submit", async event => {
 
 $("adminUseFullAmount").addEventListener("click", () => {
   const item = closures.find(closure => closure.id === selectedAdminClosureId);
-  if (item) $("adminPaymentAmount").value = String(Math.round(closureRemaining(item)));
+  if (item) setMoneyInput("adminPaymentAmount", closureRemaining(item));
 });
 
 $("cancelAdminPayment").addEventListener("click", () => {
@@ -1147,7 +1158,7 @@ $("adminPaymentForm").addEventListener("submit", async event => {
   if (!item) return;
 
   const remaining = closureRemaining(item);
-  const amount = Number($("adminPaymentAmount").value);
+  const amount = parseMoneyInput($("adminPaymentAmount").value);
   const file = $("adminCloseProof").files?.[0];
   if (!amount || amount <= 0 || amount > remaining + 0.5) {
     $("adminPaymentStatus").textContent = `Ingresá un importe entre $1 y ${money(remaining)}.`;

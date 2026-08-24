@@ -140,6 +140,46 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(79, 76, 245, .10);
 }
 
+.money-input {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+  letter-spacing: .01em;
+}
+
+.money-entry {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: #fafbfe;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.money-entry:focus-within {
+  border-color: #9897fb;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(79, 76, 245, .10);
+}
+
+.money-entry > span {
+  padding-left: 15px;
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.money-entry .money-input,
+.money-entry .money-input:focus {
+  min-height: 49px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 input[type="file"] {
   padding: 7px;
   color: var(--muted);

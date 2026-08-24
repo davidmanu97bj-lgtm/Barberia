@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-7" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-8" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -181,23 +181,10 @@
     <div class="modal-head"><h2 id="chargeTitle">Nuevo cobro</h2><button class="x" data-close="chargeModal">×</button></div>
     <form id="chargeForm">
       <input type="hidden" id="chargeMode">
-      <div class="service-label">Elegí el servicio</div>
-      <div class="service-grid" id="serviceGrid">
-        <button type="button" class="service-option" data-service="Sombreado" data-amount="12000">
-          <strong>Sombreado</strong><span>$ 12.000</span>
-        </button>
-        <button type="button" class="service-option" data-service="Clásico" data-amount="10000">
-          <strong>Clásico</strong><span>$ 10.000</span>
-        </button>
-        <button type="button" class="service-option" data-service="Corte + barba" data-amount="15000">
-          <strong>Corte + barba</strong><span>$ 15.000</span>
-        </button>
-        <button type="button" class="service-option" data-service="Barba" data-amount="5000">
-          <strong>Barba</strong><span>$ 5.000</span>
-        </button>
+      <div class="field">
+        <label for="chargeAmount">Importe del cobro</label>
+        <div class="money-entry"><span aria-hidden="true">$</span><input id="chargeAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
       </div>
-      <input type="hidden" id="selectedService">
-      <input type="hidden" id="selectedAmount">
       <div class="field"><label>Detalle / cliente</label><input id="detail" placeholder="Opcional"></div>
       <div id="proofField" class="field hidden"><label>Comprobante digital</label><input id="proof" type="file" accept="image/*,.pdf"><div class="file-note">El comprobante se guardará en Firebase Storage.</div></div>
       <div id="chargeStatus" class="status"></div>
@@ -211,7 +198,7 @@
     <div class="modal-head"><h2>Cargar deuda</h2><button class="x" data-close="debtModal">×</button></div>
     <form id="debtForm">
       <div class="debt-modal-note">Esta deuda se sumará a Efectivo y modificará el saldo por el importe completo.</div>
-      <div class="field"><label>Importe de la deuda</label><input id="debtAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 10000" required></div>
+      <div class="field"><label>Importe de la deuda</label><input id="debtAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
       <div class="field"><label>Detalle / motivo</label><input id="debtDetail" placeholder="Ej. Diferencia de caja" required></div>
       <div class="field"><label>Comprobante <span class="optional-label">opcional</span></label><input id="debtProof" type="file" accept="image/*,.pdf"></div>
       <div id="debtStatus" class="status"></div>
@@ -224,7 +211,7 @@
   <div class="modal-card">
     <div class="modal-head"><h2>Cargar gasto</h2><button class="x" data-close="expenseModal">×</button></div>
     <form id="expenseForm">
-      <div class="field"><label>Importe total del gasto</label><input id="expenseAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 20000" required></div>
+      <div class="field"><label>Importe total del gasto</label><input id="expenseAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
       <div class="field"><label>Detalle / motivo</label><input id="expenseDetail" placeholder="Ej. Productos de limpieza" required></div>
       <div class="field"><label>Comprobante</label><input id="expenseProof" type="file" accept="image/*,.pdf" required><div class="file-note">Digital reconocerá automáticamente el 50% del gasto.</div></div>
       <div id="expenseStatus" class="status"></div>
@@ -237,7 +224,7 @@
   <div class="modal-card">
     <div class="modal-head"><h2>Cargar Uber</h2><button class="x" data-close="uberModal">×</button></div>
     <form id="uberForm">
-      <div class="field"><label>Total de la semana de Uber</label><input id="uberAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 85000" required></div>
+      <div class="field"><label>Total de la semana de Uber</label><input id="uberAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
       <div class="field"><label>Fecha de cierre semanal de Uber</label><input id="uberCloseDate" type="date" required><div class="file-note">Se permite un solo comprobante por semana.</div></div>
       <div class="field"><label>Comprobante semanal</label><input id="uberProof" type="file" accept="image/*,.pdf" required><div class="file-note">Uber queda 100% en manos del chofer y también genera 5% de caja chica.</div></div>
       <div id="uberStatus" class="status"></div>
@@ -270,7 +257,7 @@
         <div id="driverCloseAmountField" class="field hidden">
           <label for="driverCloseAmount">Importe que va a pagar</label>
           <div class="amount-with-action">
-            <input id="driverCloseAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ingresar importe">
+            <input id="driverCloseAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off">
             <button id="driverUseFullAmount" type="button">Usar total</button>
           </div>
           <div id="driverCloseLimit" class="file-note"></div>
@@ -295,7 +282,7 @@
         <div class="field">
           <label for="adminPaymentAmount">Importe que paga Explora</label>
           <div class="amount-with-action">
-            <input id="adminPaymentAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Ingresar importe" required>
+            <input id="adminPaymentAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required>
             <button id="adminUseFullAmount" type="button">Usar total</button>
           </div>
           <div id="adminPaymentLimit" class="file-note"></div>
@@ -312,6 +299,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-7"></script>
+<script type="module" src="./app.js?v=20260824-8"></script>
 </body>
 </html>
