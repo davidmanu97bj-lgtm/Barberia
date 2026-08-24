@@ -1,11 +1,12 @@
-import {
-  firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN, LOGIN_ALIASES
-} from "./firebase-config.js?v=20260824-8";
+import * as firebaseSettings from "./firebase-config.js?v=20260824-9";
+
+const { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } = firebaseSettings;
+const LOGIN_ALIASES = firebaseSettings.LOGIN_ALIASES || {};
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
-  setPersistence, browserLocalPersistence, browserSessionPersistence
+  setPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   initializeFirestore, collection, addDoc, doc, getDoc, setDoc,
@@ -21,7 +22,9 @@ const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true })
 const storage = getStorage(app);
 const authReady = setPersistence(auth, browserLocalPersistence)
   .catch(() => setPersistence(auth, browserSessionPersistence))
+  .catch(() => setPersistence(auth, inMemoryPersistence))
   .catch(err => console.warn("No se pudo guardar la persistencia de sesión:", err));
+const AUTH_READY_TIMEOUT_MS = 2500;
 
 const $ = id => document.getElementById(id);
 let unsubscribePayments = null;
@@ -77,13 +80,47 @@ function localDayKey(d = new Date()) {
   return `${y}-${m}-${day}`;
 }
 function safeUsername(value) {
-  return value.trim().toLowerCase().replace(/\s+/g,"").replace(/[^a-z0-9._-]/g,"");
+  return value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"").replace(/[^a-z0-9._-]/g,"");
 }
-function usernameToEmail(usernameOrEmail) {
+
+function loginEmailCandidates(usernameOrEmail) {
   const value = usernameOrEmail.trim().toLowerCase();
-  if (value.includes("@")) return value;
-  if (LOGIN_ALIASES[value]) return LOGIN_ALIASES[value];
-  return `${safeUsername(value)}@${USER_EMAIL_DOMAIN}`;
+  if (value.includes("@")) return [value];
+
+  const username = safeUsername(value);
+  return [...new Set([
+    LOGIN_ALIASES[value],
+    username === "barberia" ? "barberia@gmail.com" : "",
+    username ? `${username}@${USER_EMAIL_DOMAIN}` : ""
+  ].filter(Boolean))];
+}
+
+function isCredentialError(err) {
+  return ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"]
+    .includes(String(err?.code || ""));
+}
+
+async function waitForAuthReady() {
+  await Promise.race([
+    authReady,
+    new Promise(resolve => setTimeout(resolve, AUTH_READY_TIMEOUT_MS))
+  ]);
+}
+
+async function signInFromLogin(usernameOrEmail, password) {
+  const candidates = loginEmailCandidates(usernameOrEmail);
+  let lastError = Object.assign(new Error("Faltan credenciales"), { code: "auth/invalid-credential" });
+
+  for (const email of candidates) {
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      lastError = err;
+      if (!isCredentialError(err)) throw err;
+    }
+  }
+
+  throw lastError;
 }
 
 function loginErrorMessage(err) {
@@ -527,8 +564,8 @@ $("loginForm").addEventListener("submit", async e => {
     if (!usernameOrEmail || !password) {
       throw Object.assign(new Error("Faltan credenciales"), { code: "auth/invalid-credential" });
     }
-    await authReady;
-    await signInWithEmailAndPassword(auth, usernameToEmail(usernameOrEmail), password);
+    await waitForAuthReady();
+    await signInFromLogin(usernameOrEmail, password);
     $("loginStatus").textContent = "Acceso correcto. Cargando caja…";
     $("loginStatus").className = "status success";
   } catch (err) {
