@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-22" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-24" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -149,7 +149,7 @@
           <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
           <div class="panel-action-stack">
             <button class="collect panel-action tone-cash" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
-            <button id="addUberBtn" class="collect panel-secondary-action tone-uber" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar Uber</span></button>
+            <button id="addUberBtn" class="collect panel-secondary-action tone-uber" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar Uber</span><b id="uberPendingBadge" class="operation-pending-badge hidden" aria-label="Semanas de Uber pendientes">0</b></button>
           </div>
         </div>
         <div class="panel-body">
@@ -231,9 +231,19 @@
   <div class="modal-card">
     <div class="modal-head"><h2>Cargar Uber</h2><button class="x" data-close="uberModal">×</button></div>
     <form id="uberForm">
-      <div class="field"><label>Total de la semana de Uber</label><input id="uberAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
-      <div class="field"><label>Fecha de cierre semanal de Uber</label><input id="uberCloseDate" type="date" required><div class="file-note">Se permite un solo comprobante por semana.</div></div>
-      <div class="field"><label>Comprobante semanal</label><input id="uberProof" type="file" accept="image/*,.pdf" required><div class="file-note">Uber queda 100% en manos del chofer y también genera 5% de caja chica.</div></div>
+      <div id="uberPendingNotice" class="uber-pending-notice" aria-live="polite"></div>
+      <div class="field">
+        <label for="uberWeekSelect">Semana cerrada a cargar</label>
+        <select id="uberWeekSelect" required></select>
+        <div class="file-note">Las semanas van de lunes a lunes. Solo aparecen las ya cerradas que todavía no tienen comprobante.</div>
+      </div>
+      <div id="uberWeekSummary" class="uber-week-summary">
+        <div><span>Inicio</span><strong id="uberWeekStartLabel">—</strong></div>
+        <div><span>Cierre</span><strong id="uberWeekEndLabel">—</strong></div>
+        <div><span>Estado</span><strong id="uberWeekStateLabel">Pendiente</strong></div>
+      </div>
+      <div class="field"><label for="uberAmount">Monto total facturado en Uber</label><div class="money-entry"><span aria-hidden="true">$</span><input id="uberAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div></div>
+      <div class="field"><label for="uberProof">Comprobante de la semana seleccionada</label><input id="uberProof" type="file" accept="image/*,.pdf" required><div class="file-note">El monto se suma al efectivo del chofer, se divide 50% para cada parte y genera 5% de caja chica.</div></div>
       <div id="uberStatus" class="status"></div>
       <div class="modal-actions"><button type="button" class="secondary" data-close="uberModal">Cancelar</button><button id="saveUberBtn" type="submit" class="save">Registrar Uber</button></div>
     </form>
@@ -321,6 +331,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-23"></script>
+<script type="module" src="./app.js?v=20260824-25"></script>
 </body>
 </html>

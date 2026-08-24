@@ -41,6 +41,9 @@ let currentProfile = null;
 let selectedCloseDirection = "";
 let selectedAdminClosureId = "";
 const RECENT_RECEIPTS_LIMIT = 6;
+// Primera semana administrada por este selector. Desde aquí, toda semana
+// cerrada sin comprobante permanece pendiente hasta que el chofer la cargue.
+const UBER_TRACKING_START_DATE = "2026-08-24";
 
 const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
@@ -290,6 +293,140 @@ function isoWeekKey(dateString) {
   const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   return `${date.getUTCFullYear()}-W${String(week).padStart(2,"0")}`;
 }
+function parseLocalDateKey(dateString) {
+  const [year, month, day] = String(dateString || "").split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+function addLocalDays(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+function startOfUberWeek(referenceDate = new Date()) {
+  const date = new Date(referenceDate);
+  date.setHours(12, 0, 0, 0);
+  const daysSinceMonday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - daysSinceMonday);
+  return date;
+}
+function formatUberWeekDate(dateString) {
+  const date = parseLocalDateKey(dateString);
+  if (!date) return "Sin fecha";
+  return new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" })
+    .format(date)
+    .replace(/\./g, "");
+}
+function buildUberWeek(startDate) {
+  const start = new Date(startDate);
+  const close = addLocalDays(start, 7);
+  const weekStartDate = localDayKey(start);
+  const weekCloseDate = localDayKey(close);
+  return {
+    weekStartDate,
+    weekCloseDate,
+    weekKey: isoWeekKey(weekCloseDate),
+    label: `${formatUberWeekDate(weekStartDate)} – ${formatUberWeekDate(weekCloseDate)}`
+  };
+}
+function currentUberWeek(referenceDate = new Date()) {
+  return buildUberWeek(startOfUberWeek(referenceDate));
+}
+function uberWeekLabelForItem(item) {
+  if (item.weekLabel) return item.weekLabel;
+  const close = parseLocalDateKey(item.weekCloseDate);
+  if (!close) return item.weekKey || "Semana sin fecha";
+  const start = item.weekStartDate || localDayKey(addLocalDays(close, -7));
+  return `${formatUberWeekDate(start)} – ${formatUberWeekDate(item.weekCloseDate)}`;
+}
+function isUberWeekLoaded(week) {
+  return uberClosures.some(item =>
+    item.weekStartDate === week.weekStartDate
+    || item.weekCloseDate === week.weekCloseDate
+    || item.weekKey === week.weekKey
+    || item.id === week.weekKey
+  );
+}
+function pendingUberWeeks(referenceDate = new Date()) {
+  const firstWeek = parseLocalDateKey(UBER_TRACKING_START_DATE);
+  const today = parseLocalDateKey(localDayKey(referenceDate));
+  if (!firstWeek || !today) return [];
+
+  const pending = [];
+  let cursor = firstWeek;
+  let safety = 0;
+  while (cursor.getTime() < today.getTime() && safety < 520) {
+    const week = buildUberWeek(cursor);
+    const closeDate = parseLocalDateKey(week.weekCloseDate);
+    // El comprobante se habilita al día siguiente del cierre. Ejemplo:
+    // la semana 24–31 de agosto empieza a solicitarse el 1 de septiembre.
+    if (!closeDate || closeDate.getTime() >= today.getTime()) break;
+    if (!isUberWeekLoaded(week)) pending.push(week);
+    cursor = addLocalDays(cursor, 7);
+    safety += 1;
+  }
+  return pending;
+}
+function selectedPendingUberWeek() {
+  const selectedStart = $("uberWeekSelect")?.value || "";
+  return pendingUberWeeks().find(week => week.weekStartDate === selectedStart) || null;
+}
+function updateUberWeekSummary() {
+  const week = selectedPendingUberWeek();
+  const startLabel = $("uberWeekStartLabel");
+  const endLabel = $("uberWeekEndLabel");
+  const stateLabel = $("uberWeekStateLabel");
+  if (!startLabel || !endLabel || !stateLabel) return;
+
+  startLabel.textContent = week ? formatUberWeekDate(week.weekStartDate) : "—";
+  endLabel.textContent = week ? formatUberWeekDate(week.weekCloseDate) : "—";
+  stateLabel.textContent = week ? "Falta cargar" : "Al día";
+}
+function renderUberWeekSelector() {
+  const select = $("uberWeekSelect");
+  const notice = $("uberPendingNotice");
+  const amountInput = $("uberAmount");
+  const proofInput = $("uberProof");
+  const saveButton = $("saveUberBtn");
+  if (!select || !notice || !amountInput || !proofInput || !saveButton) return;
+
+  const pending = pendingUberWeeks();
+  const previousValue = select.value;
+  const hasPending = pending.length > 0;
+
+  notice.classList.toggle("is-clear", !hasPending);
+  if (hasPending) {
+    notice.innerHTML = `<strong>${pending.length} ${pending.length === 1 ? "semana pendiente" : "semanas pendientes"}</strong><span>${pending.length === 1 ? "Seleccioná la semana cerrada y cargá su comprobante." : "Los comprobantes atrasados se acumulan. Cargá uno por cada semana."}</span>`;
+    select.innerHTML = pending
+      .map(week => `<option value="${week.weekStartDate}">${week.label} · Falta cargar</option>`)
+      .join("");
+    select.value = pending.some(week => week.weekStartDate === previousValue)
+      ? previousValue
+      : pending[0].weekStartDate;
+  } else {
+    const activeWeek = currentUberWeek();
+    notice.innerHTML = `<strong>Comprobantes al día</strong><span>La semana ${activeWeek.label} todavía está en curso.</span>`;
+    select.innerHTML = `<option value="">No hay semanas cerradas pendientes</option>`;
+  }
+
+  select.disabled = !hasPending;
+  amountInput.disabled = !hasPending;
+  proofInput.disabled = !hasPending;
+  saveButton.disabled = !hasPending;
+  updateUberWeekSummary();
+}
+function renderUberPendingBadge() {
+  const button = $("addUberBtn");
+  const badge = $("uberPendingBadge");
+  if (!button || !badge) return;
+  const count = pendingUberWeeks().length;
+  badge.textContent = String(count);
+  badge.classList.toggle("hidden", count === 0);
+  button.classList.toggle("has-pending-alert", count > 0);
+  button.title = count
+    ? `${count} ${count === 1 ? "semana de Uber pendiente" : "semanas de Uber pendientes"}`
+    : "No hay semanas de Uber pendientes";
+}
 function formatDate(dateString) {
   const [y,m,d] = String(dateString || "").split("-").map(Number);
   if (!y || !m || !d) return "Sin fecha";
@@ -428,7 +565,7 @@ function render() {
       method: "cash",
       type: "uber_receipt",
       service: "Uber",
-      detail: `Cierre semanal · ${formatDate(item.weekCloseDate)}`
+      detail: `Semana ${uberWeekLabelForItem(item)}`
     }))
   ].sort((a, b) => {
     const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
@@ -477,6 +614,7 @@ function render() {
   $("digitalCount").textContent = visibleDigitalItems.length;
 
   renderBilledTotal(model);
+  renderUberPendingBadge();
   renderList("cashList", visibleCashItems, false);
   renderList("digitalList", visibleDigitalItems, true);
 }
@@ -515,7 +653,7 @@ function renderList(containerId, items, isDigital) {
         : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
     const amountPrefix = debtCompensation ? "−" : "+";
     const footerLabel = uberReceipt
-      ? `${escapeHtml(item.weekKey || "Semana")} · cierre ${formatDate(item.weekCloseDate)}`
+      ? `Semana ${escapeHtml(uberWeekLabelForItem(item))}`
       : `Hoy · ${time}`;
     return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""} ${uberReceipt ? "receipt-uber" : ""} ${debtCompensation ? "receipt-debt-compensation" : ""}">
       <div class="receipt-main">
@@ -604,6 +742,7 @@ function subscribeToday(user) {
         return bMs - aMs;
       });
     render();
+    if (!$("uberModal")?.classList.contains("hidden")) renderUberWeekSelector();
   }, err => {
     console.error("Firestore Uber snapshot error:", err);
     $("syncStatus").textContent = "Error de Uber";
@@ -1066,11 +1205,13 @@ $("expenseForm")?.addEventListener("submit", async e => {
 
 $("addUberBtn")?.addEventListener("click", () => {
   $("uberForm").reset();
-  $("uberCloseDate").value = localDayKey();
   $("uberStatus").textContent = "";
   $("uberStatus").className = "status";
+  renderUberWeekSelector();
   $("uberModal").classList.remove("hidden");
 });
+
+$("uberWeekSelect")?.addEventListener("change", updateUberWeekSummary);
 
 $("uberForm")?.addEventListener("submit", async e => {
   e.preventDefault();
@@ -1078,27 +1219,22 @@ $("uberForm")?.addEventListener("submit", async e => {
   if (!user) return;
 
   const amount = parseMoneyInput($("uberAmount").value);
-  const weekCloseDate = $("uberCloseDate").value;
-  const weekKey = isoWeekKey(weekCloseDate);
+  const week = selectedPendingUberWeek();
   const file = $("uberProof").files?.[0];
 
+  if (!week) {
+    $("uberStatus").textContent = "Elegí una semana cerrada pendiente.";
+    $("uberStatus").className = "status error";
+    renderUberWeekSelector();
+    return;
+  }
   if (!amount || amount <= 0) {
     $("uberStatus").textContent = "Ingresá el total semanal de Uber.";
     $("uberStatus").className = "status error";
     return;
   }
-  if (!weekCloseDate || !weekKey) {
-    $("uberStatus").textContent = "Elegí la fecha de cierre de Uber.";
-    $("uberStatus").className = "status error";
-    return;
-  }
-  if (weekCloseDate > localDayKey()) {
-    $("uberStatus").textContent = "La fecha de cierre no puede estar en el futuro.";
-    $("uberStatus").className = "status error";
-    return;
-  }
   if (!file) {
-    $("uberStatus").textContent = "Adjuntá el comprobante semanal de Uber.";
+    $("uberStatus").textContent = `Adjuntá el comprobante de la semana ${week.label}.`;
     $("uberStatus").className = "status error";
     return;
   }
@@ -1108,24 +1244,29 @@ $("uberForm")?.addEventListener("submit", async e => {
   $("uberStatus").textContent = "";
 
   try {
-    const uberDocRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "uber", weekKey);
+    // Se usa una identificación determinística para impedir que la misma
+    // semana se cargue dos veces, incluso desde dos dispositivos distintos.
+    const uberDocRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "uber", week.weekKey);
     const existing = await getDoc(uberDocRef);
-    if (existing.exists()) {
-      $("uberStatus").textContent = `Ya existe un comprobante para ${weekKey}.`;
+    if (existing.exists() || isUberWeekLoaded(week)) {
+      $("uberStatus").textContent = `La semana ${week.label} ya tiene comprobante.`;
       $("uberStatus").className = "status error";
+      renderUberWeekSelector();
       return;
     }
 
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/uber/${weekKey}_${Date.now()}_${cleanName}`;
+    const proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/uber/${week.weekKey}_${Date.now()}_${cleanName}`;
     const storageRef = ref(storage, proofPath);
     await uploadBytes(storageRef, file);
     const proofUrl = await getDownloadURL(storageRef);
 
     await setDoc(uberDocRef, {
       amount,
-      weekCloseDate,
-      weekKey,
+      weekStartDate: week.weekStartDate,
+      weekCloseDate: week.weekCloseDate,
+      weekKey: week.weekKey,
+      weekLabel: week.label,
       proofUrl,
       proofPath,
       dayKey: localDayKey(),
@@ -1135,13 +1276,43 @@ $("uberForm")?.addEventListener("submit", async e => {
       createdAt: serverTimestamp()
     });
 
-    $("uberModal").classList.add("hidden");
+    // Reflejo inmediato: permite continuar con la siguiente semana atrasada
+    // sin esperar la confirmación visual del listener de Firestore.
+    const savedAt = new Date();
+    uberClosures = [{
+      id: week.weekKey,
+      amount,
+      weekStartDate: week.weekStartDate,
+      weekCloseDate: week.weekCloseDate,
+      weekKey: week.weekKey,
+      weekLabel: week.label,
+      proofUrl,
+      proofPath,
+      dayKey: localDayKey(),
+      operatorUid: user.uid,
+      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      businessId: BUSINESS_ID,
+      createdAt: { toMillis: () => savedAt.getTime(), toDate: () => savedAt }
+    }, ...uberClosures.filter(item => item.id !== week.weekKey)];
+    render();
+
+    $("uberAmount").value = "";
+    $("uberProof").value = "";
+    renderUberWeekSelector();
+    const remaining = pendingUberWeeks().length;
+    $("uberStatus").textContent = remaining
+      ? `Comprobante de ${week.label} guardado. Quedan ${remaining} ${remaining === 1 ? "semana pendiente" : "semanas pendientes"}.`
+      : `Comprobante de ${week.label} guardado. Ya no quedan semanas pendientes.`;
+    $("uberStatus").className = "status success";
+    if (!remaining) setTimeout(() => $("uberModal").classList.add("hidden"), 1300);
   } catch (err) {
     console.error(err);
-    $("uberStatus").textContent = "No se pudo registrar el cierre de Uber.";
+    $("uberStatus").textContent = err?.code === "permission-denied"
+      ? "Esa semana ya fue registrada o no tenés permiso para volver a cargarla."
+      : "No se pudo registrar el comprobante de Uber.";
     $("uberStatus").className = "status error";
   } finally {
-    $("saveUberBtn").disabled = false;
+    $("saveUberBtn").disabled = pendingUberWeeks().length === 0;
     $("saveUberBtn").textContent = "Registrar Uber";
   }
 });

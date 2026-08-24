@@ -2184,6 +2184,49 @@ a.proof:hover { background: #e3e7f0; }
 .collect.tone-uber:hover { background: rgba(246, 206, 78, .19); }
 .collect.tone-expense:hover { background: rgba(198, 47, 53, .11); }
 
+.operation-pending-badge {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  margin-left: auto;
+  place-items: center;
+  padding: 0 6px;
+  border: 1px solid rgba(138, 98, 0, .16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .72);
+  color: #765400;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.collect.tone-uber.has-pending-alert {
+  border-color: rgba(198, 47, 53, .42);
+  background: rgba(198, 47, 53, .09);
+  color: #a9272d;
+  animation: uberPendingAlert 1.15s ease-in-out infinite;
+}
+
+.collect.tone-uber.has-pending-alert .collect-icon,
+.collect.tone-uber.has-pending-alert .operation-pending-badge {
+  border-color: rgba(198, 47, 53, .18);
+  background: rgba(198, 47, 53, .11);
+  color: #a9272d;
+}
+
+@keyframes uberPendingAlert {
+  0%, 100% {
+    border-color: rgba(198, 47, 53, .30);
+    background: rgba(198, 47, 53, .055);
+    box-shadow: 0 0 0 0 rgba(198, 47, 53, 0);
+  }
+  50% {
+    border-color: rgba(198, 47, 53, .70);
+    background: rgba(198, 47, 53, .16);
+    box-shadow: 0 0 0 5px rgba(198, 47, 53, .08);
+  }
+}
+
 .modal[data-tone="cash"] {
   --operation-tone: var(--green);
   --operation-soft: var(--green-soft);
@@ -2200,6 +2243,84 @@ a.proof:hover { background: #e3e7f0; }
   --operation-tone: #c69105;
   --operation-soft: var(--amber-soft);
   --operation-ink: #745400;
+}
+
+.uber-pending-notice {
+  display: grid;
+  gap: 4px;
+  margin: -2px 0 16px;
+  padding: 13px 14px;
+  border: 1px solid rgba(198, 145, 5, .22);
+  border-radius: 16px;
+  background: rgba(255, 247, 221, .66);
+  color: #745400;
+}
+
+.uber-pending-notice strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.uber-pending-notice span {
+  color: #766b50;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.uber-pending-notice.is-clear {
+  border-color: rgba(22, 137, 75, .18);
+  background: rgba(239, 251, 244, .74);
+  color: var(--green);
+}
+
+.uber-pending-notice.is-clear span { color: #5f786b; }
+
+.uber-week-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: -2px 0 16px;
+}
+
+.uber-week-summary > div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .74);
+}
+
+.uber-week-summary span,
+.uber-week-summary strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uber-week-summary span {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.uber-week-summary strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+#uberWeekStateLabel { color: #9a6d00; }
+
+#uberWeekSelect:disabled,
+#uberAmount:disabled,
+#uberProof:disabled {
+  cursor: not-allowed;
+  opacity: .62;
 }
 
 .modal[data-tone="expense"] {
@@ -2266,5 +2387,11 @@ a.proof:hover { background: #e3e7f0; }
 @media (prefers-reduced-motion: reduce) {
   .money-rolling {
     animation: none !important;
+  }
+
+  .collect.tone-uber.has-pending-alert {
+    animation: none !important;
+    border-color: rgba(198, 47, 53, .65);
+    background: rgba(198, 47, 53, .12);
   }
 }
