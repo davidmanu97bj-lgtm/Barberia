@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-6" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-7" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -143,12 +143,16 @@
         </div>
       </article>
       <aside class="settlement">
-        <div class="settle-icon">U</div><h3>Uber</h3>
-        <div class="mini-total">Cargado hoy<strong id="uberTotal">$ 0</strong></div>
-        <button id="addUberBtn" class="collect secondary-action uber-button" type="button">+ Cargar Uber</button>
-        <div class="divider"></div>
-        <div class="records-heading records-heading-uber"><span>Comprobantes</span><b id="uberCount">0</b></div>
-        <div id="uberList" class="uber-list"><div class="uber-empty">Los cierres semanales aparecerán acá.</div></div>
+        <div class="panel-head uber-panel-head">
+          <div class="panel-tag uber-panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 16h14M7 16l1-5h8l1 5M8 11l1.2-3h5.6l1.2 3M6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg></span><span>Uber</span></div>
+          <div class="uber-total-label">Cargado hoy</div>
+          <div class="panel-total uber-panel-total" id="uberTotal">$ 0</div>
+          <button id="addUberBtn" class="collect secondary-action uber-button" type="button">+ Cargar Uber</button>
+        </div>
+        <div class="panel-body">
+          <div class="records-heading records-heading-uber"><span>Comprobantes</span><b id="uberCount">0</b></div>
+          <div id="uberList" class="uber-list proof-list"><div class="uber-empty">Los cierres semanales aparecerán acá.</div></div>
+        </div>
       </aside>
       <article class="money-panel">
         <div class="panel-head">
@@ -161,17 +165,13 @@
         </div>
         <div class="panel-body">
           <div class="records-heading"><span>Comprobantes</span><b id="digitalCount">0</b></div>
-          <div id="digitalList" class="proof-list"><div class="empty">Los cobros digitales y sus comprobantes aparecerán acá.</div></div>
+          <div id="digitalList" class="proof-list"><div class="empty">Los cobros digitales y los gastos aparecerán acá.</div></div>
         </div>
       </article>
     </section>
     <section class="close-box">
       <div><h3>Finalizar jornada</h3><p>Cuando termine el día, enviar el pedido de cierre de caja.</p></div>
       <button id="closeDayBtn" class="close-btn">Pedir cierre</button>
-    </section>
-    <section class="expense-ledger">
-      <div class="records-heading"><span>Comprobantes de gastos</span><b id="expenseCount">0</b></div>
-      <div id="expenseList" class="expense-list"><div class="expense-empty">Sin gastos cargados hoy.</div></div>
     </section>
   </main>
 </section>
@@ -312,6 +312,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-6"></script>
+<script type="module" src="./app.js?v=20260824-7"></script>
 </body>
 </html>

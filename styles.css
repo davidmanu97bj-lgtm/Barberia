@@ -1512,12 +1512,14 @@ a.proof:hover { background: #e3e7f0; }
   height: 100%;
 }
 
-.money-panel {
+.money-panel,
+.settlement {
   display: flex;
   flex-direction: column;
 }
 
-.money-panel .panel-head {
+.money-panel .panel-head,
+.settlement .panel-head {
   display: flex;
   min-height: 365px;
   flex-direction: column;
@@ -1640,6 +1642,18 @@ a.proof:hover { background: #e3e7f0; }
 
 .receipt-debt .amount { color: var(--red); }
 
+.receipt-expense {
+  border-color: #f0d2d4;
+  background: #fffafa;
+}
+
+.receipt-expense .receipt-icon {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.receipt-expense .amount { color: var(--red); }
+
 .debt-modal-note {
   margin-bottom: 16px;
   padding: 12px 13px;
@@ -1662,8 +1676,55 @@ a.proof:hover { background: #e3e7f0; }
 .settlement {
   position: static;
   top: auto;
+  padding: 0;
+  text-align: left;
+}
+
+.uber-panel-head {
+  align-items: stretch;
+  text-align: center;
+}
+
+.uber-panel-tag { align-self: center; }
+
+.uber-panel-tag .panel-tag-icon {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.uber-total-label {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.uber-panel-total {
+  margin: 7px 0 12px;
+  font-size: 25px;
+  text-align: center;
+}
+
+.uber-panel-head .uber-button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.records-heading-uber {
   display: flex;
-  flex-direction: column;
+  margin: 2px 2px 11px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-align: left;
+}
+
+.records-heading-uber b {
+  min-width: 25px;
+  height: 25px;
+  margin: 0;
+  font-size: 11px;
 }
 
 .uber-list {
@@ -1672,26 +1733,7 @@ a.proof:hover { background: #e3e7f0; }
   overflow: visible;
 }
 
-/* Los comprobantes de gastos quedan separados para no desnivelar Digital. */
-.expense-ledger {
-  margin-top: 14px;
-  padding: 18px;
-  border: 1px solid #dce2ed;
-  border-radius: 27px;
-  background: #fff;
-  box-shadow: var(--shadow-soft);
-}
-
-.expense-ledger > .records-heading { margin-bottom: 13px; }
-
-.expense-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.expense-list .expense-item { margin-bottom: 0; }
-.expense-list .expense-empty { grid-column: 1 / -1; }
+.uber-receipt { min-height: 110px; }
 
 @media (max-width: 760px) {
   .login-logo-shell {
@@ -1722,7 +1764,8 @@ a.proof:hover { background: #e3e7f0; }
     border-radius: 9px;
   }
 
-  .money-panel .panel-head { min-height: 326px; }
+  .money-panel .panel-head,
+  .settlement .panel-head { min-height: 326px; }
 
   .panel-tag-icon {
     width: 25px;
@@ -1762,21 +1805,43 @@ a.proof:hover { background: #e3e7f0; }
 
   .receipt { min-height: 119px; }
 
+  .uber-receipt { min-height: 119px; }
+
   .settlement {
     position: static;
     top: auto;
+    padding: 0;
   }
 
-  .expense-ledger {
-    margin-top: 10px;
-    padding: 14px 8px;
-    border-radius: 22px;
+  .records-heading-uber {
+    display: flex;
+    margin: 1px 1px 8px;
+    font-size: 8px;
+    letter-spacing: .035em;
+    text-align: left;
   }
 
-  .expense-list { grid-template-columns: 1fr; gap: 7px; }
+  .records-heading-uber b {
+    min-width: 20px;
+    height: 20px;
+    margin: 0;
+    font-size: 8px;
+  }
+
+  .uber-total-label {
+    margin-top: 14px;
+    font-size: 7px;
+  }
+
+  .uber-panel-total {
+    margin: 5px 0 9px;
+    font-size: 15px;
+    letter-spacing: -.4px;
+  }
 }
 
 @media (max-width: 380px) {
   .brand-logo-shell { width: 176px; }
-  .money-panel .panel-head { min-height: 318px; }
+  .money-panel .panel-head,
+  .settlement .panel-head { min-height: 318px; }
 }

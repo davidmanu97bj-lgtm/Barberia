@@ -1,6 +1,6 @@
 import {
   firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN, LOGIN_ALIASES
-} from "./firebase-config.js?v=20260824-6";
+} from "./firebase-config.js?v=20260824-7";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
@@ -88,6 +88,9 @@ function isSettlementAdjustment(item) {
 }
 function isAdminDebt(item) {
   return item.type === "admin_debt";
+}
+function isExpenseReceipt(item) {
+  return item.type === "expense_receipt";
 }
 function revenueTotalFor(method) {
   return payments
@@ -213,7 +216,20 @@ function render() {
     const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
     return bMs - aMs;
   });
-  const digitalItems = payments.filter(p => p.method === "digital");
+  const digitalItems = [
+    ...payments.filter(p => p.method === "digital"),
+    ...expenses.map(item => ({
+      ...item,
+      method: "digital",
+      type: "expense_receipt",
+      service: "Gasto",
+      detail: `${item.detail || "Gasto"} · 50% reconocido: ${money(Number(item.amount || 0) * 0.5)}`
+    }))
+  ].sort((a, b) => {
+    const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return bMs - aMs;
+  });
   const visibleCashItems = cashItems.slice(0, RECENT_RECEIPTS_LIMIT);
   const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
 
@@ -233,13 +249,11 @@ function render() {
 
   $("cashCount").textContent = visibleCashItems.length;
   $("digitalCount").textContent = visibleDigitalItems.length;
-  $("expenseCount").textContent = Math.min(expenses.length, RECENT_RECEIPTS_LIMIT);
   $("uberCount").textContent = Math.min(uberClosures.length, RECENT_RECEIPTS_LIMIT);
 
   renderSettlement(model);
   renderList("cashList", visibleCashItems, false);
   renderList("digitalList", visibleDigitalItems, true);
-  renderExpenseList();
   renderUberList();
 }
 
@@ -247,7 +261,7 @@ function renderList(containerId, items, isDigital) {
   const box = $(containerId);
   if (!items.length) {
     box.innerHTML = `<div class="empty">${isDigital
-      ? "Los cobros digitales y sus comprobantes aparecerán acá."
+      ? "Los cobros digitales y los gastos aparecerán acá."
       : "Los cobros en efectivo aparecerán acá."}</div>`;
     return;
   }
@@ -261,46 +275,25 @@ function renderList(containerId, items, isDigital) {
           ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
           : `<span class="proof">Sin archivo</span>`)
       : "";
-    const icon = isDigital
-      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
-      : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
-    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""}">
+    const expenseReceipt = isExpenseReceipt(item);
+    const icon = expenseReceipt
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>`
+      : isDigital
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
+        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+    const amountPrefix = expenseReceipt ? "-" : "+";
+    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""}">
       <div class="receipt-main">
         <span class="receipt-icon">${icon}</span>
         <div class="receipt-copy">
           <strong>${escapeHtml(item.service || "Cobro")}</strong>
           <small>${escapeHtml(item.detail || "Servicio registrado")}</small>
         </div>
-        <div class="amount">+${money(item.amount)}</div>
+        <div class="amount">${amountPrefix}${money(item.amount)}</div>
       </div>
       <div class="receipt-footer">
         <span>Hoy · ${time}</span>${proof}
       </div>
-    </article>`;
-  }).join("");
-}
-
-function renderExpenseList() {
-  const box = $("expenseList");
-  if (!expenses.length) {
-    box.innerHTML = `<div class="expense-empty">Sin gastos cargados hoy.</div>`;
-    return;
-  }
-
-  box.innerHTML = expenses.slice(0, RECENT_RECEIPTS_LIMIT).map(item => {
-    const time = item.createdAt?.toDate
-      ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
-      : "Ahora";
-    const proof = item.proofUrl
-      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
-      : `<span class="proof">Sin archivo</span>`;
-    return `<article class="expense-item">
-      <div class="expense-main">
-        <span class="receipt-icon expense-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></span>
-        <div class="receipt-copy"><strong>${escapeHtml(item.detail || "Gasto")}</strong><small>50% reconocido: ${money(Number(item.amount||0)*0.5)}</small></div>
-        <div class="expense-amount">-${money(item.amount)}</div>
-      </div>
-      <div class="receipt-footer"><span>Hoy · ${time}</span>${proof}</div>
     </article>`;
   }).join("");
 }
