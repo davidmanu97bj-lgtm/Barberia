@@ -1,4 +1,4 @@
-import * as firebaseSettings from "./firebase-config.js?v=20260824-13";
+import * as firebaseSettings from "./firebase-config.js?v=20260824-15";
 
 const { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } = firebaseSettings;
 const LOGIN_ALIASES = firebaseSettings.LOGIN_ALIASES || {};
@@ -46,6 +46,63 @@ const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
 }).format(value || 0);
 const moneyInputFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+const moneyAnimationFrames = new WeakMap();
+const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function setAnimatedMoney(elementOrId, targetValue) {
+  const element = typeof elementOrId === "string" ? $(elementOrId) : elementOrId;
+  if (!element) return;
+
+  const target = Number(targetValue || 0);
+  const storedCurrent = Number(element.dataset.moneyCurrent);
+  const hasPreviousValue = element.dataset.moneyCurrent !== undefined && Number.isFinite(storedCurrent);
+  const previous = hasPreviousValue ? storedCurrent : target;
+  const activeFrame = moneyAnimationFrames.get(element);
+
+  if (activeFrame !== undefined) {
+    cancelAnimationFrame(activeFrame);
+    moneyAnimationFrames.delete(element);
+  }
+
+  element.setAttribute("aria-label", money(target));
+
+  if (!hasPreviousValue || Math.abs(target - previous) < 0.5 || reducedMotionQuery.matches) {
+    element.textContent = money(target);
+    element.dataset.moneyCurrent = String(target);
+    element.classList.remove("money-rolling");
+    return;
+  }
+
+  element.classList.remove("money-rolling");
+  void element.offsetWidth;
+  element.classList.add("money-rolling");
+  element.addEventListener("animationend", () => {
+    element.classList.remove("money-rolling");
+  }, { once: true });
+
+  const startedAt = performance.now();
+  const duration = 760;
+
+  const tick = now => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = previous + (target - previous) * eased;
+
+    element.textContent = money(Math.round(current));
+    element.dataset.moneyCurrent = String(current);
+
+    if (progress < 1) {
+      moneyAnimationFrames.set(element, requestAnimationFrame(tick));
+      return;
+    }
+
+    element.textContent = money(target);
+    element.dataset.moneyCurrent = String(target);
+    moneyAnimationFrames.delete(element);
+  };
+
+  moneyAnimationFrames.set(element, requestAnimationFrame(tick));
+}
 
 function moneyInputDigits(value) {
   return String(value ?? "").replace(/\D/g, "");
@@ -263,14 +320,14 @@ function renderSettlement(model) {
 
   if (model.from === "balanced") {
     label.textContent = "Equilibrado";
-    amount.textContent = money(0);
+    setAnimatedMoney(amount, 0);
     return;
   }
 
   label.textContent = model.from === "cash"
     ? "Chofer paga a Explora"
     : "Explora paga al chofer";
-  amount.textContent = money(model.amount);
+  setAnimatedMoney(amount, model.amount);
 }
 
 function render() {
@@ -307,14 +364,14 @@ function render() {
   const visibleCashItems = cashItems.slice(0, RECENT_RECEIPTS_LIMIT);
   const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
 
-  $("cashTotal").textContent = money(model.cashAdjusted);
+  setAnimatedMoney("cashTotal", model.cashAdjusted);
   $("cashBaseTotal").textContent = money(model.cash);
   $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
   $("adminDebtTotal").textContent = money(model.adminDebt);
 
-  $("digitalTotal").textContent = money(model.digitalAdjusted);
+  setAnimatedMoney("digitalTotal", model.digitalAdjusted);
   $("digitalBaseTotal").textContent = money(model.digital);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   $("expenseHalfTotal").textContent = money(model.expenseHalf);

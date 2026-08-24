@@ -1981,47 +1981,57 @@ a.proof:hover { background: #e3e7f0; }
 
 /* Cada operación conserva su color desde el botón hasta el formulario. */
 .collect.tone-cash {
-  border-color: #117a43;
-  background: linear-gradient(145deg, #1a9b55, #117a43);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(22, 137, 75, .20);
+  border-color: rgba(22, 137, 75, .24);
+  background: rgba(22, 137, 75, .09);
+  color: #117743;
+  box-shadow: none;
 }
 
 .collect.tone-digital {
-  border-color: #4441dc;
-  background: linear-gradient(145deg, #5a57f7, #4441dc);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(79, 76, 245, .20);
+  border-color: rgba(79, 76, 245, .23);
+  background: rgba(79, 76, 245, .08);
+  color: #4643d8;
+  box-shadow: none;
 }
 
 .collect.tone-uber {
-  border-color: #ead17a;
-  background: #fff4c9;
+  border-color: rgba(166, 119, 0, .22);
+  background: rgba(246, 206, 78, .13);
   color: #715200;
-  box-shadow: 0 7px 16px rgba(138, 98, 0, .10);
+  box-shadow: none;
 }
 
 .collect.tone-expense {
-  border-color: #edc4c7;
-  background: #fff0f1;
-  color: var(--red);
-  box-shadow: 0 7px 16px rgba(198, 47, 53, .08);
+  border-color: rgba(198, 47, 53, .20);
+  background: rgba(198, 47, 53, .07);
+  color: #b52b31;
+  box-shadow: none;
+}
+
+.collect.tone-cash .collect-icon {
+  background: rgba(22, 137, 75, .12);
+  color: #117743;
+}
+
+.collect.tone-digital .collect-icon {
+  background: rgba(79, 76, 245, .11);
+  color: #4643d8;
 }
 
 .collect.tone-uber .collect-icon {
-  background: #f6df8d;
+  background: rgba(198, 145, 5, .13);
   color: #715200;
 }
 
 .collect.tone-expense .collect-icon {
-  background: #f7d4d6;
-  color: var(--red);
+  background: rgba(198, 47, 53, .10);
+  color: #b52b31;
 }
 
-.collect.tone-cash:hover { background: linear-gradient(145deg, #1a9b55, #117a43); }
-.collect.tone-digital:hover { background: linear-gradient(145deg, #5a57f7, #4441dc); }
-.collect.tone-uber:hover { background: #fbeab0; }
-.collect.tone-expense:hover { background: #fbe1e3; }
+.collect.tone-cash:hover { background: rgba(22, 137, 75, .13); }
+.collect.tone-digital:hover { background: rgba(79, 76, 245, .12); }
+.collect.tone-uber:hover { background: rgba(246, 206, 78, .19); }
+.collect.tone-expense:hover { background: rgba(198, 47, 53, .11); }
 
 .modal[data-tone="cash"] {
   --operation-tone: var(--green);
@@ -2048,8 +2058,8 @@ a.proof:hover { background: #e3e7f0; }
 }
 
 .modal[data-tone] .modal-card {
-  border-top: 5px solid var(--operation-tone);
-  background: linear-gradient(180deg, var(--operation-soft) 0, #fff 118px);
+  border-top: 3px solid color-mix(in srgb, var(--operation-tone) 45%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--operation-soft) 62%, #fff) 0, #fff 112px);
 }
 
 .modal[data-tone] .modal-head h2 { color: var(--operation-ink); }
@@ -2063,11 +2073,47 @@ a.proof:hover { background: #e3e7f0; }
 .modal[data-tone] select:focus,
 .modal[data-tone] textarea:focus,
 .modal[data-tone] .money-entry:focus-within {
-  border-color: var(--operation-tone);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--operation-tone) 13%, transparent);
+  border-color: color-mix(in srgb, var(--operation-tone) 62%, #fff);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--operation-tone) 9%, transparent);
 }
 
 .modal[data-tone] .save,
 .modal[data-tone] input[type="file"]::file-selector-button {
-  background: var(--operation-tone);
+  border: 1px solid color-mix(in srgb, var(--operation-tone) 24%, transparent);
+  background: color-mix(in srgb, var(--operation-tone) 12%, #fff);
+  color: var(--operation-ink);
+  box-shadow: none;
+}
+
+.money-rolling {
+  font-variant-numeric: tabular-nums;
+  transform-origin: center bottom;
+  will-change: transform, opacity, filter;
+  animation: moneyRollUp .76s cubic-bezier(.22, .8, .24, 1);
+}
+
+@keyframes moneyRollUp {
+  0% {
+    transform: translateY(11px);
+    opacity: .35;
+    filter: blur(1.2px);
+  }
+  38% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  72% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .money-rolling {
+    animation: none !important;
+  }
 }
