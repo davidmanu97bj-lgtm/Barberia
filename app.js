@@ -382,7 +382,9 @@ function renderBilledTotal(model) {
   setAnimatedMoney("summaryBilledAmount", model.grand);
   $("summaryReimbursementAmount").textContent = money(model.expenseReimbursement);
   const button = $("compensateDebtBtn");
-  button.disabled = model.compensationAvailable <= 0.5;
+  // El botón siempre abre el detalle. Si no hay saldo aplicable, el modal
+  // explica el motivo en lugar de parecer que la aplicación no responde.
+  button.disabled = false;
   button.title = model.expenseReimbursement <= 0.5
     ? "No hay reintegros disponibles."
     : model.adminDebt <= 0.5
@@ -392,16 +394,21 @@ function renderBilledTotal(model) {
 
 function openDebtCompensationModal() {
   const model = settlementModel();
-  if (model.compensationAvailable <= 0.5) return;
 
   $("compensationReimbursementAvailable").textContent = money(model.expenseReimbursement);
   $("compensationDebtAvailable").textContent = money(model.adminDebt);
   $("compensationMaximum").textContent = money(model.compensationAvailable);
-  $("compensationOutcome").textContent = `Se utilizarán ${money(model.compensationAvailable)}. La deuda quedará en ${money(model.adminDebt - model.compensationAvailable)} y el reintegro pendiente en ${money(model.expenseReimbursement - model.compensationAvailable)}.`;
+  if (model.compensationAvailable > 0.5) {
+    $("compensationOutcome").textContent = `Se utilizarán ${money(model.compensationAvailable)}. La nueva deuda será de ${money(model.adminDebt - model.compensationAvailable)} y el reintegro pendiente quedará en ${money(model.expenseReimbursement - model.compensationAvailable)}.`;
+  } else if (model.expenseReimbursement <= 0.5) {
+    $("compensationOutcome").textContent = "Todavía no hay dinero pendiente de reintegro para utilizar en una compensación.";
+  } else {
+    $("compensationOutcome").textContent = "No hay una deuda pendiente para compensar con este reintegro.";
+  }
   $("debtCompensationStatus").textContent = "";
   $("debtCompensationStatus").className = "status";
-  $("confirmDebtCompensation").disabled = false;
-  $("confirmDebtCompensation").textContent = "Aceptar";
+  $("confirmDebtCompensation").disabled = model.compensationAvailable <= 0.5;
+  $("confirmDebtCompensation").textContent = model.compensationAvailable > 0.5 ? "OK, compensar" : "Sin saldo para compensar";
   $("debtCompensationModal").classList.remove("hidden");
 }
 
@@ -845,7 +852,7 @@ $("confirmDebtCompensation").addEventListener("click", async () => {
       $("debtCompensationStatus").textContent = "No se pudo compensar la deuda. Intentá nuevamente.";
       $("debtCompensationStatus").className = "status error";
       button.disabled = false;
-      button.textContent = "Aceptar";
+      button.textContent = "OK, compensar";
     }
   }
 });

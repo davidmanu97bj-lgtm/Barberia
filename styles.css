@@ -1994,8 +1994,11 @@ a.proof:hover { background: #e3e7f0; }
   gap: 0;
   place-items: stretch;
   padding: 0;
+  background: #fff;
   text-align: left;
 }
+
+.summary::after { display: none; }
 
 .summary .summary-metric {
   position: relative;
@@ -2005,13 +2008,19 @@ a.proof:hover { background: #e3e7f0; }
   min-width: 0;
   align-items: flex-start;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 23px 24px;
+}
+
+.summary .summary-metric > small {
+  display: flex;
+  min-height: 29px;
+  align-items: flex-end;
 }
 
 .summary-refund {
   border-left: 1px solid #e1e5ee;
-  background: linear-gradient(135deg, rgba(79, 76, 245, .025), rgba(79, 76, 245, .065));
+  background: #fff;
 }
 
 .summary-compensate {
@@ -2092,6 +2101,7 @@ a.proof:hover { background: #e3e7f0; }
 
 @media (max-width: 760px) {
   .summary .summary-metric { padding: 15px 12px; }
+  .summary .summary-metric > small { min-height: 32px; }
   .summary small { font-size: 8px; letter-spacing: .07em; }
   .summary .summary-when { font-size: 8px; }
   .summary-compensate { min-height: 33px; margin-top: 9px; padding: 7px 8px; font-size: 8px; }
