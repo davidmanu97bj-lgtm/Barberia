@@ -45,8 +45,17 @@ const RECENT_RECEIPTS_LIMIT = 6;
 const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
 }).format(value || 0);
+const signedMoney = value => {
+  const numericValue = Number(value || 0);
+  if (Math.abs(numericValue) < 0.5) return money(0);
+  return `${numericValue > 0 ? "+" : "−"} ${money(Math.abs(numericValue))}`;
+};
 const moneyInputFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
 const moneyAnimationFrames = new WeakMap();
+
+function moneyForElement(element, value) {
+  return element?.dataset.moneyFormat === "signed" ? signedMoney(value) : money(value);
+}
 
 function canAnimateMoney() {
   try {
@@ -77,9 +86,9 @@ function setAnimatedMoney(elementOrId, targetValue) {
 
   // El valor correcto se muestra primero. La animación es una mejora visual y
   // nunca debe impedir el inicio de sesión ni dejar una cifra desactualizada.
-  element.textContent = money(target);
+  element.textContent = moneyForElement(element, target);
   element.dataset.moneyCurrent = String(target);
-  element.setAttribute("aria-label", money(target));
+  element.setAttribute("aria-label", moneyForElement(element, target));
 
   if (!hasPreviousValue || Math.abs(target - previous) < 0.5 || !canAnimateMoney()) {
     element.classList.remove("money-rolling");
@@ -103,7 +112,7 @@ function setAnimatedMoney(elementOrId, targetValue) {
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = previous + (target - previous) * eased;
 
-      element.textContent = money(Math.round(current));
+      element.textContent = moneyForElement(element, Math.round(current));
       element.dataset.moneyCurrent = String(current);
 
       if (progress < 1) {
@@ -111,7 +120,7 @@ function setAnimatedMoney(elementOrId, targetValue) {
         return;
       }
 
-      element.textContent = money(target);
+      element.textContent = moneyForElement(element, target);
       element.dataset.moneyCurrent = String(target);
       moneyAnimationFrames.delete(element);
     };
@@ -282,11 +291,11 @@ function escapeHtml(s="") {
   }[c]));
 }
 
-// Cuenta corriente compensada:
+// Billeteras espejo compensadas:
 // - Chofer → Explora: 50% de Efectivo/Uber + 5% de caja chica + deuda.
 // - Explora → Chofer: 50% de Digital + 50% de gastos.
-// - Los ajustes se suman a la columna receptora hasta igualar ambos subtotales.
-// - El único saldo pendiente es la diferencia entre las dos columnas.
+// - El saldo positivo identifica quién debe compensar; el negativo, quién recibe.
+// - Ambas billeteras muestran siempre el mismo saldo con signos opuestos.
 function settlementModel() {
   const cashRevenue = revenueTotalFor("cash");
   const uber = uberTodayTotal();
@@ -313,6 +322,9 @@ function settlementModel() {
   const baseBalance = cashDebt - digitalDebt;
   const balance = baseBalance - driverPaid + exploraPaid;
   const amount = Math.abs(balance);
+  const normalizedBalance = amount > 0.5 ? balance : 0;
+  const driverWallet = normalizedBalance;
+  const exploraWallet = -normalizedBalance;
 
   let from = "balanced";
   let to = "balanced";
@@ -329,18 +341,38 @@ function settlementModel() {
     cashShare, uberShare, digitalShare, cashBox, expenseHalf,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
     cashAdjusted, digitalAdjusted,
-    cashDebt, digitalDebt, balance, amount, from, to,
+    cashDebt, digitalDebt, balance: normalizedBalance, amount: Math.abs(normalizedBalance),
+    driverWallet, exploraWallet, from, to,
     grand: cashRevenue + uber + digitalRevenue
   };
+}
+
+function renderWalletStatus(elementId, walletBalance) {
+  const element = $(elementId);
+  if (!element) return;
+
+  element.classList.remove("is-paying", "is-receiving", "is-balanced");
+  if (walletBalance > 0.5) {
+    element.textContent = "Debe compensar";
+    element.classList.add("is-paying");
+  } else if (walletBalance < -0.5) {
+    element.textContent = "Debe recibir";
+    element.classList.add("is-receiving");
+  } else {
+    element.textContent = "Billetera equilibrada";
+    element.classList.add("is-balanced");
+  }
 }
 
 function renderSettlement(model) {
   const label = $("summarySettlementLabel");
   const amount = $("summarySettlementAmount");
+  const note = $("summarySettlementNote");
 
   if (model.from === "balanced") {
-    label.textContent = "Equilibrado";
+    label.textContent = "Billeteras equilibradas";
     setAnimatedMoney(amount, 0);
+    if (note) note.textContent = "No hay pagos pendientes.";
     return;
   }
 
@@ -348,6 +380,7 @@ function renderSettlement(model) {
     ? "Chofer paga a Explora"
     : "Explora paga al chofer";
   setAnimatedMoney(amount, model.amount);
+  if (note) note.textContent = "Para equilibrar ambas billeteras.";
 }
 
 function render() {
@@ -384,14 +417,16 @@ function render() {
   const visibleCashItems = cashItems.slice(0, RECENT_RECEIPTS_LIMIT);
   const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
 
-  setAnimatedMoney("cashTotal", model.cashAdjusted);
+  setAnimatedMoney("cashTotal", model.driverWallet);
+  renderWalletStatus("cashWalletStatus", model.driverWallet);
   $("cashBaseTotal").textContent = money(model.cashShare);
   $("uberCashTotal").textContent = money(model.uberShare);
   $("cashBoxTotal").textContent = money(model.cashBox);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
   $("adminDebtTotal").textContent = money(model.adminDebt);
 
-  setAnimatedMoney("digitalTotal", model.digitalAdjusted);
+  setAnimatedMoney("digitalTotal", model.exploraWallet);
+  renderWalletStatus("digitalWalletStatus", model.exploraWallet);
   $("digitalBaseTotal").textContent = money(model.digitalShare);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   $("expenseHalfTotal").textContent = money(model.expenseHalf);

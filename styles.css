@@ -432,6 +432,10 @@ input[type="file"]::file-selector-button {
   text-transform: uppercase;
 }
 
+.panel-direction.is-paying { color: #a76f00; }
+.panel-direction.is-receiving { color: #16894b; }
+.panel-direction.is-balanced { color: #7d8698; }
+
 .panel-total {
   margin: 7px 0 12px;
   color: var(--ink);
