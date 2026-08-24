@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-15" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-18" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -129,9 +129,10 @@
       <article class="money-panel">
         <div class="panel-head">
           <div class="panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"/></svg></span><span>Chofer</span></div>
+          <div class="panel-direction">A favor de Explora</div>
           <div class="panel-total" id="cashTotal">$ 0</div>
-          <div class="adjustment"><span>+ Efectivo</span><strong id="cashBaseTotal">$ 0</strong></div>
-          <div class="adjustment"><span>+ Uber</span><strong id="uberCashTotal">$ 0</strong></div>
+          <div class="adjustment"><span>+ Efectivo 50%</span><strong id="cashBaseTotal">$ 0</strong></div>
+          <div class="adjustment"><span>+ Uber 50%</span><strong id="uberCashTotal">$ 0</strong></div>
           <div class="adjustment debt-adjustment"><span>+ Deuda</span><span class="adjustment-value"><strong id="adminDebtTotal">$ 0</strong><button id="addDebtBtn" class="debt-add hidden" type="button" aria-label="Cargar deuda" title="Cargar deuda">+</button></span></div>
           <div class="adjustment"><span>Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
@@ -148,8 +149,9 @@
       <article class="money-panel">
         <div class="panel-head">
           <div class="panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 20V8l6-4 6 4v12M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></span><span>Explora</span></div>
+          <div class="panel-direction">A favor del chofer</div>
           <div class="panel-total" id="digitalTotal">$ 0</div>
-          <div class="adjustment"><span>+ Digital</span><strong id="digitalBaseTotal">$ 0</strong></div>
+          <div class="adjustment"><span>+ Digital 50%</span><strong id="digitalBaseTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Gastos 50%</span><strong id="expenseHalfTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
           <div class="panel-action-stack">
@@ -293,6 +295,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-16"></script>
+<script type="module" src="./app.js?v=20260824-18"></script>
 </body>
 </html>

@@ -423,8 +423,17 @@ input[type="file"]::file-selector-button {
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
+.panel-direction {
+  margin-top: 7px;
+  color: #8a93a4;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 .panel-total {
-  margin: 11px 0 12px;
+  margin: 7px 0 12px;
   color: var(--ink);
   font-size: clamp(29px, 3.5vw, 39px);
   font-weight: 950;
@@ -1296,7 +1305,8 @@ a.proof:hover { background: #e3e7f0; }
   .panel-head { padding: 13px 10px; }
   .panel-tag { gap: 6px; font-size: 9px; letter-spacing: .05em; }
   .panel-tag::before { width: 7px; height: 7px; box-shadow: 0 0 0 3px var(--green-soft); }
-  .panel-total { margin: 9px 0; font-size: 22px; letter-spacing: -.8px; }
+  .panel-direction { margin-top: 5px; font-size: 7px; letter-spacing: .04em; }
+  .panel-total { margin: 6px 0 9px; font-size: 22px; letter-spacing: -.8px; }
   .adjustment { min-height: 28px; padding: 6px 0; font-size: 8px; }
   .adjustment strong { font-size: 9px; }
   .adjustment-total { padding: 8px 0 11px; }

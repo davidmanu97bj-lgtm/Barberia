@@ -282,14 +282,11 @@ function escapeHtml(s="") {
   }[c]));
 }
 
-// Lógica de equilibrio de la barbería:
-// - Efectivo conserva el 100% de los cobros en efectivo.
-// - El chofer conserva también el 100% de Uber.
-// - Digital conserva el 100% de los cobros digitales.
-// - Para equilibrar 50/50, Efectivo + Uber generan deuda del 50% hacia Digital.
-// - Caja chica: 5% completo sobre Efectivo + Uber, porque ambos quedan en manos del chofer.
-// - Gastos: Digital reconoce el 50% de cada gasto pagado por el chofer.
-// - Deuda: el administrador la suma a Efectivo por su valor completo; no genera caja chica.
+// Cuenta corriente compensada:
+// - Chofer → Explora: 50% de Efectivo/Uber + 5% de caja chica + deuda.
+// - Explora → Chofer: 50% de Digital + 50% de gastos.
+// - Los ajustes se suman a la columna receptora hasta igualar ambos subtotales.
+// - El único saldo pendiente es la diferencia entre las dos columnas.
 function settlementModel() {
   const cashRevenue = revenueTotalFor("cash");
   const uber = uberTodayTotal();
@@ -301,19 +298,19 @@ function settlementModel() {
   const digital = digitalRevenue;
   const expense = expensesTotal();
   const driverHeld = cashRevenue + uber;
+  const cashShare = cashRevenue * 0.50;
+  const uberShare = uber * 0.50;
+  const digitalShare = digitalRevenue * 0.50;
   const cashBox = driverHeld * 0.05;
   const expenseHalf = expense * 0.50;
 
-  // Totales visuales de cada lado.
-  const cashAdjusted = driverHeld + exploraPaid + adminDebt + cashBox;
-  const digitalAdjusted = digitalRevenue + driverPaid + expenseHalf;
-
-  // Deudas usadas para definir quién paga a quién.
-  const cashDebt = (driverHeld * 0.50) + cashBox + adminDebt;
-  const digitalDebt = (digitalRevenue * 0.50) + expenseHalf;
+  // Obligaciones base antes de pagos compensatorios anteriores.
+  const cashDebt = cashShare + uberShare + cashBox + adminDebt;
+  const digitalDebt = digitalShare + expenseHalf;
+  // Un pago del chofer completa Explora; uno de Explora completa Chofer.
+  const cashAdjusted = cashDebt + exploraPaid;
+  const digitalAdjusted = digitalDebt + driverPaid;
   const baseBalance = cashDebt - digitalDebt;
-  // Los ajustes son transferencias entre las partes, no nueva facturación.
-  // Por eso reducen el saldo por su valor completo y no vuelven a dividirse 50/50.
   const balance = baseBalance - driverPaid + exploraPaid;
   const amount = Math.abs(balance);
 
@@ -328,7 +325,8 @@ function settlementModel() {
   }
 
   return {
-    cash, uber, digital, expense, adminDebt, driverHeld, cashBox, expenseHalf,
+    cash, uber, digital, expense, adminDebt, driverHeld,
+    cashShare, uberShare, digitalShare, cashBox, expenseHalf,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
     cashAdjusted, digitalAdjusted,
     cashDebt, digitalDebt, balance, amount, from, to,
@@ -387,14 +385,14 @@ function render() {
   const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
 
   setAnimatedMoney("cashTotal", model.cashAdjusted);
-  $("cashBaseTotal").textContent = money(model.cash);
-  $("uberCashTotal").textContent = money(model.uber);
+  $("cashBaseTotal").textContent = money(model.cashShare);
+  $("uberCashTotal").textContent = money(model.uberShare);
   $("cashBoxTotal").textContent = money(model.cashBox);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
   $("adminDebtTotal").textContent = money(model.adminDebt);
 
   setAnimatedMoney("digitalTotal", model.digitalAdjusted);
-  $("digitalBaseTotal").textContent = money(model.digital);
+  $("digitalBaseTotal").textContent = money(model.digitalShare);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   $("expenseHalfTotal").textContent = money(model.expenseHalf);
 
