@@ -40,7 +40,7 @@
     .summary:after{content:"";position:absolute;width:210px;height:210px;border-radius:50%;right:-75px;top:-120px;background:radial-gradient(circle,rgba(25,164,99,.28),rgba(25,164,99,0) 68%);pointer-events:none}
     .summary small{color:#a8afb9;font-weight:750;font-size:10px;text-transform:uppercase;letter-spacing:.12em}.summary .summary-payee{font-size:13px;color:#f1f3f5;font-weight:850;margin-top:7px}.summary .summary-when{font-size:9px;color:#8e96a0;margin-top:4px;font-weight:650}.summary .value{font-size:clamp(28px,4vw,42px);font-weight:950;letter-spacing:-1.6px;margin-top:2px;line-height:1}.summary .day{position:relative;z-index:1;font-size:11px;color:#c7ccd2;text-align:right;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);padding:8px 10px;border-radius:999px;white-space:nowrap}
 
-    .workspace{display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);gap:13px;align-items:start}
+    .workspace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
     .money-panel,.settlement{background:rgba(255,255,255,.96);border:1px solid rgba(15,17,21,.065);border-radius:var(--radius);box-shadow:var(--shadow-soft);overflow:hidden}
     .money-panel{transition:.18s ease}.money-panel:hover{box-shadow:var(--shadow)}
     .panel-head{padding:19px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff 0%,#fdfdfd 100%)}
@@ -87,7 +87,7 @@
       .login-screen{padding:18px}.login-card{padding:27px 22px;border-radius:26px}
       .topbar{padding:11px 10px}.mini-mark{width:38px;height:38px;border-radius:12px}.brand-title{font-size:13px}.brand-sub{font-size:9px}.logout-text{display:none}.ghost{padding:9px 10px}
       .main{padding:13px 7px 28px}.summary{padding:16px;border-radius:19px;margin-bottom:9px}.summary .value{font-size:25px;letter-spacing:-1px}.summary .summary-payee{font-size:11px}.summary .day{font-size:9px;padding:6px 8px}
-      .workspace{grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);gap:6px}.money-panel,.settlement{border-radius:17px}.panel-head{padding:12px 9px}.panel-tag{font-size:8px;letter-spacing:.07em}.panel-tag:before{width:6px;height:6px;box-shadow:0 0 0 3px var(--accent-soft)}
+      .workspace{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.money-panel{border-radius:17px}.panel-head{padding:12px 9px}.panel-tag{font-size:8px;letter-spacing:.07em}.panel-tag:before{width:6px;height:6px;box-shadow:0 0 0 3px var(--accent-soft)}
       .panel-total{font-size:20px;margin:7px 0 7px;letter-spacing:-.7px}.adjustment{font-size:7px;padding:5px 0;gap:4px}.adjustment strong{font-size:8px}.adjustment-total{padding:7px 0 9px}.adjustment-total span{font-size:7px}.adjustment-total strong{font-size:13px}.collect{padding:10px 5px;border-radius:11px;font-size:9px}.collect.secondary-action{margin-top:6px}
       .panel-body{padding:7px;background:#fbfcfd}.empty{padding:22px 5px;font-size:8px;border-radius:11px}.receipt{border-radius:11px;padding:8px;margin-bottom:6px}.receipt strong,.receipt .amount{font-size:9px}.receipt-meta{font-size:7px;display:block;line-height:1.3}.receipt-meta .proof{display:inline-block;margin-top:4px}.proof{font-size:7px;padding:2px 5px}
       .settlement{top:73px;padding:11px 5px}.settle-icon{width:34px;height:34px;border-radius:10px;font-size:10px;margin-bottom:8px}.settlement h3{font-size:10px}.mini-total{font-size:7px}.mini-total strong{font-size:13px}.uber-button{font-size:7px;padding:8px 3px}.uber-list{max-height:230px;margin-top:7px}.uber-receipt{padding:7px 0}.uber-receipt strong{font-size:8px}.uber-receipt small,.uber-receipt .proof{font-size:6px}.divider{margin:9px 0}
@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-8" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-11" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -123,7 +123,7 @@
   <main class="main">
     <section class="summary">
       <div><small>Quién paga a quién</small><div class="summary-payee" id="summarySettlementLabel">Equilibrado</div><div class="value" id="summarySettlementAmount">$ 0</div><div class="summary-when">Se liquida al pedir cierre</div></div>
-      <div class="summary-actions"><button id="addExpenseBtn" class="summary-expense-button" type="button"><span class="summary-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Cargar gasto</span></button><div id="syncStatus" class="sync">Conectando…</div></div>
+      <div class="summary-actions"><div id="syncStatus" class="sync">Conectando…</div></div>
     </section>
     <section class="workspace">
       <article class="money-panel">
@@ -135,25 +135,16 @@
           <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
           <div class="adjustment debt-adjustment"><span>+ Deuda</span><span class="adjustment-value"><strong id="adminDebtTotal">$ 0</strong><button id="addDebtBtn" class="debt-add hidden" type="button" aria-label="Cargar deuda" title="Cargar deuda">+</button></span></div>
           <div class="adjustment"><span>Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
-          <button class="collect panel-action" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
+          <div class="panel-action-stack">
+            <button class="collect panel-action" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
+            <button id="addUberBtn" class="collect panel-secondary-action" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar Uber</span></button>
+          </div>
         </div>
         <div class="panel-body">
           <div class="records-heading"><span>Comprobantes</span><b id="cashCount">0</b></div>
-          <div id="cashList" class="proof-list"><div class="empty">Los cobros en efectivo aparecerán acá.</div></div>
+          <div id="cashList" class="proof-list"><div class="empty">Los cobros en efectivo y Uber aparecerán acá.</div></div>
         </div>
       </article>
-      <aside class="settlement">
-        <div class="panel-head uber-panel-head">
-          <div class="panel-tag uber-panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 16h14M7 16l1-5h8l1 5M8 11l1.2-3h5.6l1.2 3M6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg></span><span>Uber</span></div>
-          <div class="uber-total-label">Cargado hoy</div>
-          <div class="panel-total uber-panel-total" id="uberTotal">$ 0</div>
-          <button id="addUberBtn" class="collect secondary-action uber-button" type="button">+ Cargar Uber</button>
-        </div>
-        <div class="panel-body">
-          <div class="records-heading records-heading-uber"><span>Comprobantes</span><b id="uberCount">0</b></div>
-          <div id="uberList" class="uber-list proof-list"><div class="uber-empty">Los cierres semanales aparecerán acá.</div></div>
-        </div>
-      </aside>
       <article class="money-panel">
         <div class="panel-head">
           <div class="panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 20V8l6-4 6 4v12M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></span><span>Explora</span></div>
@@ -161,7 +152,10 @@
           <div class="adjustment"><span>+ Digital</span><strong id="digitalBaseTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Gastos 50%</span><strong id="expenseHalfTotal">$ 0</strong></div>
-          <button class="collect panel-action" data-mode="digital"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar digital</span></button>
+          <div class="panel-action-stack">
+            <button class="collect panel-action" data-mode="digital"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar digital</span></button>
+            <button id="addExpenseBtn" class="collect panel-secondary-action" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar gastos</span></button>
+          </div>
         </div>
         <div class="panel-body">
           <div class="records-heading"><span>Comprobantes</span><b id="digitalCount">0</b></div>
@@ -299,6 +293,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-9"></script>
+<script type="module" src="./app.js?v=20260824-11"></script>
 </body>
 </html>

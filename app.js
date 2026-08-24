@@ -1,4 +1,4 @@
-import * as firebaseSettings from "./firebase-config.js?v=20260824-9";
+import * as firebaseSettings from "./firebase-config.js?v=20260824-11";
 
 const { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } = firebaseSettings;
 const LOGIN_ALIASES = firebaseSettings.LOGIN_ALIASES || {};
@@ -156,6 +156,9 @@ function isAdminDebt(item) {
 function isExpenseReceipt(item) {
   return item.type === "expense_receipt";
 }
+function isUberReceipt(item) {
+  return item.type === "uber_receipt";
+}
 function revenueTotalFor(method) {
   return payments
     .filter(p => p.method === method && !isSettlementAdjustment(p))
@@ -274,7 +277,14 @@ function render() {
   const model = settlementModel();
   const cashItems = [
     ...payments.filter(p => p.method === "cash"),
-    ...debts.map(item => ({ ...item, method: "cash", type: "admin_debt", service: "Deuda" }))
+    ...debts.map(item => ({ ...item, method: "cash", type: "admin_debt", service: "Deuda" })),
+    ...uberClosures.map(item => ({
+      ...item,
+      method: "cash",
+      type: "uber_receipt",
+      service: "Uber",
+      detail: `Cierre semanal · ${formatDate(item.weekCloseDate)}`
+    }))
   ].sort((a, b) => {
     const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
     const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
@@ -309,16 +319,12 @@ function render() {
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   $("expenseHalfTotal").textContent = money(model.expenseHalf);
 
-  $("uberTotal").textContent = money(model.uber);
-
   $("cashCount").textContent = visibleCashItems.length;
   $("digitalCount").textContent = visibleDigitalItems.length;
-  $("uberCount").textContent = Math.min(uberClosures.length, RECENT_RECEIPTS_LIMIT);
 
   renderSettlement(model);
   renderList("cashList", visibleCashItems, false);
   renderList("digitalList", visibleDigitalItems, true);
-  renderUberList();
 }
 
 function renderList(containerId, items, isDigital) {
@@ -326,14 +332,15 @@ function renderList(containerId, items, isDigital) {
   if (!items.length) {
     box.innerHTML = `<div class="empty">${isDigital
       ? "Los cobros digitales y los gastos aparecerán acá."
-      : "Los cobros en efectivo aparecerán acá."}</div>`;
+      : "Los cobros en efectivo y Uber aparecerán acá."}</div>`;
     return;
   }
   box.innerHTML = items.map(item => {
     const time = item.createdAt?.toDate
       ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
       : "Ahora";
-    const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item);
+    const uberReceipt = isUberReceipt(item);
+    const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item) || uberReceipt;
     const proof = showsProof
       ? (item.proofUrl
           ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
@@ -342,11 +349,16 @@ function renderList(containerId, items, isDigital) {
     const expenseReceipt = isExpenseReceipt(item);
     const icon = expenseReceipt
       ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`
+      : uberReceipt
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h14M7 16l1-5h8l1 5M8 11l1.2-3h5.6l1.2 3M6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>`
       : isDigital
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
         : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
     const amountPrefix = "+";
-    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""}">
+    const footerLabel = uberReceipt
+      ? `${escapeHtml(item.weekKey || "Semana")} · cierre ${formatDate(item.weekCloseDate)}`
+      : `Hoy · ${time}`;
+    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""} ${uberReceipt ? "receipt-uber" : ""}">
       <div class="receipt-main">
         <span class="receipt-icon">${icon}</span>
         <div class="receipt-copy">
@@ -356,29 +368,8 @@ function renderList(containerId, items, isDigital) {
         <div class="amount">${amountPrefix}${money(item.amount)}</div>
       </div>
       <div class="receipt-footer">
-        <span>Hoy · ${time}</span>${proof}
+        <span>${footerLabel}</span>${proof}
       </div>
-    </article>`;
-  }).join("");
-}
-
-function renderUberList() {
-  const box = $("uberList");
-  if (!uberClosures.length) {
-    box.innerHTML = `<div class="uber-empty">Los cierres semanales aparecerán acá.</div>`;
-    return;
-  }
-
-  box.innerHTML = uberClosures.slice(0, RECENT_RECEIPTS_LIMIT).map(item => {
-    const proof = item.proofUrl
-      ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
-      : `<span class="proof">Sin archivo</span>`;
-    const todayMark = item.dayKey === localDayKey() ? " · suma hoy" : "";
-    return `<article class="uber-receipt ${item.proofUrl ? "completed" : "pending"}">
-      <span class="uber-week">${escapeHtml(item.weekKey || "Semana")}</span>
-      <strong>${money(item.amount)}</strong>
-      <small>Cierre ${formatDate(item.weekCloseDate)}${todayMark}</small>
-      ${proof}
     </article>`;
   }).join("");
 }
