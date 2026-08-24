@@ -460,6 +460,18 @@ input[type="file"]::file-selector-button {
   font-weight: 850;
 }
 
+.adjustment > span:first-child {
+  min-width: 0;
+  padding-right: 7px;
+  line-height: 1.22;
+}
+
+.adjustment > strong,
+.adjustment-value {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .adjustment-total {
   padding: 11px 0 15px;
   border-top: 1px solid var(--line);
@@ -1584,7 +1596,7 @@ a.proof:hover { background: #e3e7f0; }
 
 .money-panel .panel-head {
   display: flex;
-  min-height: 420px;
+  min-height: 500px;
   flex-direction: column;
 }
 
@@ -1863,7 +1875,7 @@ a.proof:hover { background: #e3e7f0; }
     border-radius: 9px;
   }
 
-  .money-panel .panel-head { min-height: 365px; }
+  .money-panel .panel-head { min-height: 420px; }
 
   .panel-tag-icon {
     width: 25px;
@@ -1952,7 +1964,7 @@ a.proof:hover { background: #e3e7f0; }
 
 @media (max-width: 380px) {
   .brand-logo-shell { width: 176px; }
-  .money-panel .panel-head { min-height: 365px; }
+  .money-panel .panel-head { min-height: 420px; }
 }
 
 /* Resumen central y comprobantes completamente uniformes. */

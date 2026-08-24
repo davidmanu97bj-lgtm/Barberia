@@ -364,23 +364,8 @@ function renderWalletStatus(elementId, walletBalance) {
   }
 }
 
-function renderSettlement(model) {
-  const label = $("summarySettlementLabel");
-  const amount = $("summarySettlementAmount");
-  const note = $("summarySettlementNote");
-
-  if (model.from === "balanced") {
-    label.textContent = "Billeteras equilibradas";
-    setAnimatedMoney(amount, 0);
-    if (note) note.textContent = "No hay pagos pendientes.";
-    return;
-  }
-
-  label.textContent = model.from === "cash"
-    ? "Chofer paga a Explora"
-    : "Explora paga al chofer";
-  setAnimatedMoney(amount, model.amount);
-  if (note) note.textContent = "Para equilibrar ambas billeteras.";
+function renderBilledTotal(model) {
+  setAnimatedMoney("summaryBilledAmount", model.grand);
 }
 
 function render() {
@@ -419,22 +404,25 @@ function render() {
 
   setAnimatedMoney("cashTotal", model.driverWallet);
   renderWalletStatus("cashWalletStatus", model.driverWallet);
-  $("cashBaseTotal").textContent = money(model.cashShare);
-  $("uberCashTotal").textContent = money(model.uberShare);
+  $("cashBaseTotal").textContent = money(model.cashRevenue);
+  $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
+  $("cashExpenseTotal").textContent = money(model.expense);
+  $("driverExpenseHalfTotal").textContent = money(model.expenseHalf);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
   $("adminDebtTotal").textContent = money(model.adminDebt);
 
   setAnimatedMoney("digitalTotal", model.exploraWallet);
   renderWalletStatus("digitalWalletStatus", model.exploraWallet);
-  $("digitalBaseTotal").textContent = money(model.digitalShare);
+  $("digitalBaseTotal").textContent = money(model.digitalRevenue);
+  $("digitalExpenseTotal").textContent = money(model.expense);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   $("expenseHalfTotal").textContent = money(model.expenseHalf);
 
   $("cashCount").textContent = visibleCashItems.length;
   $("digitalCount").textContent = visibleDigitalItems.length;
 
-  renderSettlement(model);
+  renderBilledTotal(model);
   renderList("cashList", visibleCashItems, false);
   renderList("digitalList", visibleDigitalItems, true);
 }
