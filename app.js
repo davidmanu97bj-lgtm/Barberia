@@ -1903,6 +1903,7 @@ $("addExpenseBtn")?.addEventListener("click", () => {
   $("expenseForm").reset();
   $("expenseStatus").textContent = "";
   $("expenseStatus").className = "status";
+  $("expenseSummary")?.classList.add("hidden");
   $("expenseModal").classList.remove("hidden");
 });
 
@@ -2031,6 +2032,9 @@ $("expenseForm")?.addEventListener("submit", async e => {
     const proofUrl = await getDownloadURL(storageRef);
 
     const expensesRef = collection(db, ROOT_COLLECTIONS.expenses);
+    const expenseBefore = expensesTotal();
+    const reimbursementAppliedBefore = reimbursementCompensationTotal();
+
     await addDoc(expensesRef, {
       amount,
       monto: amount,
@@ -2064,7 +2068,17 @@ $("expenseForm")?.addEventListener("submit", async e => {
       createdAt: serverTimestamp()
     });
 
-    $("expenseModal").classList.add("hidden");
+    const accumulatedTotal = expenseBefore + amount;
+    const exploraReimbursement = Math.max(0, accumulatedTotal * 0.50 - reimbursementAppliedBefore);
+    $("expenseSummaryLoaded").textContent = money(amount);
+    $("expenseSummaryTotal").textContent = money(accumulatedTotal);
+    $("expenseSummaryReimbursement").textContent = money(exploraReimbursement);
+    $("expenseSummary")?.classList.remove("hidden");
+    $("expenseStatus").textContent = "Gasto registrado correctamente.";
+    $("expenseStatus").className = "status success";
+    $("expenseAmount").value = "";
+    $("expenseDetail").value = "";
+    $("expenseProof").value = "";
   } catch (err) {
     console.error(err);
     $("expenseStatus").textContent = "No se pudo registrar el gasto.";

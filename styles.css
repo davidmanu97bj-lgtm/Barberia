@@ -2951,3 +2951,37 @@ a.proof:hover { background: #e3e7f0; }
   .advance-box p { font-size: 11px; }
   .advance-btn { width: 100%; font-size: 12px; }
 }
+
+
+/* Resumen inmediato después de registrar un gasto */
+.expense-summary {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(220, 38, 38, .16);
+  border-radius: 18px;
+  background: rgba(254, 242, 242, .72);
+}
+.expense-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+.expense-summary-row + .expense-summary-row {
+  border-top: 1px solid rgba(148, 163, 184, .20);
+}
+.expense-summary-row strong {
+  color: var(--ink);
+  font-size: 18px;
+  white-space: nowrap;
+}
+.expense-summary-reimbursement {
+  margin-top: 2px;
+}
+.expense-summary-reimbursement span,
+.expense-summary-reimbursement strong {
+  color: var(--green);
+}
