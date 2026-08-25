@@ -977,9 +977,6 @@ function openCashboxAmount() {
   const uberCashbox = uberClosures
     .filter(item => !movementIsDeleted(item) && recordTimestampMs(item) > cutoff)
     .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
-    // Regla autoritativa: Caja chica = 5% de (Efectivo + Uber).
-    // Para Uber siempre usamos el importe bruto, aunque registros históricos
-    // tengan cashboxAmount/uberCashboxAmount guardados con otra lógica.
     .reduce((sum,item) => sum + Number(item.amount || 0) * 0.05, 0);
   return regularCash + uberCashbox;
 }
@@ -989,11 +986,11 @@ function openExpenses() {
   return expenses.filter(item => recordTimestampMs(item) > cutoff);
 }
 
-// Billeteras espejo compensadas — misma lógica de Santander Main:
-// - Facturación abierta = efectivo + digital desde el último cierre de facturación.
-// - Cada parte corresponde al 50% del total facturado.
-// - Caja chica = 5% de (efectivo + Uber) y se suma a lo que debe liquidar el chofer.
-// - Uber, gastos, deudas y adelantos son módulos separados y NO cambian este saldo.
+// Billeteras espejo compensadas — regla operativa vigente:
+// - Facturación compartida = efectivo + Uber + digital.
+// - El chofer conserva físicamente 100% de efectivo y Uber, pero debe reintegrar 50% de ambos a Explora.
+// - Caja chica = 5% de (efectivo + Uber) y también se suma a lo que debe liquidar el chofer.
+// - Gastos, deudas y adelantos se mantienen como módulos separados.
 
 // - Explora → Chofer: 50% de Digital que no se haya aplicado a un adelanto.
 // - El saldo positivo identifica quién debe compensar; el negativo, quién recibe.
@@ -1003,41 +1000,46 @@ function settlementModel() {
   const digitalRevenue = revenueTotalFor("digital");
   const driverPaid = adjustmentTotal("driver_to_explora");
   const exploraPaid = adjustmentTotal("explora_to_driver");
+  const uberRevenue = uberClosures
+    .filter(item => !movementIsDeleted(item))
+    .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
+    .reduce((sum,item) => sum + Number(item.amount || 0), 0);
   const cash = cashRevenue;
   const digital = digitalRevenue;
   const expense = expensesTotal();
   const cashShare = cashRevenue * 0.50;
+  const uberShare = uberRevenue * 0.50;
   const digitalShare = digitalRevenue * 0.50;
   const cashBox = openCashboxAmount();
   const expenseHalf = expense * 0.50;
   const reimbursementApplied = Math.min(reimbursementCompensationTotal(), expenseHalf);
   const expenseReimbursement = Math.max(0, expenseHalf - reimbursementApplied);
 
-  // Fórmula autoritativa del Explorer anterior:
-  // (50% efectivo + 5% caja chica) - 50% digital,
-  // corregida únicamente por pagos de liquidación ya registrados en el período.
-  const baseBalance = cashShare + cashBox - digitalShare;
+  // Fórmula autoritativa vigente:
+  // 50% efectivo + 50% Uber + 5% de (efectivo + Uber) - 50% digital,
+  // corregida únicamente por pagos de liquidación ya registrados.
+  const baseBalance = cashShare + uberShare + cashBox - digitalShare;
   const balance = baseBalance - driverPaid + exploraPaid;
   const normalizedBalance = Math.abs(balance) > 0.5 ? balance : 0;
   const compensationAvailable = Math.min(expenseReimbursement, Math.max(0, normalizedBalance));
 
   return {
-    cash, uber:uberClosures.filter(item => !movementIsDeleted(item)).reduce((sum,item)=>sum+Number(item.amount||0),0), digital, expense,
+    cash, uber:uberRevenue, digital, expense,
     adminDebt:debtsTotal(), advanceDebt:advancesOutstandingTotal(), advanceRepaidToday:advanceRepaymentAppliedTotal(),
-    driverHeld:cashRevenue,
-    cashShare, uberShare:0, digitalShare, digitalShareGross:digitalShare,
+    driverHeld:cashRevenue + uberRevenue,
+    cashShare, uberShare, digitalShare, digitalShareGross:digitalShare,
     cashBox, expenseHalf, expenseReimbursement, reimbursementApplied, compensationAvailable,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
-    cashAdjusted:cashShare + cashBox + exploraPaid,
+    cashAdjusted:cashShare + uberShare + cashBox + exploraPaid,
     digitalAdjusted:digitalShare + driverPaid,
-    cashDebt:cashShare + cashBox,
+    cashDebt:cashShare + uberShare + cashBox,
     digitalDebt:digitalShare,
     balance:normalizedBalance, amount:Math.abs(normalizedBalance),
     driverWallet:normalizedBalance, exploraWallet:-normalizedBalance,
     from:normalizedBalance > 0.5 ? "cash" : normalizedBalance < -0.5 ? "digital" : "balanced",
     to:normalizedBalance > 0.5 ? "digital" : normalizedBalance < -0.5 ? "cash" : "balanced",
-    grand:cashRevenue + digitalRevenue,
-    billingShareEach:(cashRevenue + digitalRevenue) * 0.50,
+    grand:cashRevenue + uberRevenue + digitalRevenue,
+    billingShareEach:(cashRevenue + uberRevenue + digitalRevenue) * 0.50,
     billingCutoffMs:0
   };
 }
