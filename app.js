@@ -27,6 +27,11 @@ const authReady = setPersistence(auth, browserLocalPersistence)
 const AUTH_READY_TIMEOUT_MS = 2500;
 
 const $ = id => document.getElementById(id);
+const SPLASH_MIN_VISIBLE_MS = 900;
+let splashStartedAt = Date.now();
+let splashProgress = 4;
+let splashTimer = null;
+let splashTransition = 0;
 let unsubscribePayments = null;
 let unsubscribeExpenses = null;
 let unsubscribeUber = null;
@@ -50,6 +55,76 @@ const UBER_TRACKING_START_DATE = "2026-08-24";
 const ADVANCE_MAX_AMOUNT = 400000;
 const ADVANCE_INTEREST_RATE = 0.40;
 const ADVANCE_DIFFERENCE_LIMIT = 50000;
+
+function setSplashProgress(value) {
+  const progress = Math.max(0, Math.min(100, Number(value) || 0));
+  splashProgress = progress;
+
+  const arc = $("splashProgressArc");
+  const dot = $("splashProgressDot");
+  const progressBox = document.querySelector(".splash-progress");
+  if (arc) arc.style.strokeDashoffset = String(100 - progress);
+  if (progressBox) progressBox.setAttribute("aria-valuenow", String(Math.round(progress)));
+
+  if (dot) {
+    const angle = (-90 + (360 * progress / 100)) * Math.PI / 180;
+    dot.setAttribute("cx", String(60 + 48 * Math.cos(angle)));
+    dot.setAttribute("cy", String(60 + 48 * Math.sin(angle)));
+  }
+}
+
+function startSplash() {
+  splashTransition += 1;
+  splashStartedAt = Date.now();
+  splashProgress = 4;
+  $("splashScreen")?.classList.remove("hidden", "is-leaving");
+  $("loginScreen")?.classList.add("hidden");
+  $("app")?.classList.add("hidden");
+  setSplashProgress(splashProgress);
+
+  if (splashTimer) window.clearInterval(splashTimer);
+  splashTimer = window.setInterval(() => {
+    const remaining = 91 - splashProgress;
+    setSplashProgress(Math.min(91, splashProgress + Math.max(1.1, remaining * .075)));
+  }, 90);
+}
+
+async function finishSplash(targetId) {
+  const transitionId = ++splashTransition;
+  if (splashTimer) {
+    window.clearInterval(splashTimer);
+    splashTimer = null;
+  }
+
+  const elapsed = Date.now() - splashStartedAt;
+  if (elapsed < SPLASH_MIN_VISIBLE_MS) {
+    await new Promise(resolve => window.setTimeout(resolve, SPLASH_MIN_VISIBLE_MS - elapsed));
+  }
+  if (transitionId !== splashTransition) return;
+
+  setSplashProgress(100);
+  await new Promise(resolve => window.setTimeout(resolve, 190));
+  if (transitionId !== splashTransition) return;
+
+  const splash = $("splashScreen");
+  splash?.classList.add("is-leaving");
+  await new Promise(resolve => window.setTimeout(resolve, 220));
+  if (transitionId !== splashTransition) return;
+
+  splash?.classList.add("hidden");
+  splash?.classList.remove("is-leaving");
+  $("loginScreen")?.classList.toggle("hidden", targetId !== "loginScreen");
+  $("app")?.classList.toggle("hidden", targetId !== "app");
+}
+
+startSplash();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .catch(err => console.warn("No se pudo registrar el acceso directo:", err));
+  });
+}
 
 const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
@@ -993,12 +1068,12 @@ $("loginForm")?.addEventListener("submit", async e => {
     if (!usernameOrEmail || !password) {
       throw Object.assign(new Error("Faltan credenciales"), { code: "auth/invalid-credential" });
     }
+    startSplash();
     await waitForAuthReady();
     await signInFromLogin(usernameOrEmail, password);
-    $("loginStatus").textContent = "Acceso correcto. Cargando caja…";
-    $("loginStatus").className = "status success";
   } catch (err) {
     console.error(err);
+    await finishSplash("loginScreen");
     $("loginStatus").textContent = loginErrorMessage(err);
     $("loginStatus").className = "status error";
   } finally {
@@ -1007,7 +1082,15 @@ $("loginForm")?.addEventListener("submit", async e => {
   }
 });
 
-$("logoutBtn")?.addEventListener("click", () => signOut(auth));
+$("logoutBtn")?.addEventListener("click", async () => {
+  startSplash();
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error(err);
+    await finishSplash("app");
+  }
+});
 
 onAuthStateChanged(auth, async user => {
   if (!user) {
@@ -1025,8 +1108,7 @@ onAuthStateChanged(auth, async user => {
     advances = [];
     advancesLoaded = false;
     currentProfile = null;
-    $("app").classList.add("hidden");
-    $("loginScreen").classList.remove("hidden");
+    await finishSplash("loginScreen");
     return;
   }
 
@@ -1034,11 +1116,10 @@ onAuthStateChanged(auth, async user => {
   // que una lectura lenta o una regla pendiente de Firestore no expulse al usuario.
   currentProfile = fallbackProfile(user);
   $("operatorName").textContent = currentProfile.displayName;
-  $("loginScreen").classList.add("hidden");
-  $("app").classList.remove("hidden");
   subscribeToday(user);
   applyRoleUI();
   subscribeClosures(user);
+  await finishSplash("app");
 
   try {
     currentProfile = await loadProfile(user);

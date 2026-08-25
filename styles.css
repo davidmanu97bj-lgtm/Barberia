@@ -48,6 +48,98 @@ textarea { font: inherit; }
 
 button { touch-action: manipulation; }
 
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    24px
+    max(24px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 50% 48%, rgba(29, 136, 80, .055), transparent 31rem),
+    #020303;
+  opacity: 1;
+  transition: opacity .22s ease;
+}
+
+.splash-screen.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-content {
+  width: min(88vw, 650px);
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  text-align: center;
+}
+
+.splash-logo {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(214, 173, 55, .08));
+}
+
+.splash-progress {
+  width: 92px;
+  height: 92px;
+  margin-top: 34px;
+  filter: drop-shadow(0 0 13px rgba(52, 222, 123, .16));
+}
+
+.splash-progress svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.splash-progress-track,
+.splash-progress-arc {
+  fill: none;
+  stroke-width: 8;
+}
+
+.splash-progress-track { stroke: #0b2417; }
+
+.splash-progress-arc {
+  stroke: #36df7b;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 96;
+  transform: rotate(-90deg);
+  transform-origin: 60px 60px;
+  transition: stroke-dashoffset .18s ease-out;
+}
+
+.splash-progress-dot {
+  fill: #68f49f;
+  transition: cx .18s ease-out, cy .18s ease-out;
+}
+
+.splash-content p {
+  margin: 22px 0 0;
+  color: #fff;
+  font-size: clamp(17px, 4.5vw, 22px);
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+
+@media (max-width: 520px) {
+  .splash-content { width: min(86vw, 520px); }
+  .splash-progress { width: 82px; height: 82px; margin-top: 29px; }
+  .splash-content p { margin-top: 19px; }
+}
+
 .login-screen {
   min-height: 100dvh;
   display: grid;
