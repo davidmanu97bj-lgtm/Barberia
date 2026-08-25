@@ -960,23 +960,33 @@ function lastCashboxResetMs() {
     .map(closureCutoffMs).filter(Boolean).sort((a,b)=>b-a)[0] || 0;
 }
 
+function billingMigrationBaselineMs() {
+  // Conservamos exactamente el período abierto que ya existía en Santander Main.
+  // Solo los cierres históricos `on_demand` anteriores a la migración fijan la base.
+  // Los cierres nuevos usan `settlement_only`, por lo que NUNCA vuelven a reiniciar
+  // la facturación: únicamente registran pagos/ajustes hasta llevar el saldo a cero.
+  return lastBillingClosureMs();
+}
+
 function openBillingPayments() {
-  // La facturación es acumulativa y nunca se reinicia por pedir o completar un cierre.
-  // Los cierres solo se reflejan como ajustes de liquidación que llevan el saldo a 0.
-  return payments.filter(item => !movementIsDeleted(item));
+  const baseline = billingMigrationBaselineMs();
+  return payments
+    .filter(item => !movementIsDeleted(item))
+    .filter(item => recordTimestampMs(item) > baseline);
 }
 
 function openCashboxAmount() {
-  // Regla autoritativa: la caja chica NO se reinicia con cierres.
-  // Siempre es exactamente el 5% del acumulado histórico vigente de
-  // Efectivo + Uber. Los pagos de liquidación compensan el saldo, pero
-  // no reducen ni reinician la base de caja chica.
+  // Caja chica = 5% de (Efectivo + Uber) dentro del período abierto heredado
+  // de Santander. Desde la migración en adelante no vuelve a reiniciarse.
+  const baseline = billingMigrationBaselineMs();
   const regularCash = payments
     .filter(item => !movementIsDeleted(item) && !cashboxIsExcluded(item))
+    .filter(item => recordTimestampMs(item) > baseline)
     .filter(item => item.method === "cash" && !isSettlementAdjustment(item) && !isReimbursementCompensation(item))
     .reduce((sum,item) => sum + Number(item.amount || 0), 0);
   const uberCash = uberClosures
     .filter(item => !movementIsDeleted(item))
+    .filter(item => recordTimestampMs(item) > baseline)
     .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
     .reduce((sum,item) => sum + Number(item.amount || 0), 0);
   return (regularCash + uberCash) * 0.05;
@@ -1001,8 +1011,10 @@ function settlementModel() {
   const digitalRevenue = revenueTotalFor("digital");
   const driverPaid = adjustmentTotal("driver_to_explora");
   const exploraPaid = adjustmentTotal("explora_to_driver");
+  const billingBaseline = billingMigrationBaselineMs();
   const uberRevenue = uberClosures
     .filter(item => !movementIsDeleted(item))
+    .filter(item => recordTimestampMs(item) > billingBaseline)
     .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
     .reduce((sum,item) => sum + Number(item.amount || 0), 0);
   const cash = cashRevenue;
@@ -1041,7 +1053,7 @@ function settlementModel() {
     to:normalizedBalance > 0.5 ? "digital" : normalizedBalance < -0.5 ? "cash" : "balanced",
     grand:cashRevenue + uberRevenue + digitalRevenue,
     billingShareEach:(cashRevenue + uberRevenue + digitalRevenue) * 0.50,
-    billingCutoffMs:0
+    billingCutoffMs:billingBaseline
   };
 }
 
