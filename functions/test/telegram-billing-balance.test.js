@@ -56,7 +56,7 @@ test("cambia a Explora como pagador cuando el digital supera efectivo + caja chi
   assert.equal(balance.amountToDriver, 5000);
 });
 
-test("solo suma facturación y caja chica posteriores al último cierre de facturación", () => {
+test("un cierre de facturación no reinicia los acumulados", () => {
   const balance = calculateOpenBillingBalance({
     records: [
       record("cash-before", 100000, "cash", 1000),
@@ -64,12 +64,12 @@ test("solo suma facturación y caja chica posteriores al último cierre de factu
     ],
     closures: [billingClosure(1500)]
   });
-  assert.equal(balance.cutoffMs, 1500);
-  assert.equal(balance.cashboxResetMs, 1500);
-  assert.equal(balance.cash, 0);
+  assert.equal(balance.cutoffMs, 0);
+  assert.equal(balance.cashboxResetMs, 0);
+  assert.equal(balance.cash, 100000);
   assert.equal(balance.digital, 20000);
-  assert.equal(balance.cashboxTotal, 0);
-  assert.equal(balance.amountToDriver, 10000);
+  assert.equal(balance.cashboxTotal, 5000);
+  assert.equal(balance.amountFromDriver, 45000);
 });
 
 test("un cierre rechazado no corta el período", () => {
@@ -126,7 +126,7 @@ test("el pago del chofer reduce Facturación sin contarse como cobro ni generar 
   assert.equal(balance.amountToDriver, 0);
 });
 
-test("un pago de Facturación anterior al corte no afecta el período nuevo", () => {
+test("un pago de Facturación anterior sigue compensando sin borrar el histórico", () => {
   const balance = calculateOpenBillingBalance({
     records: [
       record("old-payment", 10000, "cash", 1000, {
@@ -138,9 +138,27 @@ test("un pago de Facturación anterior al corte no afecta el período nuevo", ()
     ],
     closures:[billingClosure(1500)]
   });
-  assert.equal(balance.settlementPaymentTotal, 0);
+  assert.equal(balance.settlementPaymentTotal, 10000);
   assert.equal(balance.cashboxTotal, 1000);
-  assert.equal(balance.amountFromDriver, 11000);
+  assert.equal(balance.amountFromDriver, 1000);
+});
+
+test("un pago de Explora al chofer también equilibra sin reiniciar facturación", () => {
+  const balance = calculateOpenBillingBalance({
+    records: [
+      record("digital-1", 100000, "digital", 1000),
+      record("explora-payment", 50000, "cash", 2000, {
+        type:"settlement_adjustment",
+        adjustmentDirection:"explora_to_driver",
+        internalSettlementAdjustment:true,
+        excludeFromBillingSettlement:true
+      })
+    ]
+  });
+  assert.equal(balance.digital, 100000);
+  assert.equal(balance.exploraSettlementTotal, 50000);
+  assert.equal(balance.amountFromDriver, 0);
+  assert.equal(balance.amountToDriver, 0);
 });
 
 test("incluye caja chica de Uber igual que el Home", () => {
