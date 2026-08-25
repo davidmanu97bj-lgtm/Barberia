@@ -44,6 +44,40 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
+      // Adelanto solicitado por el chofer. Se crea con un máximo de $400.000
+      // y una deuda total compuesta por capital + 40%. Los cobros digitales
+      // solo pueden disminuir el saldo; nunca aumentarlo ni alterar el capital.
+      match /advances/{advanceId} {
+        allow read: if isOwner(userId) || isAdmin(businessId);
+        allow create: if isOwner(userId)
+          && request.resource.data.type == 'cash_advance'
+          && request.resource.data.businessId == businessId
+          && request.resource.data.operatorUid == userId
+          && request.resource.data.principalAmount > 0
+          && request.resource.data.principalAmount <= 400000
+          && request.resource.data.interestPercent == 40
+          && request.resource.data.interestAmount >= request.resource.data.principalAmount * 0.40 - 1
+          && request.resource.data.interestAmount <= request.resource.data.principalAmount * 0.40 + 1
+          && request.resource.data.totalDebt == request.resource.data.principalAmount + request.resource.data.interestAmount
+          && request.resource.data.remainingAmount == request.resource.data.totalDebt
+          && request.resource.data.repaidAmount == 0
+          && request.resource.data.differenceAtRequest >= 0
+          && request.resource.data.differenceAtRequest < 50000
+          && request.resource.data.status == 'active';
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'remainingAmount', 'repaidAmount', 'status', 'updatedAt'
+          ])
+          && request.resource.data.remainingAmount >= 0
+          && request.resource.data.remainingAmount <= resource.data.remainingAmount
+          && request.resource.data.repaidAmount == request.resource.data.totalDebt - request.resource.data.remainingAmount
+          && (
+            (request.resource.data.remainingAmount > 0 && request.resource.data.status == 'active')
+            || (request.resource.data.remainingAmount == 0 && request.resource.data.status == 'paid')
+          );
+        allow delete: if false;
+      }
+
       match /closures/{closureId} {
         allow read: if isOwner(userId) || isAdmin(businessId);
         allow create: if isOwner(userId);

@@ -837,6 +837,181 @@ a.proof:hover { background: #e3e7f0; }
   font-size: 13px;
 }
 
+.advance-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 11px;
+  padding: 18px 21px;
+  border: 1px solid #dce2ed;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #182235 0%, #202c43 100%);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(24, 34, 53, .13);
+}
+
+.advance-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: #e4c45c;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.advance-box h3 {
+  margin: 0 0 5px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.advance-box p {
+  margin: 0;
+  color: #b8c0ce;
+  font-size: 11px;
+}
+
+.advance-btn {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 11px 16px;
+  border: 1px solid rgba(228, 196, 92, .26);
+  border-radius: 14px;
+  background: rgba(228, 196, 92, .12);
+  color: #f2d97e;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.advance-btn:hover { background: rgba(228, 196, 92, .18); }
+
+.advance-intro {
+  margin-bottom: 13px;
+  padding: 14px;
+  border: 1px solid rgba(198, 145, 5, .18);
+  border-radius: 17px;
+  background: rgba(255, 247, 221, .64);
+}
+
+.advance-intro strong {
+  color: #6f5205;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.advance-intro p,
+.advance-explanation,
+.advance-requirement {
+  margin: 5px 0 0;
+  color: #666d7d;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.advance-conditions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 13px;
+}
+
+.advance-conditions > div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fafbfe;
+}
+
+.advance-conditions span,
+.advance-conditions strong {
+  display: block;
+}
+
+.advance-conditions span {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.advance-conditions strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.advance-explanation { margin: 0 0 8px; }
+
+.advance-requirement {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-left: 3px solid #d4ad2e;
+  border-radius: 0 12px 12px 0;
+  background: #faf8ef;
+  color: #675d3e;
+}
+
+.advance-quote {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: #fafbfe;
+}
+
+.advance-quote > div {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.advance-quote > div:first-child { border-top: 0; }
+.advance-quote strong { color: var(--ink); font-size: 13px; white-space: nowrap; }
+
+.advance-quote .advance-quote-total {
+  background: rgba(255, 247, 221, .72);
+  color: #735600;
+  font-weight: 850;
+}
+
+.advance-quote .advance-quote-total strong {
+  color: #735600;
+  font-size: 18px;
+}
+
+.advance-debt-adjustment,
+.advance-repayment-adjustment { color: #8a6508; }
+
+.advance-debt-adjustment strong,
+.advance-repayment-adjustment strong { color: #805e08; }
+
+.receipt-advance {
+  border-color: #e7d89d;
+  background: #fffdf5;
+}
+
+.receipt-advance .receipt-icon {
+  background: #fff3ca;
+  color: #8a6508;
+}
+
+.receipt-advance .amount { color: #8a6508; }
+
 .modal {
   z-index: 50;
   display: grid;
@@ -1437,6 +1612,22 @@ a.proof:hover { background: #e3e7f0; }
   .close-box h3 { font-size: 16px; }
   .close-box p { font-size: 11px; }
   .close-btn { width: 100%; font-size: 12px; }
+
+  .advance-box {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 16px 17px;
+    border-radius: 21px;
+  }
+
+  .advance-box h3 { font-size: 15px; }
+  .advance-btn { width: 100%; }
+  .advance-conditions { gap: 6px; }
+  .advance-conditions > div { padding: 9px 7px; }
+  .advance-conditions span { font-size: 8px; }
+  .advance-conditions strong { font-size: 9px; }
 
   .modal {
     padding: 8px;
@@ -2243,6 +2434,12 @@ a.proof:hover { background: #e3e7f0; }
   --operation-tone: #c69105;
   --operation-soft: var(--amber-soft);
   --operation-ink: #745400;
+}
+
+.modal[data-tone="advance"] {
+  --operation-tone: #b28611;
+  --operation-soft: #fff7dd;
+  --operation-ink: #725400;
 }
 
 .uber-pending-notice {

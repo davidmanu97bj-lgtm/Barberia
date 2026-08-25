@@ -96,7 +96,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-24" />
+  <link rel="stylesheet" href="./styles.css?v=20260824-25" />
 </head>
 <body>
 <section id="loginScreen" class="login-screen">
@@ -145,6 +145,7 @@
           <div class="adjustment"><span>Uber cobrado</span><strong id="uberCashTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
           <div class="adjustment debt-adjustment"><span>+ Deuda agregada</span><span class="adjustment-value"><strong id="adminDebtTotal">$ 0</strong><button id="addDebtBtn" class="debt-add hidden" type="button" aria-label="Cargar deuda" title="Cargar deuda">+</button></span></div>
+          <div id="advanceDebtRow" class="adjustment advance-debt-adjustment hidden"><span>+ Adelanto pendiente</span><strong id="advanceDebtTotal">$ 0</strong></div>
           <div id="cashDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>− Reintegro aplicado</span><strong id="cashDebtCompensationTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
           <div class="panel-action-stack">
@@ -163,6 +164,7 @@
           <div class="panel-direction is-balanced" id="digitalWalletStatus">Billetera equilibrada</div>
           <div class="panel-total" id="digitalTotal" data-money-format="signed">$ 0</div>
           <div class="adjustment"><span>Digital cobrado</span><strong id="digitalBaseTotal">$ 0</strong></div>
+          <div id="advanceRepaymentRow" class="adjustment advance-repayment-adjustment hidden"><span>− Aplicado al adelanto</span><strong id="advanceRepaymentTotal">$ 0</strong></div>
           <div id="digitalDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>+ Reintegro utilizado</span><strong id="digitalDebtCompensationTotal">$ 0</strong></div>
           <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
           <div class="panel-action-stack">
@@ -179,6 +181,10 @@
     <section class="close-box">
       <div><h3>Pedir un cierre</h3><p>Podés pedir un cierre para equilibrar las cuentas.</p></div>
       <button id="closeDayBtn" class="close-btn">Pedir cierre</button>
+    </section>
+    <section id="advanceBox" class="advance-box">
+      <div><span class="advance-kicker">Beneficio Explora</span><h3>Pedir un adelanto en efectivo</h3><p>Hasta $400.000, sin plazo fijo para devolver.</p></div>
+      <button id="requestAdvanceBtn" class="advance-btn" type="button">Pedir adelanto</button>
     </section>
   </main>
 </section>
@@ -265,6 +271,37 @@
   </div>
 </div>
 
+<div id="advanceModal" class="modal hidden" data-tone="advance">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Adelanto en efectivo</h2><button class="x" data-close="advanceModal">×</button></div>
+    <div class="advance-intro">
+      <strong>En Explora premiamos a los buenos choferes.</strong>
+      <p>Por eso queremos darte un adelanto en efectivo para que lo uses en lo que quieras.</p>
+    </div>
+    <div class="advance-conditions">
+      <div><span>Tope</span><strong>$400.000</strong></div>
+      <div><span>Interés</span><strong>40%</strong></div>
+      <div><span>Plazo</span><strong>Sin vencimiento</strong></div>
+    </div>
+    <p class="advance-explanation">El 50% que te corresponde de cada cobro digital se aplicará automáticamente para disminuir el saldo del adelanto.</p>
+    <p class="advance-requirement">Para solicitarlo, la diferencia actual entre Chofer y Explora debe ser menor a $50.000. La verificación se realiza al confirmar.</p>
+    <form id="advanceForm">
+      <div class="field">
+        <label for="advanceAmount">Monto que querés recibir</label>
+        <div class="money-entry"><span aria-hidden="true">$</span><input id="advanceAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
+        <div class="file-note">Ingresá manualmente un importe de hasta $400.000.</div>
+      </div>
+      <div class="advance-quote" aria-live="polite">
+        <div><span>Vas a recibir</span><strong id="advancePrincipalPreview">$ 0</strong></div>
+        <div><span>Interés 40%</span><strong id="advanceInterestPreview">$ 0</strong></div>
+        <div class="advance-quote-total"><span>Vas a devolver</span><strong id="advanceTotalPreview">$ 0</strong></div>
+      </div>
+      <div id="advanceStatus" class="status"></div>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="advanceModal">Cancelar</button><button id="confirmAdvanceBtn" type="submit" class="save">Confirmar adelanto</button></div>
+    </form>
+  </div>
+</div>
+
 <div id="closeModal" class="modal hidden">
   <div class="modal-card">
     <div class="modal-head"><h2 id="closeModalTitle">Pedir cierre</h2><button class="x" data-close="closeModal">×</button></div>
@@ -331,6 +368,6 @@
   </div>
 </div>
 
-<script type="module" src="./app.js?v=20260824-25"></script>
+<script type="module" src="./app.js?v=20260824-26"></script>
 </body>
 </html>

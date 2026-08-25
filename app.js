@@ -10,7 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   initializeFirestore, collection, addDoc, doc, getDoc, setDoc,
-  onSnapshot, serverTimestamp, query, where, writeBatch
+  onSnapshot, serverTimestamp, query, where, writeBatch, runTransaction
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {
   getStorage, ref, uploadBytes, getDownloadURL
@@ -32,11 +32,14 @@ let unsubscribeExpenses = null;
 let unsubscribeUber = null;
 let unsubscribeClosures = null;
 let unsubscribeDebts = null;
+let unsubscribeAdvances = null;
 let payments = [];
 let expenses = [];
 let uberClosures = [];
 let closures = [];
 let debts = [];
+let advances = [];
+let advancesLoaded = false;
 let currentProfile = null;
 let selectedCloseDirection = "";
 let selectedAdminClosureId = "";
@@ -44,6 +47,9 @@ const RECENT_RECEIPTS_LIMIT = 6;
 // Primera semana administrada por este selector. Desde aquí, toda semana
 // cerrada sin comprobante permanece pendiente hasta que el chofer la cargue.
 const UBER_TRACKING_START_DATE = "2026-08-24";
+const ADVANCE_MAX_AMOUNT = 400000;
+const ADVANCE_INTEREST_RATE = 0.40;
+const ADVANCE_DIFFERENCE_LIMIT = 50000;
 
 const money = value => new Intl.NumberFormat("es-AR", {
   style: "currency", currency: "ARS", maximumFractionDigits: 0
@@ -255,6 +261,9 @@ function isExpenseReceipt(item) {
 function isUberReceipt(item) {
   return item.type === "uber_receipt";
 }
+function isCashAdvance(item) {
+  return item.type === "cash_advance";
+}
 function revenueTotalFor(method) {
   return payments
     .filter(p => p.method === method && !isSettlementAdjustment(p) && !isReimbursementCompensation(p))
@@ -263,13 +272,61 @@ function revenueTotalFor(method) {
 function adjustmentTotal(direction) {
   return payments
     .filter(p => isSettlementAdjustment(p) && p.adjustmentDirection === direction)
-    .reduce((a,p)=>a+Number(p.amount||0),0);
+    .reduce((total, item) => {
+      const amount = Number(item.amount || 0);
+      const paidToAdvance = direction === "driver_to_explora"
+        ? Number(item.advanceRepaymentAmount || 0)
+        : 0;
+      return total + Math.max(0, amount - paidToAdvance);
+    }, 0);
 }
 function expensesTotal() {
   return expenses.reduce((a,e)=>a+Number(e.amount||0),0);
 }
 function debtsTotal() {
   return debts.reduce((a,item)=>a+Number(item.amount||0),0);
+}
+function advanceRemaining(item) {
+  return Math.max(0, Number(item.remainingAmount ?? item.totalDebt ?? 0) || 0);
+}
+function advancesOutstandingTotal() {
+  return advances.reduce((total, item) => total + advanceRemaining(item), 0);
+}
+function advanceRepaymentAppliedTotal() {
+  return payments
+    .filter(item => item.method === "digital" && !isSettlementAdjustment(item))
+    .reduce((total, item) => total + Number(item.advanceRepaymentAmount || 0), 0);
+}
+function planAdvanceRepayment(availableAmount, sourceAdvances = advances) {
+  let available = Math.max(0, Number(availableAmount || 0));
+  const allocations = [];
+  const activeAdvances = [...sourceAdvances]
+    .filter(item => advanceRemaining(item) > 0.5)
+    .sort((a, b) => {
+      const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return aMs - bMs;
+    });
+
+  for (const advance of activeAdvances) {
+    if (available <= 0.5) break;
+    const before = advanceRemaining(advance);
+    const applied = Math.min(before, available);
+    const after = Math.max(0, before - applied);
+    allocations.push({
+      id: advance.id,
+      applied,
+      remainingAmount: after,
+      repaidAmount: Math.max(0, Number(advance.totalDebt || 0) - after),
+      status: after <= 0.5 ? "paid" : "active"
+    });
+    available -= applied;
+  }
+
+  return {
+    allocations,
+    totalApplied: allocations.reduce((total, item) => total + item.applied, 0)
+  };
 }
 function reimbursementCompensationTotal() {
   return payments
@@ -439,8 +496,8 @@ function escapeHtml(s="") {
 }
 
 // Billeteras espejo compensadas:
-// - Chofer → Explora: 50% de Efectivo/Uber + 5% de caja chica + deuda.
-// - Explora → Chofer: 50% de Digital + 50% de gastos.
+// - Chofer → Explora: 50% de Efectivo/Uber + 5% de caja chica + deudas/adelantos.
+// - Explora → Chofer: 50% de Digital que no se haya aplicado a un adelanto.
 // - El saldo positivo identifica quién debe compensar; el negativo, quién recibe.
 // - Ambas billeteras muestran siempre el mismo saldo con signos opuestos.
 function settlementModel() {
@@ -450,20 +507,25 @@ function settlementModel() {
   const driverPaid = adjustmentTotal("driver_to_explora");
   const exploraPaid = adjustmentTotal("explora_to_driver");
   const adminDebt = debtsTotal();
+  const advanceDebt = advancesOutstandingTotal();
+  const advanceRepaidToday = advanceRepaymentAppliedTotal();
   const cash = cashRevenue;
   const digital = digitalRevenue;
   const expense = expensesTotal();
   const driverHeld = cashRevenue + uber;
   const cashShare = cashRevenue * 0.50;
   const uberShare = uber * 0.50;
-  const digitalShare = digitalRevenue * 0.50;
+  const digitalShareGross = digitalRevenue * 0.50;
+  // La parte del chofer en los cobros digitales paga primero sus adelantos.
+  // Solo el excedente continúa disponible para compensar la billetera espejo.
+  const digitalShare = Math.max(0, digitalShareGross - advanceRepaidToday);
   const cashBox = driverHeld * 0.05;
   const expenseHalf = expense * 0.50;
   const reimbursementApplied = Math.min(reimbursementCompensationTotal(), expenseHalf);
   const expenseReimbursement = Math.max(0, expenseHalf - reimbursementApplied);
 
   // Obligaciones base antes de pagos compensatorios anteriores.
-  const cashDebt = cashShare + uberShare + cashBox + adminDebt;
+  const cashDebt = cashShare + uberShare + cashBox + adminDebt + advanceDebt;
   // El reintegro de gastos se mantiene separado hasta que el chofer decide
   // utilizarlo para reducir su diferencia pendiente con Explora.
   const digitalDebt = digitalShare;
@@ -489,8 +551,8 @@ function settlementModel() {
   }
 
   return {
-    cash, uber, digital, expense, adminDebt, driverHeld,
-    cashShare, uberShare, digitalShare, cashBox, expenseHalf,
+    cash, uber, digital, expense, adminDebt, advanceDebt, advanceRepaidToday, driverHeld,
+    cashShare, uberShare, digitalShare, digitalShareGross, cashBox, expenseHalf,
     expenseReimbursement, reimbursementApplied, compensationAvailable,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
     cashAdjusted, digitalAdjusted,
@@ -555,11 +617,51 @@ function openDebtCompensationModal() {
   modal.classList.remove("hidden");
 }
 
+function advanceQuote(principalValue) {
+  const principal = Math.max(0, Number(principalValue || 0));
+  const interest = Math.round(principal * ADVANCE_INTEREST_RATE);
+  return { principal, interest, total: principal + interest };
+}
+
+function renderAdvanceQuote() {
+  const input = $("advanceAmount");
+  if (!input) return;
+  const quote = advanceQuote(parseMoneyInput(input.value));
+  const principal = $("advancePrincipalPreview");
+  const interest = $("advanceInterestPreview");
+  const total = $("advanceTotalPreview");
+  if (principal) principal.textContent = money(quote.principal);
+  if (interest) interest.textContent = money(quote.interest);
+  if (total) total.textContent = money(quote.total);
+}
+
+function openAdvanceModal() {
+  if (isAdminProfile()) return;
+  const form = $("advanceForm");
+  const modal = $("advanceModal");
+  if (!form || !modal) return;
+  form.reset();
+  $("advanceStatus").textContent = "";
+  $("advanceStatus").className = "status";
+  $("confirmAdvanceBtn").disabled = false;
+  $("confirmAdvanceBtn").textContent = "Confirmar adelanto";
+  renderAdvanceQuote();
+  modal.classList.remove("hidden");
+}
+
 function render() {
   const model = settlementModel();
   const cashItems = [
     ...payments.filter(p => p.method === "cash"),
     ...debts.map(item => ({ ...item, method: "cash", type: "admin_debt", service: "Deuda" })),
+    ...advances.map(item => ({
+      ...item,
+      method: "cash",
+      type: "cash_advance",
+      amount: Number(item.principalAmount || 0),
+      service: "Adelanto en efectivo",
+      detail: `Deuda con 40%: ${money(item.totalDebt)} · Saldo pendiente: ${money(advanceRemaining(item))}`
+    })),
     ...uberClosures.map(item => ({
       ...item,
       method: "cash",
@@ -596,6 +698,10 @@ function render() {
   $("cashBoxTotal").textContent = money(model.cashBox);
   $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
   $("adminDebtTotal").textContent = money(model.adminDebt);
+  const advanceDebtTotal = $("advanceDebtTotal");
+  const advanceDebtRow = $("advanceDebtRow");
+  if (advanceDebtTotal) advanceDebtTotal.textContent = money(model.advanceDebt);
+  if (advanceDebtRow) advanceDebtRow.classList.toggle("hidden", model.advanceDebt <= 0.5);
   const cashCompensationTotal = $("cashDebtCompensationTotal");
   const cashCompensationRow = $("cashDebtCompensationRow");
   if (cashCompensationTotal) cashCompensationTotal.textContent = money(model.reimbursementApplied);
@@ -605,6 +711,10 @@ function render() {
   renderWalletStatus("digitalWalletStatus", model.exploraWallet);
   $("digitalBaseTotal").textContent = money(model.digitalRevenue);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
+  const advanceRepaymentTotal = $("advanceRepaymentTotal");
+  const advanceRepaymentRow = $("advanceRepaymentRow");
+  if (advanceRepaymentTotal) advanceRepaymentTotal.textContent = money(model.advanceRepaidToday);
+  if (advanceRepaymentRow) advanceRepaymentRow.classList.toggle("hidden", model.advanceRepaidToday <= 0.5);
   const digitalCompensationTotal = $("digitalDebtCompensationTotal");
   const digitalCompensationRow = $("digitalDebtCompensationRow");
   if (digitalCompensationTotal) digitalCompensationTotal.textContent = money(model.reimbursementApplied);
@@ -633,9 +743,10 @@ function renderList(containerId, items, isDigital) {
       : "Ahora";
     const uberReceipt = isUberReceipt(item);
     const debtCompensation = isReimbursementCompensation(item);
-    const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item) || uberReceipt;
+    const cashAdvance = isCashAdvance(item);
+    const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item) || uberReceipt || cashAdvance;
     const proof = showsProof
-      ? (debtCompensation
+      ? (debtCompensation || cashAdvance
           ? `<span class="proof internal-proof">Comprobante interno</span>`
           : item.proofUrl
           ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
@@ -648,14 +759,18 @@ function renderList(containerId, items, isDigital) {
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h14M7 16l1-5h8l1 5M8 11l1.2-3h5.6l1.2 3M6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>`
       : debtCompensation
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-9M5 20h14"/></svg>`
+      : cashAdvance
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M7 7.5h7.2a3 3 0 0 1 0 6H9.8a3 3 0 0 0 0 6H17"/></svg>`
       : isDigital
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
         : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
     const amountPrefix = debtCompensation ? "−" : "+";
     const footerLabel = uberReceipt
       ? `Semana ${escapeHtml(uberWeekLabelForItem(item))}`
+      : cashAdvance
+        ? `${advanceRemaining(item) <= 0.5 ? "Adelanto pagado" : "Sin vencimiento"}`
       : `Hoy · ${time}`;
-    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""} ${uberReceipt ? "receipt-uber" : ""} ${debtCompensation ? "receipt-debt-compensation" : ""}">
+    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""} ${uberReceipt ? "receipt-uber" : ""} ${debtCompensation ? "receipt-debt-compensation" : ""} ${cashAdvance ? "receipt-advance" : ""}">
       <div class="receipt-main">
         <span class="receipt-icon">${icon}</span>
         <div class="receipt-copy">
@@ -687,10 +802,13 @@ function subscribeToday(user) {
   if (unsubscribeExpenses) unsubscribeExpenses();
   if (unsubscribeUber) unsubscribeUber();
   if (unsubscribeDebts) unsubscribeDebts();
+  if (unsubscribeAdvances) unsubscribeAdvances();
+  advancesLoaded = false;
 
   const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
   const expensesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "expenses");
   const uberRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "uber");
+  const advancesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "advances");
   const debtsRef = collection(db, "businesses", BUSINESS_ID, "debts");
   $("syncStatus").textContent = "Sincronizando…";
   $("syncStatus").className = "sync";
@@ -765,6 +883,27 @@ function subscribeToday(user) {
     $("syncStatus").textContent = "Error de deudas";
     $("syncStatus").className = "sync bad";
   });
+
+  unsubscribeAdvances = onSnapshot(advancesRef, snap => {
+    advances = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bMs - aMs;
+      });
+    advancesLoaded = true;
+    render();
+  }, err => {
+    console.error("Firestore advances snapshot error:", err);
+    // Un fallo aislado del módulo de adelantos no debe bloquear los cobros
+    // digitales ni el ingreso al resto de la aplicación.
+    advances = [];
+    advancesLoaded = true;
+    render();
+    $("syncStatus").textContent = "Error de adelantos";
+    $("syncStatus").className = "sync bad";
+  });
 }
 
 function isAdminProfile() {
@@ -774,6 +913,7 @@ function isAdminProfile() {
 function applyRoleUI() {
   $("closeDayBtn").textContent = isAdminProfile() ? "Gestionar cierres" : "Pedir cierre";
   $("addDebtBtn").classList.toggle("hidden", !isAdminProfile());
+  $("advanceBox")?.classList.toggle("hidden", isAdminProfile());
 }
 
 function closureRemaining(item) {
@@ -876,11 +1016,14 @@ onAuthStateChanged(auth, async user => {
     if (unsubscribeUber) unsubscribeUber();
     if (unsubscribeClosures) unsubscribeClosures();
     if (unsubscribeDebts) unsubscribeDebts();
+    if (unsubscribeAdvances) unsubscribeAdvances();
     payments = [];
     expenses = [];
     uberClosures = [];
     closures = [];
     debts = [];
+    advances = [];
+    advancesLoaded = false;
     currentProfile = null;
     $("app").classList.add("hidden");
     $("loginScreen").classList.remove("hidden");
@@ -1006,6 +1149,76 @@ $("confirmDebtCompensation")?.addEventListener("click", async () => {
   }
 });
 
+$("requestAdvanceBtn")?.addEventListener("click", openAdvanceModal);
+$("advanceAmount")?.addEventListener("input", renderAdvanceQuote);
+
+$("advanceForm")?.addEventListener("submit", async event => {
+  event.preventDefault();
+  const user = auth.currentUser;
+  if (!user || isAdminProfile()) return;
+
+  const principal = parseMoneyInput($("advanceAmount").value);
+  const quote = advanceQuote(principal);
+  if (!principal || principal <= 0) {
+    $("advanceStatus").textContent = "Ingresá el monto que querés recibir.";
+    $("advanceStatus").className = "status error";
+    return;
+  }
+  if (principal > ADVANCE_MAX_AMOUNT) {
+    $("advanceStatus").textContent = `El adelanto máximo es de ${money(ADVANCE_MAX_AMOUNT)}.`;
+    $("advanceStatus").className = "status error";
+    return;
+  }
+
+  // La elegibilidad se valida solamente al confirmar, tal como se informa
+  // en el formulario. El chofer puede completar y revisar antes la cotización.
+  const model = settlementModel();
+  const difference = Math.abs(model.balance);
+  if (difference >= ADVANCE_DIFFERENCE_LIMIT) {
+    $("advanceStatus").textContent = model.balance > 0
+      ? `Actualmente le debés ${money(difference)} a Explora. Reducí esa diferencia por debajo de ${money(ADVANCE_DIFFERENCE_LIMIT)} y volvé a solicitar el adelanto.`
+      : `La diferencia actual entre Chofer y Explora es de ${money(difference)}. Debe ser menor a ${money(ADVANCE_DIFFERENCE_LIMIT)} para solicitar un adelanto.`;
+    $("advanceStatus").className = "status error";
+    return;
+  }
+
+  const button = $("confirmAdvanceBtn");
+  button.disabled = true;
+  button.textContent = "Solicitando…";
+  $("advanceStatus").textContent = "";
+
+  try {
+    const advancesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "advances");
+    await addDoc(advancesRef, {
+      type: "cash_advance",
+      principalAmount: quote.principal,
+      interestPercent: 40,
+      interestAmount: quote.interest,
+      totalDebt: quote.total,
+      remainingAmount: quote.total,
+      repaidAmount: 0,
+      status: "active",
+      differenceAtRequest: difference,
+      requestedDayKey: localDayKey(),
+      operatorUid: user.uid,
+      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      businessId: BUSINESS_ID,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    $("advanceStatus").textContent = `Adelanto solicitado: recibís ${money(quote.principal)} y devolvés ${money(quote.total)} sin vencimiento.`;
+    $("advanceStatus").className = "status success";
+    setTimeout(() => $("advanceModal").classList.add("hidden"), 1700);
+  } catch (err) {
+    console.error(err);
+    $("advanceStatus").textContent = "No se pudo registrar el adelanto. Intentá nuevamente.";
+    $("advanceStatus").className = "status error";
+    button.disabled = false;
+    button.textContent = "Confirmar adelanto";
+  }
+});
+
 $("chargeForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   const user = auth.currentUser;
@@ -1026,6 +1239,11 @@ $("chargeForm")?.addEventListener("submit", async e => {
     $("chargeStatus").className = "status error";
     return;
   }
+  if (mode === "digital" && !advancesLoaded) {
+    $("chargeStatus").textContent = "Esperá un momento mientras se actualiza el saldo de adelantos.";
+    $("chargeStatus").className = "status error";
+    return;
+  }
 
   $("saveChargeBtn").disabled = true;
   $("saveChargeBtn").textContent = "Guardando…";
@@ -1043,18 +1261,58 @@ $("chargeForm")?.addEventListener("submit", async e => {
     }
 
     const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
-    await addDoc(paymentsRef, {
-      method: mode,
-      amount,
-      service,
-      detail: $("detail").value.trim(),
-      proofUrl,
-      proofPath,
-      dayKey: localDayKey(),
-      operatorUid: user.uid,
-      operatorName: currentProfile?.displayName || currentProfile?.username || "",
-      businessId: BUSINESS_ID,
-      createdAt: serverTimestamp()
+    const paymentRef = doc(paymentsRef);
+    const enteredDetail = $("detail").value.trim();
+    const candidateAdvanceRefs = mode === "digital"
+      ? advances
+          .filter(item => advanceRemaining(item) > 0.5)
+          .map(item => doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id))
+      : [];
+
+    // La transacción vuelve a leer los adelantos antes de descontarlos. Así,
+    // dos cobros simultáneos no pueden pisarse ni perder una devolución.
+    await runTransaction(db, async transaction => {
+      const freshAdvances = [];
+      for (const advanceRef of candidateAdvanceRefs) {
+        const snap = await transaction.get(advanceRef);
+        if (snap.exists()) freshAdvances.push({ id: snap.id, ...snap.data() });
+      }
+
+      const repaymentPlan = mode === "digital"
+        ? planAdvanceRepayment(Math.floor(amount * 0.50), freshAdvances)
+        : { allocations: [], totalApplied: 0 };
+      const paymentDetail = [
+        enteredDetail,
+        repaymentPlan.totalApplied > 0.5 ? `Aplicado al adelanto: ${money(repaymentPlan.totalApplied)}` : ""
+      ].filter(Boolean).join(" · ");
+
+      transaction.set(paymentRef, {
+        method: mode,
+        amount,
+        service,
+        detail: paymentDetail,
+        advanceRepaymentAmount: repaymentPlan.totalApplied,
+        advanceAllocations: repaymentPlan.allocations.map(item => ({
+          advanceId: item.id,
+          amount: item.applied
+        })),
+        proofUrl,
+        proofPath,
+        dayKey: localDayKey(),
+        operatorUid: user.uid,
+        operatorName: currentProfile?.displayName || currentProfile?.username || "",
+        businessId: BUSINESS_ID,
+        createdAt: serverTimestamp()
+      });
+      repaymentPlan.allocations.forEach(item => {
+        const advanceRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id);
+        transaction.update(advanceRef, {
+          remainingAmount: item.remainingAmount,
+          repaidAmount: item.repaidAmount,
+          status: item.status,
+          updatedAt: serverTimestamp()
+        });
+      });
     });
 
     $("chargeModal").classList.add("hidden");
@@ -1488,49 +1746,80 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
       proofUrl = await getDownloadURL(storageRef);
 
       const paymentRef = doc(collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments"));
-      const batch = writeBatch(db);
-      batch.set(paymentRef, {
-        method: "digital",
-        type: "settlement_adjustment",
-        adjustmentDirection: "driver_to_explora",
-        amount,
-        service: "Ajuste del chofer",
-        detail: remainingAmount <= 0.5 ? "Pago total a Explora" : "Pago parcial a Explora",
-        proofUrl,
-        proofPath,
-        closureId: closureRef.id,
-        dayKey: localDayKey(),
-        operatorUid: user.uid,
-        operatorName: currentProfile?.displayName || currentProfile?.username || "",
-        businessId: BUSINESS_ID,
-        createdAt: serverTimestamp()
+      const candidateAdvanceRefs = advances
+        .filter(item => advanceRemaining(item) > 0.5)
+        .map(item => doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id));
+      await runTransaction(db, async transaction => {
+        const freshAdvances = [];
+        for (const advanceRef of candidateAdvanceRefs) {
+          const snap = await transaction.get(advanceRef);
+          if (snap.exists()) freshAdvances.push({ id: snap.id, ...snap.data() });
+        }
+        const repaymentPlan = planAdvanceRepayment(amount, freshAdvances);
+        const baseDetail = remainingAmount <= 0.5 ? "Pago total a Explora" : "Pago parcial a Explora";
+        const detail = [
+          baseDetail,
+          repaymentPlan.totalApplied > 0.5 ? `Aplicado al adelanto: ${money(repaymentPlan.totalApplied)}` : ""
+        ].filter(Boolean).join(" · ");
+
+        transaction.set(paymentRef, {
+          method: "digital",
+          type: "settlement_adjustment",
+          adjustmentDirection: "driver_to_explora",
+          amount,
+          advanceRepaymentAmount: repaymentPlan.totalApplied,
+          advanceAllocations: repaymentPlan.allocations.map(item => ({
+            advanceId: item.id,
+            amount: item.applied
+          })),
+          service: "Ajuste del chofer",
+          detail,
+          proofUrl,
+          proofPath,
+          closureId: closureRef.id,
+          dayKey: localDayKey(),
+          operatorUid: user.uid,
+          operatorName: currentProfile?.displayName || currentProfile?.username || "",
+          businessId: BUSINESS_ID,
+          createdAt: serverTimestamp()
+        });
+        transaction.set(closureRef, {
+          direction: "driver_pays_explora",
+          requestedAmount: model.amount,
+          settlementAmount: model.amount,
+          paidAmountTotal: amount,
+          remainingAmount,
+          proofUrl,
+          proofPath,
+          proofUploadedByUid: user.uid,
+          proofUploadedByRole: "driver",
+          status: remainingAmount <= 0.5 ? "completed" : "partial",
+          dayKey: localDayKey(),
+          cashTotal: model.cash,
+          uberTotal: model.uber,
+          debtTotal: model.adminDebt + model.advanceDebt,
+          advanceDebtTotal: model.advanceDebt,
+          advanceRepaidAmount: repaymentPlan.totalApplied,
+          cashBox5: model.cashBox,
+          digitalTotal: model.digital,
+          expensesTotal: model.expense,
+          total: model.grand,
+          operatorUid: user.uid,
+          operatorName: currentProfile?.displayName || currentProfile?.username || "",
+          businessId: BUSINESS_ID,
+          requestedAt: serverTimestamp(),
+          completedAt: remainingAmount <= 0.5 ? serverTimestamp() : null
+        });
+        repaymentPlan.allocations.forEach(item => {
+          const advanceRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id);
+          transaction.update(advanceRef, {
+            remainingAmount: item.remainingAmount,
+            repaidAmount: item.repaidAmount,
+            status: item.status,
+            updatedAt: serverTimestamp()
+          });
+        });
       });
-      batch.set(closureRef, {
-        direction: "driver_pays_explora",
-        requestedAmount: model.amount,
-        settlementAmount: model.amount,
-        paidAmountTotal: amount,
-        remainingAmount,
-        proofUrl,
-        proofPath,
-        proofUploadedByUid: user.uid,
-        proofUploadedByRole: "driver",
-        status: remainingAmount <= 0.5 ? "completed" : "partial",
-        dayKey: localDayKey(),
-        cashTotal: model.cash,
-        uberTotal: model.uber,
-        debtTotal: model.adminDebt,
-        cashBox5: model.cashBox,
-        digitalTotal: model.digital,
-        expensesTotal: model.expense,
-        total: model.grand,
-        operatorUid: user.uid,
-        operatorName: currentProfile?.displayName || currentProfile?.username || "",
-        businessId: BUSINESS_ID,
-        requestedAt: serverTimestamp(),
-        completedAt: remainingAmount <= 0.5 ? serverTimestamp() : null
-      });
-      await batch.commit();
       $("closeStatus").textContent = remainingAmount <= 0.5
         ? "Pago registrado. Las partes quedaron equilibradas."
         : `Pago parcial registrado. Quedan ${money(remainingAmount)} pendientes.`;
@@ -1545,7 +1834,8 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
         dayKey: localDayKey(),
         cashTotal: model.cash,
         uberTotal: model.uber,
-        debtTotal: model.adminDebt,
+        debtTotal: model.adminDebt + model.advanceDebt,
+        advanceDebtTotal: model.advanceDebt,
         cashBox5: model.cashBox,
         digitalTotal: model.digital,
         expensesTotal: model.expense,
