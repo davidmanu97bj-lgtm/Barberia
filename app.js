@@ -1,4 +1,4 @@
-import * as firebaseSettings from "./firebase-config.js?v=20260824-13";
+import * as firebaseSettings from "./firebase-config.js?v=20260824-15";
 
 const { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } = firebaseSettings;
 const LOGIN_ALIASES = firebaseSettings.LOGIN_ALIASES || {};
@@ -46,6 +46,15 @@ let debts = [];
 let advances = [];
 let advancesLoaded = false;
 let currentProfile = null;
+// Históricos de Santander pueden usar aliases anteriores a driverUid.
+// Se cargan una vez y se fusionan con el listener canónico en tiempo real.
+const legacyOwnedCache = new Map();
+const canonicalOwnedCache = new Map();
+const OWNERSHIP_FIELDS = [
+  "driverUid", "choferUid", "uid", "ownerUid", "driverId", "choferId",
+  "driver_id", "chofer_id", "userUid", "userId", "createdByUid", "ownerId",
+  "conductorUid", "conductorId", "assignedDriverUid", "enteredOnBehalfOf", "simulationDriverUid"
+];
 let selectedCloseDirection = "";
 let selectedAdminClosureId = "";
 const RECENT_RECEIPTS_LIMIT = 6;
@@ -71,10 +80,36 @@ function profileRole(profile = {}, user = auth.currentUser) {
   return ["admin", "administrador", "owner", "superadmin"].includes(raw) ? "admin" : "barber";
 }
 
+function moneyNumber(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const text = String(value ?? "").replace(/\s/g, "");
+  if (!text) return 0;
+  const cleaned = text.replace(/[^0-9,.-]/g, "");
+  if (!cleaned || cleaned === "-" || cleaned === "," || cleaned === ".") return 0;
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+  let normalized = cleaned;
+  if (lastComma >= 0 && lastDot >= 0) {
+    normalized = lastComma > lastDot ? cleaned.replace(/\./g, "").replace(/,/g, ".") : cleaned.replace(/,/g, "");
+  } else if (lastDot >= 0) {
+    const tail = cleaned.slice(lastDot + 1);
+    normalized = tail.length === 3 ? cleaned.replace(/\./g, "") : cleaned;
+  } else if (lastComma >= 0) {
+    const tail = cleaned.slice(lastComma + 1);
+    normalized = tail.length === 3 ? cleaned.replace(/,/g, "") : cleaned.replace(/,/g, ".");
+  }
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function recordAmount(item = {}) {
-  for (const value of [item.amount, item.monto, item.valor, item.finalPrice, item.totalAmount, item.total, item.importe]) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  for (const value of [item.amount, item.monto, item.valor, item.finalPrice, item.totalAmount, item.total, item.importe,
+    item.price, item.precio, item.precioFinal, item.montoFinal, item.montoCobrado, item.importeTotal,
+    item.finalAmount, item.billingAmount, item.chargedAmount, item.paidAmount, item.fare, item.tarifa,
+    item.value, item.totalCobrado, item.facturacion, item.billingTotal]) {
+    if (value === null || value === undefined || value === "") continue;
+    const parsed = moneyNumber(value);
+    if (parsed >= 0) return parsed;
   }
   return 0;
 }
@@ -248,6 +283,46 @@ function currentDriverName() {
 
 function ownedQuery(collectionName, uid = currentDriverUid()) {
   return query(collection(db, collectionName), where("driverUid", "==", uid));
+}
+
+function cacheKey(collectionName, uid) {
+  return `${collectionName}::${uid}`;
+}
+
+function mergeOwnedRows(collectionName, uid, canonicalRows = []) {
+  const key = cacheKey(collectionName, uid);
+  const map = new Map();
+  for (const row of legacyOwnedCache.get(key) || []) map.set(row.id, row);
+  for (const row of canonicalRows || []) map.set(row.id, row);
+  return Array.from(map.values());
+}
+
+async function loadOwnedHistory(collectionName, uid) {
+  const targetUid = String(uid || "").trim();
+  if (!targetUid) return [];
+  const key = cacheKey(collectionName, targetUid);
+  const map = new Map();
+  const tasks = OWNERSHIP_FIELDS.map(async field => {
+    try {
+      const snap = await getDocs(query(collection(db, collectionName), where(field, "==", targetUid), limit(900)));
+      snap.forEach(d => map.set(d.id, { id:d.id, ...d.data() }));
+    } catch (err) {
+      // Algunos aliases pueden no estar permitidos por reglas/índices; seguimos con los demás.
+      console.warn("EXPLORA_HISTORY_QUERY", collectionName, field, err?.code || err?.message || err);
+    }
+  });
+  await Promise.allSettled(tasks);
+  const rows = Array.from(map.values());
+  legacyOwnedCache.set(key, rows);
+  return rows;
+}
+
+function setCanonicalRows(collectionName, uid, rows) {
+  canonicalOwnedCache.set(cacheKey(collectionName, uid), rows || []);
+}
+
+function canonicalRows(collectionName, uid) {
+  return canonicalOwnedCache.get(cacheKey(collectionName, uid)) || [];
 }
 
 function setSplashProgress(value) {
@@ -547,14 +622,21 @@ function isUberReceipt(item) {
 function isCashAdvance(item) {
   return item.type === "cash_advance";
 }
+function movementIsDeleted(item = {}) {
+  const status = String(item.status || item.estado || item.state || item.deletionStatus || "").toLowerCase();
+  return item.deleted === true || item.isDeleted === true || item.eliminado === true || /deleted|eliminado|borrado|anulado/.test(status);
+}
+function cashboxIsExcluded(item = {}) {
+  return item.excludeFromCashbox === true || item.cashboxExcluded === true || item.cajaChicaEliminada === true || item.ignoreCashbox === true || item.noCashbox === true;
+}
 function revenueTotalFor(method) {
-  return payments
-    .filter(p => p.method === method && !isSettlementAdjustment(p) && !isReimbursementCompensation(p))
+  return openBillingPayments()
+    .filter(p => !movementIsDeleted(p) && p.method === method && !isSettlementAdjustment(p) && !isReimbursementCompensation(p))
     .reduce((a,p)=>a+Number(p.amount||0),0);
 }
 function adjustmentTotal(direction) {
-  return payments
-    .filter(p => isSettlementAdjustment(p) && p.adjustmentDirection === direction)
+  return openBillingPayments()
+    .filter(p => !movementIsDeleted(p) && isSettlementAdjustment(p) && p.adjustmentDirection === direction)
     .reduce((total, item) => {
       const amount = Number(item.amount || 0);
       const paidToAdvance = direction === "driver_to_explora"
@@ -564,7 +646,7 @@ function adjustmentTotal(direction) {
     }, 0);
 }
 function expensesTotal() {
-  return expenses.reduce((a,e)=>a+Number(e.amount||0),0);
+  return openExpenses().reduce((a,e)=>a+Number(e.amount||0),0);
 }
 function debtsTotal() {
   return debts.reduce((a,item)=>a+Number(item.amount||0),0);
@@ -612,7 +694,9 @@ function planAdvanceRepayment(availableAmount, sourceAdvances = advances) {
   };
 }
 function reimbursementCompensationTotal() {
+  const cutoff = lastExpensesClosureMs();
   return payments
+    .filter(item => recordTimestampMs(item) > cutoff)
     .filter(isReimbursementCompensation)
     .reduce((a,item)=>a+Number(item.amount||0),0);
 }
@@ -778,70 +862,150 @@ function escapeHtml(s="") {
   }[c]));
 }
 
-// Billeteras espejo compensadas:
-// - Chofer → Explora: 50% de Efectivo/Uber + 5% de caja chica + deudas/adelantos.
+function closureCutoffMs(item = {}) {
+  const direct = Number(item.cutoffAtMs || item.requestedAtMs || item.createdAtMs || 0);
+  if (direct > 0) return direct;
+  return recordTimestampMs({
+    createdAt: item.cutoffAt || item.requestedAt || item.createdAt || item.completedAt || item.closedAt,
+    createdAtMs: item.cutoffAtMs || item.requestedAtMs || item.createdAtMs || item.completedAtMs || item.closedAtMs
+  });
+}
+
+function closureInvalidatesCutoff(item = {}) {
+  const text = [item.status, item.estado, item.closureStatus, item.paymentStatus, item.receiptStatus,
+    item.rejectionReason, item.rollbackStatus, item.closureMode, item.periodType]
+    .map(v => String(v || "").toLowerCase()).join(" | ");
+  return item.rejected === true || item.rollbackRestored === true || item.invalidatesCutoff === true ||
+    item.cutoffActive === false || /reject|rechaz|cancel|anulad|no aceptado|rejected_on_demand/.test(text);
+}
+
+function closureKind(item = {}) {
+  const raw = String(item.closureKind || item.closureType || item.payTab || item.closeKind || item.kind ||
+    item.cierreTipo || item.type || item.category || item.homeModule || item.homeTab || item.moduleKey || "").toLowerCase();
+  if (/gasto|expense/.test(raw)) return "gastos";
+  if (/caja|chica|cashbox/.test(raw)) return "caja_chica";
+  if (/factur|billing|cobro|explora|digital|transfer|qr|card|tarjeta|chofer|driver|efectivo|cash/.test(raw)) return "facturacion";
+  return "";
+}
+
+function closureUsesCutoff(item = {}) {
+  const mode = String(item.closureMode || item.periodType || "").toLowerCase();
+  // Misma regla que Santander Main: solo un cierre on_demand válido corta el período abierto.
+  return mode === "on_demand" && !closureInvalidatesCutoff(item);
+}
+
+function lastBillingClosureMs() {
+  return closures
+    .filter(closureUsesCutoff)
+    .filter(item => closureKind(item) === "facturacion")
+    .map(closureCutoffMs)
+    .filter(Boolean)
+    .sort((a,b) => b-a)[0] || 0;
+}
+
+function lastExpensesClosureMs() {
+  return closures
+    .filter(closureUsesCutoff)
+    .filter(item => closureKind(item) === "gastos")
+    .map(closureCutoffMs)
+    .filter(Boolean)
+    .sort((a,b) => b-a)[0] || 0;
+}
+
+function billingClosureClosesCashbox(item = {}) {
+  const affects = Array.isArray(item.affectsTabs) ? item.affectsTabs.map(v => String(v || "").toLowerCase()) : [];
+  return item.autoClosesCashbox === true || item.cashboxClosedWithBilling === true || item.cashboxAutoClosed === true ||
+    affects.some(v => /caja|cashbox/.test(v));
+}
+
+function lastCashboxResetMs() {
+  const automaticBilling = closures
+    .filter(closureUsesCutoff)
+    .filter(item => closureKind(item) === "facturacion" && billingClosureClosesCashbox(item))
+    .map(closureCutoffMs).filter(Boolean).sort((a,b)=>b-a)[0] || 0;
+  if (automaticBilling) return automaticBilling;
+  return closures
+    .filter(closureUsesCutoff)
+    .filter(item => closureKind(item) === "caja_chica")
+    .map(closureCutoffMs).filter(Boolean).sort((a,b)=>b-a)[0] || 0;
+}
+
+function openBillingPayments() {
+  const cutoff = lastBillingClosureMs();
+  return payments.filter(item => !movementIsDeleted(item) && recordTimestampMs(item) > cutoff);
+}
+
+function openCashboxAmount() {
+  const cutoff = lastCashboxResetMs();
+  const regularCash = payments
+    .filter(item => !movementIsDeleted(item) && !cashboxIsExcluded(item) && recordTimestampMs(item) > cutoff)
+    .filter(item => item.method === "cash" && !isSettlementAdjustment(item) && !isReimbursementCompensation(item))
+    .reduce((sum,item) => sum + Number(item.amount || 0) * 0.05, 0);
+  const uberCashbox = uberClosures
+    .filter(item => !movementIsDeleted(item) && recordTimestampMs(item) > cutoff)
+    .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
+    .reduce((sum,item) => {
+      const explicit = moneyNumber(item.cashboxAmount ?? item.uberCashboxAmount ?? 0);
+      return sum + (explicit > 0 ? explicit : Number(item.amount || 0) * 0.05);
+    }, 0);
+  return regularCash + uberCashbox;
+}
+
+function openExpenses() {
+  const cutoff = lastExpensesClosureMs();
+  return expenses.filter(item => recordTimestampMs(item) > cutoff);
+}
+
+// Billeteras espejo compensadas — misma lógica de Santander Main:
+// - Facturación abierta = efectivo + digital desde el último cierre de facturación.
+// - Cada parte corresponde al 50% del total facturado.
+// - Caja chica = 5% del efectivo abierto y se suma a lo que debe liquidar el chofer.
+// - Uber, gastos, deudas y adelantos son módulos separados y NO cambian este saldo.
+
 // - Explora → Chofer: 50% de Digital que no se haya aplicado a un adelanto.
 // - El saldo positivo identifica quién debe compensar; el negativo, quién recibe.
 // - Ambas billeteras muestran siempre el mismo saldo con signos opuestos.
 function settlementModel() {
   const cashRevenue = revenueTotalFor("cash");
-  const uber = uberTodayTotal();
   const digitalRevenue = revenueTotalFor("digital");
   const driverPaid = adjustmentTotal("driver_to_explora");
   const exploraPaid = adjustmentTotal("explora_to_driver");
-  const adminDebt = debtsTotal();
-  const advanceDebt = advancesOutstandingTotal();
-  const advanceRepaidToday = advanceRepaymentAppliedTotal();
   const cash = cashRevenue;
   const digital = digitalRevenue;
   const expense = expensesTotal();
-  const driverHeld = cashRevenue + uber;
   const cashShare = cashRevenue * 0.50;
-  const uberShare = uber * 0.50;
-  const digitalShareGross = digitalRevenue * 0.50;
-  // La parte del chofer en los cobros digitales paga primero sus adelantos.
-  // Solo el excedente continúa disponible para compensar la billetera espejo.
-  const digitalShare = Math.max(0, digitalShareGross - advanceRepaidToday);
-  const cashBox = driverHeld * 0.05;
+  const digitalShare = digitalRevenue * 0.50;
+  const cashBox = openCashboxAmount();
   const expenseHalf = expense * 0.50;
   const reimbursementApplied = Math.min(reimbursementCompensationTotal(), expenseHalf);
   const expenseReimbursement = Math.max(0, expenseHalf - reimbursementApplied);
 
-  // Obligaciones base antes de pagos compensatorios anteriores.
-  const cashDebt = cashShare + uberShare + cashBox + adminDebt + advanceDebt;
-  // El reintegro de gastos se mantiene separado hasta que el chofer decide
-  // utilizarlo para reducir su diferencia pendiente con Explora.
-  const digitalDebt = digitalShare;
-  // Un pago del chofer completa Explora; uno de Explora completa Chofer.
-  const cashAdjusted = cashDebt + exploraPaid;
-  const digitalAdjusted = digitalDebt + driverPaid;
-  const baseBalance = cashDebt - digitalDebt;
-  const balance = baseBalance - driverPaid + exploraPaid - reimbursementApplied;
-  const amount = Math.abs(balance);
-  const normalizedBalance = amount > 0.5 ? balance : 0;
+  // Fórmula autoritativa del Explorer anterior:
+  // (50% efectivo + 5% caja chica) - 50% digital,
+  // corregida únicamente por pagos de liquidación ya registrados en el período.
+  const baseBalance = cashShare + cashBox - digitalShare;
+  const balance = baseBalance - driverPaid + exploraPaid;
+  const normalizedBalance = Math.abs(balance) > 0.5 ? balance : 0;
   const compensationAvailable = Math.min(expenseReimbursement, Math.max(0, normalizedBalance));
-  const driverWallet = normalizedBalance;
-  const exploraWallet = -normalizedBalance;
-
-  let from = "balanced";
-  let to = "balanced";
-  if (balance > 0.5) {
-    from = "cash";
-    to = "digital";
-  } else if (balance < -0.5) {
-    from = "digital";
-    to = "cash";
-  }
 
   return {
-    cash, uber, digital, expense, adminDebt, advanceDebt, advanceRepaidToday, driverHeld,
-    cashShare, uberShare, digitalShare, digitalShareGross, cashBox, expenseHalf,
-    expenseReimbursement, reimbursementApplied, compensationAvailable,
+    cash, uber:uberClosures.filter(item => recordTimestampMs(item) > lastCashboxResetMs()).reduce((sum,item)=>sum+Number(item.amount||0),0), digital, expense,
+    adminDebt:debtsTotal(), advanceDebt:advancesOutstandingTotal(), advanceRepaidToday:advanceRepaymentAppliedTotal(),
+    driverHeld:cashRevenue,
+    cashShare, uberShare:0, digitalShare, digitalShareGross:digitalShare,
+    cashBox, expenseHalf, expenseReimbursement, reimbursementApplied, compensationAvailable,
     cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
-    cashAdjusted, digitalAdjusted,
-    cashDebt, digitalDebt, balance: normalizedBalance, amount: Math.abs(normalizedBalance),
-    driverWallet, exploraWallet, from, to,
-    grand: cashRevenue + uber + digitalRevenue
+    cashAdjusted:cashShare + cashBox + exploraPaid,
+    digitalAdjusted:digitalShare + driverPaid,
+    cashDebt:cashShare + cashBox,
+    digitalDebt:digitalShare,
+    balance:normalizedBalance, amount:Math.abs(normalizedBalance),
+    driverWallet:normalizedBalance, exploraWallet:-normalizedBalance,
+    from:normalizedBalance > 0.5 ? "cash" : normalizedBalance < -0.5 ? "digital" : "balanced",
+    to:normalizedBalance > 0.5 ? "digital" : normalizedBalance < -0.5 ? "cash" : "balanced",
+    grand:cashRevenue + digitalRevenue,
+    billingShareEach:(cashRevenue + digitalRevenue) * 0.50,
+    billingCutoffMs:lastBillingClosureMs()
   };
 }
 
@@ -1128,82 +1292,68 @@ function subscribeToday(user) {
   if (unsubscribeAdvances) unsubscribeAdvances();
   advancesLoaded = false;
 
-  const paymentsRef = ownedQuery(ROOT_COLLECTIONS.payments, user.uid);
-  const expensesRef = ownedQuery(ROOT_COLLECTIONS.expenses, user.uid);
-  const uberRef = ownedQuery(ROOT_COLLECTIONS.uber, user.uid);
-  const advancesRef = ownedQuery(ROOT_COLLECTIONS.advances, user.uid);
-  const debtsRef = ownedQuery(ROOT_COLLECTIONS.debts, user.uid);
-  $("syncStatus").textContent = "Sincronizando…";
+  const uid = user.uid;
+  const setup = ({ collectionName, normalizer, assign, onError, afterRender }) => {
+    // Primero recupera todos los aliases históricos de Santander.
+    loadOwnedHistory(collectionName, uid).then(rows => {
+      const merged = mergeOwnedRows(collectionName, uid, canonicalRows(collectionName, uid));
+      assign(merged.map(row => normalizer(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a)));
+      render();
+      afterRender?.();
+    }).catch(err => console.warn("EXPLORA_HISTORY_LOAD", collectionName, err));
+
+    // Luego mantiene en vivo el camino canónico driverUid para todos los movimientos nuevos.
+    return onSnapshot(ownedQuery(collectionName, uid), snap => {
+      const canon = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      setCanonicalRows(collectionName, uid, canon);
+      const merged = mergeOwnedRows(collectionName, uid, canon);
+      assign(merged.map(row => normalizer(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a)));
+      render();
+      afterRender?.();
+      $("syncStatus").textContent = "En tiempo real";
+      $("syncStatus").className = "sync ok";
+    }, err => {
+      console.error(`Firestore ${collectionName} snapshot error:`, err);
+      onError?.(err);
+    });
+  };
+
+  $("syncStatus").textContent = "Sincronizando período…";
   $("syncStatus").className = "sync";
 
-  unsubscribePayments = onSnapshot(paymentsRef, snap => {
-    const today = localDayKey();
-    payments = snap.docs
-      .map(d => normalizePaymentRecord(d.id, d.data()))
-      .filter(item => item.dayKey === today)
-      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
-    render();
-    $("syncStatus").textContent = "En tiempo real";
-    $("syncStatus").className = "sync ok";
-  }, err => {
-    console.error("Firestore billing_records snapshot error:", err);
-    $("syncStatus").textContent = "Error de datos";
-    $("syncStatus").className = "sync bad";
+  unsubscribePayments = setup({
+    collectionName:ROOT_COLLECTIONS.payments,
+    normalizer:normalizePaymentRecord,
+    assign:rows => { payments = rows; },
+    onError:() => { $("syncStatus").textContent = "Error de datos"; $("syncStatus").className = "sync bad"; }
   });
-
-  unsubscribeExpenses = onSnapshot(expensesRef, snap => {
-    const today = localDayKey();
-    expenses = snap.docs
-      .map(d => normalizeExpenseRecord(d.id, d.data()))
-      .filter(item => item.dayKey === today)
-      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
-    render();
-  }, err => {
-    console.error("Firestore gastos snapshot error:", err);
-    $("syncStatus").textContent = "Error de gastos";
-    $("syncStatus").className = "sync bad";
+  unsubscribeExpenses = setup({
+    collectionName:ROOT_COLLECTIONS.expenses,
+    normalizer:normalizeExpenseRecord,
+    assign:rows => { expenses = rows; },
+    onError:() => { $("syncStatus").textContent = "Error de gastos"; $("syncStatus").className = "sync bad"; }
   });
-
-  unsubscribeUber = onSnapshot(uberRef, snap => {
-    uberClosures = snap.docs
-      .map(d => normalizeUberRecord(d.id, d.data()))
-      .filter(item => item.noData !== true)
-      .sort((a, b) => String(b.weekCloseDate || "").localeCompare(String(a.weekCloseDate || "")) || recordTimestampMs(b) - recordTimestampMs(a));
-    render();
-    if (!$("uberModal")?.classList.contains("hidden")) renderUberWeekSelector();
-  }, err => {
-    console.error("Firestore uber_weekly_closures snapshot error:", err);
-    $("syncStatus").textContent = "Error de Uber";
-    $("syncStatus").className = "sync bad";
+  unsubscribeUber = setup({
+    collectionName:ROOT_COLLECTIONS.uber,
+    normalizer:normalizeUberRecord,
+    assign:rows => { uberClosures = rows.filter(item => item.noData !== true); },
+    afterRender:() => { if (!$("uberModal")?.classList.contains("hidden")) renderUberWeekSelector(); },
+    onError:() => { $("syncStatus").textContent = "Error de Uber"; $("syncStatus").className = "sync bad"; }
   });
-
-  unsubscribeDebts = onSnapshot(debtsRef, snap => {
-    const today = localDayKey();
-    debts = snap.docs
-      .map(d => normalizeDebtRecord(d.id, d.data()))
-      .filter(item => item.dayKey === today && item.amount > 0)
-      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
-    render();
-  }, err => {
-    console.error("Firestore deudas_choferes snapshot error:", err);
-    $("syncStatus").textContent = "Error de deudas";
-    $("syncStatus").className = "sync bad";
+  unsubscribeDebts = setup({
+    collectionName:ROOT_COLLECTIONS.debts,
+    normalizer:normalizeDebtRecord,
+    assign:rows => { debts = rows.filter(item => item.amount > 0); },
+    onError:() => { $("syncStatus").textContent = "Error de deudas"; $("syncStatus").className = "sync bad"; }
   });
-
-  unsubscribeAdvances = onSnapshot(advancesRef, snap => {
-    advances = snap.docs
-      .map(d => normalizeAdvanceRecord(d.id, d.data()))
-      .filter(item => item.type === "cash_advance" || item.loanType === "cash_advance")
-      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
-    advancesLoaded = true;
-    render();
-  }, err => {
-    console.error("Firestore prestamos_operativos snapshot error:", err);
-    advances = [];
-    advancesLoaded = true;
-    render();
-    $("syncStatus").textContent = "Error de adelantos";
-    $("syncStatus").className = "sync bad";
+  unsubscribeAdvances = setup({
+    collectionName:ROOT_COLLECTIONS.advances,
+    normalizer:normalizeAdvanceRecord,
+    assign:rows => {
+      advances = rows.filter(item => item.type === "cash_advance" || item.loanType === "cash_advance");
+      advancesLoaded = true;
+    },
+    onError:() => { advances = []; advancesLoaded = true; render(); $("syncStatus").textContent = "Error de adelantos"; $("syncStatus").className = "sync bad"; }
   });
 }
 
@@ -1261,21 +1411,33 @@ function renderAdminClosures() {
 function subscribeClosures(user) {
   if (unsubscribeClosures) unsubscribeClosures();
   const baseRef = collection(db, ROOT_COLLECTIONS.closures);
-  const source = isAdminProfile()
-    ? baseRef
-    : query(baseRef, where("driverUid", "==", user.uid));
 
-  unsubscribeClosures = onSnapshot(source, snap => {
-    closures = snap.docs
-      .map(d => normalizeClosureRecord(d.id, d.data()))
-      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
-    renderAdminClosures();
-  }, err => {
-    console.error("Firestore cierres_semanales snapshot error:", err);
-    if (isAdminProfile()) {
+  if (isAdminProfile()) {
+    unsubscribeClosures = onSnapshot(baseRef, snap => {
+      closures = snap.docs.map(d => normalizeClosureRecord(d.id, d.data())).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a));
+      render();
+      renderAdminClosures();
+    }, err => {
+      console.error("Firestore cierres_semanales snapshot error:", err);
       $("adminClosureList").innerHTML = `<div class="admin-empty error">No se pudieron cargar los cierres.</div>`;
-    }
-  });
+    });
+    return;
+  }
+
+  const uid = user.uid;
+  loadOwnedHistory(ROOT_COLLECTIONS.closures, uid).then(rows => {
+    const merged = mergeOwnedRows(ROOT_COLLECTIONS.closures, uid, canonicalRows(ROOT_COLLECTIONS.closures, uid));
+    closures = merged.map(row => normalizeClosureRecord(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a));
+    render();
+  }).catch(err => console.warn("EXPLORA_HISTORY_LOAD cierres", err));
+
+  unsubscribeClosures = onSnapshot(ownedQuery(ROOT_COLLECTIONS.closures, uid), snap => {
+    const canon = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    setCanonicalRows(ROOT_COLLECTIONS.closures, uid, canon);
+    const merged = mergeOwnedRows(ROOT_COLLECTIONS.closures, uid, canon);
+    closures = merged.map(row => normalizeClosureRecord(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a));
+    render();
+  }, err => console.error("Firestore cierres_semanales snapshot error:", err));
 }
 
 $("loginForm")?.addEventListener("submit", async e => {
