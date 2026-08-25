@@ -2171,12 +2171,17 @@ exports.notifyExpenseV2 = onDocumentCreated({
   const data = event.data?.data() || {};
   const docId = telegramSafeText(event.params?.docId || event.data?.id);
   const notes = telegramSafeText(data.notes || data.detalle || data.descripcion || data.observaciones);
+  const loadedAmount = Number(data.telegramExpenseLoadedAmount ?? telegramAmount(data) ?? 0);
+  const accumulatedTotal = Number(data.telegramExpenseAccumulatedTotal ?? 0);
+  const exploraReimbursement = Number(data.telegramExploraReimbursement ?? 0);
   const captionLines = [
     "GASTO REGISTRADO",
     `Chofer: ${telegramDriverName(data)}`,
-    `Monto: ${telegramMoney(telegramAmount(data))}`,
+    `Gasto cargado: ${telegramMoney(loadedAmount)}`,
     `Tipo: ${telegramExpenseType(data)}`,
     ...(notes ? [`Detalle: ${notes.slice(0, 300)}`] : []),
+    ...(accumulatedTotal > 0 ? [`Total acumulado de gastos: ${telegramMoney(accumulatedTotal)}`] : []),
+    ...(Number.isFinite(exploraReimbursement) ? [`Explora debe reintegrar: ${telegramMoney(Math.max(0, exploraReimbursement))}`] : []),
     `Fecha: ${telegramDateLabel(data)}`
   ];
 
