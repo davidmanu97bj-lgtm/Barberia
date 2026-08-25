@@ -106,6 +106,15 @@ function isDriverBillingSettlementPayment(data = {}) {
     (type === "driver_payment" && /factur|billing/.test(source));
 }
 
+function billingSettlementDirection(data = {}) {
+  let direction = safeText(data.adjustmentDirection || data.settlementDirection || data.paymentDirection).toLowerCase();
+  if (["driver_pays_explora", "chofer_a_explora", "chofer_a_david"].includes(direction)) direction = "driver_to_explora";
+  if (["explora_pays_driver", "explora_a_chofer", "david_a_chofer"].includes(direction)) direction = "explora_to_driver";
+  if (direction === "driver_to_explora" || direction === "explora_to_driver") return direction;
+  if (isDriverBillingSettlementPayment(data)) return "driver_to_explora";
+  return "";
+}
+
 function activeClosureKind(value = "") {
   const raw = safeText(value).toLowerCase();
   if (/pendiente|deuda|debt|multa|choque|prestamo|pr[eé]stamo|adelanto|loan|advance/.test(raw)) return "pendientes";
@@ -205,14 +214,8 @@ function billingClosureClosesCashbox(data = {}) {
 }
 
 function latestCashboxResetMs(closures = []) {
-  const automaticBillingCuts = closures
-    .filter(closureUsesActiveCutoff)
-    .filter(row => isBillingClosureKind(closureKindOf(row)) || isBillingClosureKind(closureHomeModuleOf(row)))
-    .filter(billingClosureClosesCashbox)
-    .map(closureCutMs)
-    .filter(value => value > 0)
-    .sort((a, b) => b - a);
-  if (automaticBillingCuts[0]) return automaticBillingCuts[0];
+  // Facturación es acumulativa: un cierre de facturación no reinicia caja chica.
+  // Solo un cierre explícito del módulo caja chica puede cortar ese módulo.
   return latestCutoffMsFor(closures, "caja_chica");
 }
 
@@ -246,25 +249,35 @@ function uberCashboxAmount(data = {}) {
 }
 
 function calculateOpenBillingBalance({ records = [], closures = [], uberWeeks = [] } = {}) {
-  const cutoffMs = latestBillingCutoffMs(closures);
+  // La facturación nunca se corta por un cierre: efectivo y digital son históricos
+  // acumulados. Los pagos de cierre quedan como ajustes y son los que llevan el
+  // saldo a cero sin borrar la facturación.
+  const cutoffMs = 0;
   const cashboxResetMs = latestCashboxResetMs(closures);
   let cash = 0;
   let digital = 0;
   let includedCount = 0;
-  let settlementPaymentTotal = 0;
+  let driverSettlementTotal = 0;
+  let exploraSettlementTotal = 0;
   let settlementPaymentCount = 0;
 
   for (const record of records) {
-    if (!record || movementIsDeleted(record) || isSimulated(record) || rowMs(record) <= cutoffMs) continue;
-    if (record.excludeFromBillingSettlement === true || record.internalSettlementAdjustment === true) continue;
+    if (!record || movementIsDeleted(record) || isSimulated(record)) continue;
     const amount = amountOf(record);
-    if (isDriverBillingSettlementPayment(record)) {
-      if (amount > 0) {
-        settlementPaymentTotal += amount;
+    const settlementDirection = billingSettlementDirection(record);
+    if (settlementDirection) {
+      const paidToAdvance = settlementDirection === "driver_to_explora"
+        ? moneyNumber(record.advanceRepaymentAmount || 0)
+        : 0;
+      const settlementAmount = Math.max(0, amount - paidToAdvance);
+      if (settlementAmount > 0) {
+        if (settlementDirection === "driver_to_explora") driverSettlementTotal += settlementAmount;
+        else exploraSettlementTotal += settlementAmount;
         settlementPaymentCount += 1;
       }
       continue;
     }
+    if (record.excludeFromBillingSettlement === true || record.internalSettlementAdjustment === true) continue;
     const method = paymentMethodOf(record);
     if (!(amount > 0) || !["cash", "card", "qr", "transfer", "digital"].includes(method)) continue;
     if (method === "cash") cash += amount;
@@ -275,6 +288,7 @@ function calculateOpenBillingBalance({ records = [], closures = [], uberWeeks = 
   let regularCashboxGenerated = 0;
   for (const record of records) {
     if (!record || movementIsDeleted(record) || isSimulated(record) || rowMs(record) <= cashboxResetMs) continue;
+    if (billingSettlementDirection(record)) continue;
     if (record.excludeFromBillingSettlement === true || record.internalSettlementAdjustment === true) continue;
     if (cashboxIsExcluded(record) || paymentMethodOf(record) !== "cash") continue;
     const amount = amountOf(record);
@@ -305,8 +319,10 @@ function calculateOpenBillingBalance({ records = [], closures = [], uberWeeks = 
   const cashboxTotal = roundMoney(Math.max(0, cashboxGeneratedTotal - cashboxOffsetPreviouslyApplied));
   const netBeforePayments = roundMoney(netBeforeCashboxToDriver - cashboxTotal);
 
-  settlementPaymentTotal = roundMoney(settlementPaymentTotal);
-  const netToDriver = roundMoney(netBeforePayments + settlementPaymentTotal);
+  driverSettlementTotal = roundMoney(driverSettlementTotal);
+  exploraSettlementTotal = roundMoney(exploraSettlementTotal);
+  const settlementPaymentTotal = roundMoney(driverSettlementTotal - exploraSettlementTotal);
+  const netToDriver = roundMoney(netBeforePayments + driverSettlementTotal - exploraSettlementTotal);
 
   return {
     cutoffMs,
@@ -318,6 +334,8 @@ function calculateOpenBillingBalance({ records = [], closures = [], uberWeeks = 
     shareEach,
     settlementPaymentCount,
     settlementPaymentTotal,
+    driverSettlementTotal,
+    exploraSettlementTotal,
     regularCashboxGenerated:roundMoney(regularCashboxGenerated),
     uberCashboxGenerated:roundMoney(uberCashboxGenerated),
     cashboxGeneratedTotal,
