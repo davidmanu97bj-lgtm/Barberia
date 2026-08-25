@@ -3213,3 +3213,79 @@ a.proof:hover { background: #e3e7f0; }
     flex-basis: 54px;
   }
 }
+
+
+/* === Ajuste 24-08 23:45: datos y separadores 100% simétricos === */
+/* Reserva exactamente el mismo espacio para el aviso de liquidación en ambos lados. */
+.workspace > .money-panel .panel-direction {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  height: 34px;
+  margin-top: 7px;
+  box-sizing: border-box;
+}
+.workspace > .money-panel .panel-direction.is-paying {
+  min-height: 34px;
+  height: 34px;
+  margin-top: 7px;
+}
+.workspace > .money-panel .panel-direction.is-hidden-direction {
+  display: flex !important;
+  min-height: 34px;
+  height: 34px;
+  visibility: hidden;
+}
+
+/* El saldo principal ocupa la misma caja vertical en Chofer y Explora. */
+.workspace > .money-panel .panel-total {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  height: 52px;
+  margin: 0 0 8px;
+  box-sizing: border-box;
+}
+
+/* Cada dato usa una fila idéntica. Las filas vacías conservan solamente la barra,
+   de forma que todos los separadores horizontales quedan enfrentados. */
+.workspace > .money-panel .adjustment {
+  min-height: 54px;
+  height: 54px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+.workspace > .money-panel .adjustment.is-symmetry-placeholder {
+  color: transparent !important;
+  user-select: none;
+  pointer-events: none;
+}
+.workspace > .money-panel .adjustment.is-symmetry-placeholder * {
+  visibility: hidden;
+}
+
+/* La zona superior puede crecer según la cantidad real de filas, pero ambos paneles
+   quedan siempre con exactamente la misma altura gracias a los placeholders. */
+.workspace > .money-panel .panel-head {
+  height: auto;
+  min-height: 500px;
+}
+
+@media (max-width: 760px) {
+  .workspace > .money-panel .panel-direction,
+  .workspace > .money-panel .panel-direction.is-paying,
+  .workspace > .money-panel .panel-direction.is-hidden-direction {
+    min-height: 30px;
+    height: 30px;
+  }
+  .workspace > .money-panel .panel-total {
+    min-height: 46px;
+    height: 46px;
+  }
+  .workspace > .money-panel .adjustment {
+    min-height: 44px;
+    height: 44px;
+  }
+}

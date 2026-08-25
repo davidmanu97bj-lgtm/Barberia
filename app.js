@@ -1149,6 +1149,33 @@ function openAdvanceModal() {
   modal.classList.remove("hidden");
 }
 
+
+function syncMoneyPanelRows() {
+  const panels = Array.from(document.querySelectorAll('.workspace > .money-panel .panel-head'));
+  if (panels.length < 2) return;
+
+  // Remove placeholders from previous render before recounting visible data rows.
+  panels.forEach(panel => panel.querySelectorAll('.adjustment.is-symmetry-placeholder').forEach(el => el.remove()));
+
+  const visibleRows = panels.map(panel =>
+    Array.from(panel.querySelectorAll(':scope > .adjustment')).filter(row => !row.classList.contains('hidden'))
+  );
+  const target = Math.max(...visibleRows.map(rows => rows.length));
+
+  panels.forEach((panel, index) => {
+    const missing = target - visibleRows[index].length;
+    const actions = panel.querySelector('.panel-action-stack');
+    if (!actions || missing <= 0) return;
+    for (let i = 0; i < missing; i += 1) {
+      const spacer = document.createElement('div');
+      spacer.className = 'adjustment is-symmetry-placeholder';
+      spacer.setAttribute('aria-hidden', 'true');
+      spacer.innerHTML = '<span>&nbsp;</span><strong>&nbsp;</strong>';
+      panel.insertBefore(spacer, actions);
+    }
+  });
+}
+
 function render() {
   const model = settlementModel();
   const cashItems = [
@@ -1227,6 +1254,7 @@ function render() {
   renderUberPendingBadge();
   renderList("cashList", visibleCashItems, false);
   renderList("digitalList", visibleDigitalItems, true);
+  syncMoneyPanelRows();
 }
 
 function renderList(containerId, items, isDigital) {
