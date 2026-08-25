@@ -37,12 +37,14 @@ let unsubscribeExpenses = null;
 let unsubscribeUber = null;
 let unsubscribeClosures = null;
 let unsubscribeDebts = null;
+let unsubscribeDebtPayments = null;
 let unsubscribeAdvances = null;
 let payments = [];
 let expenses = [];
 let uberClosures = [];
 let closures = [];
 let debts = [];
+let debtPayments = [];
 let advances = [];
 let advancesLoaded = false;
 let currentProfile = null;
@@ -71,6 +73,7 @@ const ROOT_COLLECTIONS = Object.freeze({
   uber: "uber_weekly_closures",
   closures: "cierres_semanales",
   debts: "deudas_choferes",
+  debtPayments: "deuda_pagos",
   advances: "prestamos_operativos"
 });
 
@@ -225,6 +228,21 @@ function normalizeDebtRecord(id, item = {}) {
     proofPath: recordProofPath(item),
     dayKey: recordDayKey(item),
     operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || ""
+  };
+}
+
+function normalizeDebtPaymentRecord(id, item = {}) {
+  const rawMethod = String(item.paymentMethod || item.method || item.paymentChannel || "").toLowerCase();
+  const usesExpenses = item.expenseOffset === true || item.usedExpenseBalance === true ||
+    rawMethod === "expense_offset" || /expense.*offset|gasto.*deuda|deuda.*gasto/.test(rawMethod) ||
+    String(item.type || item.operationType || "").toLowerCase() === "debt_expense_offset";
+  return {
+    ...item,
+    id,
+    amount: recordAmount(item),
+    expenseOffset: usesExpenses,
+    dayKey: recordDayKey(item),
+    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || item.ownerUid || ""
   };
 }
 
@@ -695,10 +713,25 @@ function planAdvanceRepayment(availableAmount, sourceAdvances = advances) {
 }
 function reimbursementCompensationTotal() {
   const cutoff = lastExpensesClosureMs();
-  return payments
+
+  // Compatibilidad completa con Santander Main:
+  // 1) los ajustes históricos de deuda con Gastos viven en `deuda_pagos`;
+  // 2) las compensaciones creadas por esta interfaz viven en `billing_records`.
+  // Ambos reducen el reintegro bruto del 50% de gastos del período abierto.
+  const legacyDebtOffsets = debtPayments
+    .filter(item => {
+      const linkedPeriodStart = Number(item.expensePeriodStartMs || item.gastosPeriodStartMs || 0);
+      return linkedPeriodStart > 0 ? linkedPeriodStart === cutoff : recordTimestampMs(item) > cutoff;
+    })
+    .filter(item => item.expenseOffset === true)
+    .reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0)), 0);
+
+  const newCompensations = payments
     .filter(item => recordTimestampMs(item) > cutoff)
     .filter(isReimbursementCompensation)
-    .reduce((a,item)=>a+Number(item.amount||0),0);
+    .reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0)), 0);
+
+  return legacyDebtOffsets + newCompensations;
 }
 function uberTodayItems() {
   const today = localDayKey();
@@ -1289,6 +1322,7 @@ function subscribeToday(user) {
   if (unsubscribeExpenses) unsubscribeExpenses();
   if (unsubscribeUber) unsubscribeUber();
   if (unsubscribeDebts) unsubscribeDebts();
+  if (unsubscribeDebtPayments) unsubscribeDebtPayments();
   if (unsubscribeAdvances) unsubscribeAdvances();
   advancesLoaded = false;
 
@@ -1345,6 +1379,12 @@ function subscribeToday(user) {
     normalizer:normalizeDebtRecord,
     assign:rows => { debts = rows.filter(item => item.amount > 0); },
     onError:() => { $("syncStatus").textContent = "Error de deudas"; $("syncStatus").className = "sync bad"; }
+  });
+  unsubscribeDebtPayments = setup({
+    collectionName:ROOT_COLLECTIONS.debtPayments,
+    normalizer:normalizeDebtPaymentRecord,
+    assign:rows => { debtPayments = rows; },
+    onError:() => { console.warn("No se pudieron sincronizar los pagos de deuda históricos."); }
   });
   unsubscribeAdvances = setup({
     collectionName:ROOT_COLLECTIONS.advances,
@@ -1492,6 +1532,7 @@ onAuthStateChanged(auth, async user => {
     if (unsubscribeUber) unsubscribeUber();
     if (unsubscribeClosures) unsubscribeClosures();
     if (unsubscribeDebts) unsubscribeDebts();
+    if (unsubscribeDebtPayments) unsubscribeDebtPayments();
     if (unsubscribeAdvances) unsubscribeAdvances();
     payments = [];
     expenses = [];
