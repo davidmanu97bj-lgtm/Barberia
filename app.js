@@ -1047,30 +1047,40 @@ function renderWalletStatus(elementId, walletBalance) {
   if (!element) return;
 
   const isDriver = elementId === "cashWalletStatus";
-  element.classList.remove("is-paying", "is-receiving", "is-balanced");
+  element.classList.remove("is-paying", "is-receiving", "is-balanced", "is-hidden-direction");
 
+  // Mostrar una sola instrucción: únicamente del lado que efectivamente paga.
+  // El panel receptor queda sin texto para evitar mensajes duplicados/espejados.
   if (Math.abs(walletBalance) <= 0.5) {
-    element.textContent = "Cuentas equilibradas";
-    element.classList.add("is-balanced");
+    if (isDriver) {
+      element.textContent = "Cuentas equilibradas";
+      element.classList.add("is-balanced");
+    } else {
+      element.textContent = "";
+      element.classList.add("is-hidden-direction");
+    }
     return;
   }
 
-  if (isDriver) {
-    if (walletBalance > 0.5) {
+  if (walletBalance > 0.5) {
+    // El chofer debe pagar a Explora: mostrar solo en la columna Chofer.
+    if (isDriver) {
       element.textContent = "Chofer debe liquidar a Explora";
       element.classList.add("is-paying");
     } else {
-      element.textContent = "Chofer debe recibir de Explora";
-      element.classList.add("is-receiving");
+      element.textContent = "";
+      element.classList.add("is-hidden-direction");
     }
+    return;
+  }
+
+  // Explora debe pagar al chofer: mostrar solo en la columna Explora.
+  if (isDriver) {
+    element.textContent = "";
+    element.classList.add("is-hidden-direction");
   } else {
-    if (walletBalance < -0.5) {
-      element.textContent = "Explora debe recibir del chofer";
-      element.classList.add("is-receiving");
-    } else {
-      element.textContent = "Explora debe liquidar al chofer";
-      element.classList.add("is-paying");
-    }
+    element.textContent = "Explora debe liquidar al chofer";
+    element.classList.add("is-paying");
   }
 }
 
