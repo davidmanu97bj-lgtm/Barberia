@@ -977,10 +977,10 @@ function openCashboxAmount() {
   const uberCashbox = uberClosures
     .filter(item => !movementIsDeleted(item) && recordTimestampMs(item) > cutoff)
     .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
-    .reduce((sum,item) => {
-      const explicit = moneyNumber(item.cashboxAmount ?? item.uberCashboxAmount ?? 0);
-      return sum + (explicit > 0 ? explicit : Number(item.amount || 0) * 0.05);
-    }, 0);
+    // Regla autoritativa: Caja chica = 5% de (Efectivo + Uber).
+    // Para Uber siempre usamos el importe bruto, aunque registros históricos
+    // tengan cashboxAmount/uberCashboxAmount guardados con otra lógica.
+    .reduce((sum,item) => sum + Number(item.amount || 0) * 0.05, 0);
   return regularCash + uberCashbox;
 }
 
@@ -992,7 +992,7 @@ function openExpenses() {
 // Billeteras espejo compensadas — misma lógica de Santander Main:
 // - Facturación abierta = efectivo + digital desde el último cierre de facturación.
 // - Cada parte corresponde al 50% del total facturado.
-// - Caja chica = 5% del efectivo abierto y se suma a lo que debe liquidar el chofer.
+// - Caja chica = 5% de (efectivo + Uber) y se suma a lo que debe liquidar el chofer.
 // - Uber, gastos, deudas y adelantos son módulos separados y NO cambian este saldo.
 
 // - Explora → Chofer: 50% de Digital que no se haya aplicado a un adelanto.
