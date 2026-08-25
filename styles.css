@@ -1805,8 +1805,20 @@ a.proof:hover { background: #e3e7f0; }
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .22));
 }
 
-.brandline { min-width: 0; }
-.operator-name-hidden { display: none; }
+.brandline { min-width: 0; display:flex; align-items:center; gap:14px; }
+.operator-greeting {
+  display:block;
+  min-width:0;
+  color:#fff;
+  font-size:clamp(13px,2.1vw,18px);
+  font-weight:850;
+  line-height:1.12;
+  letter-spacing:-.25px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
 
 /* Acción principal de gasto en el encabezado de la jornada */
 .summary-actions {
@@ -2797,3 +2809,145 @@ a.proof:hover { background: #e3e7f0; }
   font-size:14px;
 }
 @media(max-width:390px){.explora-login-brand-image{width:min(100%,270px)}}
+
+@media (max-width: 560px) {
+  .brandline { gap: 9px; }
+  .operator-greeting { font-size: 12px; max-width: 150px; }
+}
+@media (max-width: 390px) {
+  .operator-greeting { font-size: 11px; max-width: 125px; }
+}
+
+
+/* === Ajuste visual 24-08: simetría total de acciones y beneficio === */
+/* Los cuatro botones de operación comparten exactamente la misma geometría. */
+.panel-action-stack .collect {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 10px 14px !important;
+  border-radius: 16px;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+.panel-action-stack .collect .collect-icon {
+  grid-column: 1;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  place-self: center;
+}
+
+.panel-action-stack .collect > span:not(.collect-icon) {
+  grid-column: 2;
+  width: 100%;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.panel-action-stack .operation-pending-badge {
+  grid-column: 3;
+  margin: 0;
+  place-self: center;
+}
+
+/* Reserva el tercer carril incluso cuando no hay badge visible, para que
+   el + y el texto queden en el mismo eje en Cobrar efectivo/Cargar Uber. */
+.panel-action-stack .collect:not(:has(.operation-pending-badge))::after,
+.panel-action-stack .collect .operation-pending-badge.hidden {
+  visibility: hidden;
+}
+.panel-action-stack .collect:not(:has(.operation-pending-badge))::after {
+  content: "";
+  grid-column: 3;
+  width: 28px;
+  height: 28px;
+}
+
+/* El beneficio usa la misma tarjeta y el mismo botón que Pedir un cierre. */
+.action-request-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.advance-box {
+  margin-top: 11px;
+  padding: 20px 21px;
+  border: 1px solid #dce2ed;
+  border-radius: 27px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+.advance-kicker {
+  margin-bottom: 6px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.advance-box h3 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.advance-box p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.advance-btn {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 9px 20px rgba(79, 76, 245, .21);
+  font-size: 13px;
+  font-weight: 850;
+}
+.advance-btn:hover { background: var(--accent); }
+
+@media (max-width: 760px) {
+  .panel-action-stack .collect {
+    grid-template-columns: 24px minmax(0, 1fr) 24px;
+    min-height: 46px;
+    padding: 8px 10px !important;
+    border-radius: 14px;
+    font-size: 10px;
+  }
+  .panel-action-stack .collect .collect-icon,
+  .panel-action-stack .collect:not(:has(.operation-pending-badge))::after {
+    width: 24px;
+    height: 24px;
+  }
+  .action-request-box {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .advance-box {
+    margin-top: 8px;
+    padding: 17px;
+    border-radius: 22px;
+  }
+  .advance-box h3 { font-size: 16px; }
+  .advance-box p { font-size: 11px; }
+  .advance-btn { width: 100%; font-size: 12px; }
+}
