@@ -1042,16 +1042,18 @@ function settlementModel() {
   };
 }
 
-function renderWalletStatus(elementId, walletBalance) {
+function renderWalletStatus(elementId, settlementBalance) {
   const element = $(elementId);
   if (!element) return;
 
   const isDriver = elementId === "cashWalletStatus";
   element.classList.remove("is-paying", "is-receiving", "is-balanced", "is-hidden-direction");
 
-  // Mostrar una sola instrucción: únicamente del lado que efectivamente paga.
-  // El panel receptor queda sin texto para evitar mensajes duplicados/espejados.
-  if (Math.abs(walletBalance) <= 0.5) {
+  // La dirección se decide UNA sola vez con el saldo autoritativo del cierre.
+  // balance > 0  => el chofer debe liquidar a Explora.
+  // balance < 0  => Explora debe liquidar al chofer.
+  // Nunca se interpreta el signo de cada billetera espejo por separado.
+  if (Math.abs(settlementBalance) <= 0.5) {
     if (isDriver) {
       element.textContent = "Cuentas equilibradas";
       element.classList.add("is-balanced");
@@ -1062,26 +1064,19 @@ function renderWalletStatus(elementId, walletBalance) {
     return;
   }
 
-  if (walletBalance > 0.5) {
-    // El chofer debe pagar a Explora: mostrar solo en la columna Chofer.
-    if (isDriver) {
-      element.textContent = "Chofer debe liquidar a Explora";
-      element.classList.add("is-paying");
-    } else {
-      element.textContent = "";
-      element.classList.add("is-hidden-direction");
-    }
+  const driverMustPay = settlementBalance > 0.5;
+  const thisSideMustPay = (driverMustPay && isDriver) || (!driverMustPay && !isDriver);
+
+  if (!thisSideMustPay) {
+    element.textContent = "";
+    element.classList.add("is-hidden-direction");
     return;
   }
 
-  // Explora debe pagar al chofer: mostrar solo en la columna Explora.
-  if (isDriver) {
-    element.textContent = "";
-    element.classList.add("is-hidden-direction");
-  } else {
-    element.textContent = "Explora debe liquidar al chofer";
-    element.classList.add("is-paying");
-  }
+  element.textContent = driverMustPay
+    ? "Chofer debe liquidar a Explora"
+    : "Explora debe liquidar al chofer";
+  element.classList.add("is-paying");
 }
 
 function renderBilledTotal(model) {
@@ -1197,7 +1192,7 @@ function render() {
   const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
 
   setAnimatedMoney("cashTotal", model.driverWallet);
-  renderWalletStatus("cashWalletStatus", model.driverWallet);
+  renderWalletStatus("cashWalletStatus", model.balance);
   $("cashBaseTotal").textContent = money(model.cashRevenue);
   $("uberCashTotal").textContent = money(model.uber);
   $("cashBoxTotal").textContent = money(model.cashBox);
@@ -1213,7 +1208,7 @@ function render() {
   if (cashCompensationRow) cashCompensationRow.classList.toggle("hidden", model.reimbursementApplied <= 0.5);
 
   setAnimatedMoney("digitalTotal", model.exploraWallet);
-  renderWalletStatus("digitalWalletStatus", model.exploraWallet);
+  renderWalletStatus("digitalWalletStatus", model.balance);
   $("digitalBaseTotal").textContent = money(model.digitalRevenue);
   $("driverAdjustmentTotal").textContent = money(model.driverPaid);
   const advanceRepaymentTotal = $("advanceRepaymentTotal");
