@@ -22,44 +22,18 @@
     body{margin:0;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);letter-spacing:-.01em}
     button,input,select,textarea{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}.hidden{display:none!important}
 
-    .login-screen{
-      min-height:100dvh;
-      display:grid;
-      place-items:center;
-      padding:max(22px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom));
-      background:
-        radial-gradient(circle at 15% 0%, rgba(212,175,55,.14), transparent 34%),
-        linear-gradient(180deg,#050607,#010203);
-      color:#fff;
-    }
-    .login-card{
-      width:min(100%,420px);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:26px;
-      background:linear-gradient(180deg,rgba(20,23,26,.94),rgba(8,10,12,.98));
-      box-shadow:0 24px 80px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.035);
-      padding:24px;
-      backdrop-filter:none;
-    }
-    .login-logo-shell{text-align:center;margin:0 0 24px}
-    .login-logo{display:block;width:100%;max-width:330px;height:auto;margin:0 auto}
-    .login-brand-subtitle{margin:7px 0 24px;color:#d7b66a;font-size:10px;letter-spacing:.30em;padding-left:.30em;font-weight:800;text-align:center}
-    .login-screen .field{margin:14px 0}
-    .login-screen label{display:block;color:#c9cdd2;font-size:14px;font-weight:750;margin-bottom:8px}
-    .login-screen input{
-      width:100%;min-height:54px;height:54px;border:1px solid rgba(255,255,255,.10);border-radius:15px;
-      background:rgba(0,0,0,.23);color:#fff;outline:none;padding:12px 14px;font-size:16px;
-      appearance:none;-webkit-appearance:none;
-    }
-    .login-screen input:focus{border-color:rgba(245,185,66,.45);box-shadow:0 0 0 3px rgba(245,185,66,.08);background:rgba(0,0,0,.23)}
-    .login-password-wrap{position:relative;display:flex;align-items:center}
-    .login-password-wrap input{padding-right:74px}
-    .login-password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-width:56px;height:38px;border:0;border-radius:12px;background:rgba(245,185,66,.12);color:#f3c45d;font-weight:850;cursor:pointer}
-    .login-screen .primary{width:100%;min-height:56px;margin-top:12px;border:0;border-radius:16px;padding:0 16px;background:linear-gradient(180deg,#ffc848,#f0a927);color:#15100a;font-size:17px;font-weight:950;box-shadow:none}
-    .login-screen .primary:disabled{opacity:.65}
-    .login-screen .status{min-height:22px;margin-top:12px;text-align:left;color:#ffb4b4;line-height:1.35;font-size:14px}
-    .login-screen .status:not(.error):empty{display:none}
-
+    .login-screen{min-height:100dvh;display:grid;place-items:center;padding:24px;background:
+      radial-gradient(circle at 15% 5%,rgba(25,164,99,.09),transparent 28%),
+      radial-gradient(circle at 92% 90%,rgba(15,17,21,.06),transparent 30%),var(--bg)}
+    .login-card{width:min(100%,410px);background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.85);border-radius:30px;box-shadow:0 28px 80px rgba(17,24,39,.11);padding:32px 28px 28px;backdrop-filter:blur(18px)}
+    .brand-mark{width:62px;height:62px;border-radius:20px;background:linear-gradient(145deg,#0e1014,#252932);color:#fff;display:grid;place-items:center;font-weight:900;font-size:21px;letter-spacing:-1px;margin-bottom:24px;box-shadow:0 10px 28px rgba(15,17,21,.18)}
+    .eyebrow{text-transform:uppercase;font-size:10px;letter-spacing:.18em;color:var(--accent);font-weight:900;margin:0 0 9px}
+    h1{font-size:30px;line-height:1.02;margin:0 0 9px;letter-spacing:-1px}.sub{color:var(--muted);font-size:13px;line-height:1.45;margin:0 0 24px}
+    label{display:block;font-size:11px;font-weight:800;margin:0 0 7px;color:#343943}.field{margin-bottom:15px}
+    input,select,textarea{width:100%;border:1px solid var(--line);background:#fafbfc;border-radius:14px;padding:13px 14px;outline:none;transition:.18s ease;color:var(--ink)}
+    input:focus,select:focus,textarea:focus{border-color:#aeb4bc;background:#fff;box-shadow:0 0 0 4px rgba(15,17,21,.04)}
+    .primary{width:100%;border:0;border-radius:14px;padding:14px 16px;background:var(--dark);color:#fff;font-weight:850;box-shadow:0 8px 20px rgba(15,17,21,.16)}
+    .status{margin:13px 0 0;text-align:center;color:#777;font-size:11px;min-height:15px}.status.error{color:#c83737}
 
     .app{min-height:100dvh}
     .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:13px clamp(14px,4vw,34px);background:rgba(243,245,247,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(15,17,21,.055)}
@@ -116,7 +90,7 @@
     .save:disabled,.primary:disabled,.collect:disabled,.close-btn:disabled{opacity:.52;cursor:not-allowed}.close-summary{background:#f7f8fa;border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:7px}.close-summary div{display:flex;justify-content:space-between;gap:12px;font-size:11px;padding:6px 0}.close-summary strong{font-size:12px;font-weight:900}
 
     @media(max-width:760px){
-      .login-screen{padding:max(22px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom))}.login-card{padding:24px;border-radius:26px}
+      .login-screen{padding:18px}.login-card{padding:27px 22px;border-radius:26px}
       .topbar{padding:11px 10px}.mini-mark{width:38px;height:38px;border-radius:12px}.brand-title{font-size:13px}.brand-sub{font-size:9px}.logout-text{display:none}.ghost{padding:9px 10px}
       .main{padding:13px 7px 28px}.summary{padding:16px;border-radius:19px;margin-bottom:9px}.summary .value{font-size:25px;letter-spacing:-1px}.summary .summary-payee{font-size:11px}.summary .day{font-size:9px;padding:6px 8px}
       .workspace{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.money-panel{border-radius:17px}.panel-head{padding:12px 9px}.panel-tag{font-size:8px;letter-spacing:.07em}.panel-tag:before{width:6px;height:6px;box-shadow:0 0 0 3px var(--accent-soft)}
@@ -145,26 +119,26 @@
   </div>
 </section>
 
-<section id="loginScreen" class="login-screen hidden">
-  <div class="login-card">
-    <div class="login-logo-shell"><img src="./assets/explora-logo-login.png" alt="EXPLORA" class="login-logo"></div>
-    <p class="login-brand-subtitle">VIAJES Y SERVICIOS</p>
-    <form id="loginForm">
-      <div class="field">
-        <label for="user">Usuario</label>
-        <input id="user" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="marcelo" required>
+<section id="loginScreen" class="login-screen hidden" aria-label="Ingresar a EXPLORA">
+  <form id="loginForm" class="login-card" autocomplete="off">
+    <div class="explora-login-brand">
+      <img src="./assets/explora-logo-login.png" alt="EXPLORA" class="explora-login-brand-image" decoding="async">
+      <p>VIAJES Y SERVICIOS</p>
+    </div>
+    <div class="explora-login-field">
+      <label for="user">Usuario</label>
+      <input id="user" name="explora_usuario_manual" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="marcelo" required>
+    </div>
+    <div class="explora-login-field">
+      <label for="pass">Clave de acceso</label>
+      <div class="explora-password-wrap">
+        <input id="pass" name="explora_clave_manual" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="••••••••" required>
+        <button id="loginPasswordToggle" class="explora-password-toggle" type="button" aria-label="Mostrar u ocultar clave de acceso">Ver</button>
       </div>
-      <div class="field">
-        <label for="pass">Clave de acceso</label>
-        <div class="login-password-wrap">
-          <input id="pass" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="••••••••" required>
-          <button id="passwordToggle" class="login-password-toggle" type="button" aria-label="Mostrar u ocultar clave de acceso">Ver</button>
-        </div>
-      </div>
-      <button id="loginBtn" class="primary" type="submit">Ingresar</button>
-    </form>
-    <div id="loginStatus" class="status"></div>
-  </div>
+    </div>
+    <button id="loginBtn" class="explora-login-submit" type="submit">Ingresar</button>
+    <div id="loginStatus" class="status explora-login-msg" aria-live="polite"></div>
+  </form>
 </section>
 
 <section id="app" class="app hidden">

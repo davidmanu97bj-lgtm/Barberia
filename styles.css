@@ -2684,3 +2684,116 @@ a.proof:hover { background: #e3e7f0; }
     background: rgba(198, 47, 53, .12);
   }
 }
+
+/* Login EXPLORA: réplica visual del proyecto Santander anterior */
+.login-screen{
+  position:fixed;
+  inset:0;
+  z-index:4000;
+  min-height:100dvh;
+  overflow-y:auto;
+  padding:max(22px,env(safe-area-inset-top)) 18px max(22px,env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 15% 0%,rgba(212,175,55,.14),transparent 34%),
+    linear-gradient(180deg,#050607,#010203);
+  color:#fff;
+  place-items:center;
+}
+.login-screen:not(.hidden){display:grid!important}
+.login-screen.hidden{display:none!important}
+.login-card{
+  width:min(100%,420px)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:26px!important;
+  background:linear-gradient(180deg,rgba(20,23,26,.94),rgba(8,10,12,.98))!important;
+  box-shadow:0 24px 80px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.035)!important;
+  padding:24px!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.explora-login-brand{text-align:center;margin-bottom:24px;isolation:isolate}
+.explora-login-brand-image{
+  display:block;
+  width:min(100%,310px);
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+  object-position:center;
+  margin:0 auto 8px;
+  filter:drop-shadow(0 8px 24px rgba(205,154,48,.16));
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.explora-login-brand p{
+  margin:8px 0 0;
+  color:#d7b66a;
+  font-size:10px;
+  letter-spacing:.30em;
+  margin-left:.30em;
+  font-weight:800;
+}
+.explora-login-field{margin:14px 0}
+.explora-login-field label{
+  display:block;
+  color:#c9cdd2;
+  font-size:14px;
+  font-weight:750;
+  margin-bottom:8px;
+}
+.explora-login-field input{
+  width:100%;
+  min-height:54px;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:15px!important;
+  background:rgba(0,0,0,.23)!important;
+  color:#fff!important;
+  outline:none;
+  padding:12px 14px!important;
+  font-size:16px!important;
+  box-shadow:none!important;
+  -webkit-text-fill-color:#fff;
+}
+.explora-login-field input::placeholder{color:#8d9298;opacity:1}
+.explora-login-field input:focus{
+  border-color:rgba(245,185,66,.45)!important;
+  box-shadow:0 0 0 3px rgba(245,185,66,.08)!important;
+}
+.explora-password-wrap{position:relative;display:flex;align-items:center}
+.explora-password-wrap input{padding-right:74px!important}
+.explora-password-toggle{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  min-width:56px;
+  height:38px;
+  border:0;
+  border-radius:12px;
+  background:rgba(245,185,66,.12);
+  color:#f3c45d;
+  font-weight:850;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.explora-login-submit{
+  width:100%;
+  min-height:56px;
+  margin-top:12px;
+  border:0;
+  border-radius:16px;
+  background:linear-gradient(180deg,#ffc848,#f0a927);
+  color:#15100a;
+  font-size:17px;
+  font-weight:950;
+  cursor:pointer;
+}
+.explora-login-submit:disabled{opacity:.65;cursor:not-allowed}
+.explora-login-msg{
+  min-height:22px;
+  margin-top:12px;
+  color:#ffb4b4;
+  line-height:1.35;
+  font-size:14px;
+}
+@media(max-width:390px){.explora-login-brand-image{width:min(100%,270px)}}
