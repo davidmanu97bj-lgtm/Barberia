@@ -1171,7 +1171,7 @@ a.proof:hover { background: #e3e7f0; }
   z-index: 50;
   display: grid;
   overflow-y: auto;
-  place-items: end center;
+  place-items: center;
   padding: 16px;
   background: rgba(20, 27, 42, .52);
   backdrop-filter: blur(8px);

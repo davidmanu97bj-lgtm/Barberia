@@ -1941,8 +1941,7 @@ $("chargeForm")?.addEventListener("submit", async e => {
       : "Cobro digital registrado correctamente.";
     $("chargeStatus").className = "status success";
     $("chargeForm").reset();
-    await new Promise(resolve => setTimeout(resolve, 1100));
-    $("chargeModal").classList.add("hidden");
+    closeModalAndGoTop("chargeModal", 1100);
   } catch (err) {
     console.error(err);
     $("chargeStatus").textContent = "No se pudo registrar el cobro.";
@@ -2132,8 +2131,7 @@ $("expenseForm")?.addEventListener("submit", async e => {
     $("expenseStatus").textContent = "Gasto registrado correctamente.";
     $("expenseStatus").className = "status success";
     $("expenseForm").reset();
-    await new Promise(resolve => setTimeout(resolve, 1100));
-    $("expenseModal").classList.add("hidden");
+    closeModalAndGoTop("expenseModal", 1100);
   } catch (err) {
     console.error(err);
     $("expenseStatus").textContent = "No se pudo registrar el gasto.";
@@ -2285,7 +2283,7 @@ $("uberForm")?.addEventListener("submit", async e => {
       ? `Comprobante de ${week.label} guardado. Quedan ${remaining} ${remaining === 1 ? "semana pendiente" : "semanas pendientes"}.`
       : `Comprobante de ${week.label} guardado. Ya no quedan semanas pendientes.`;
     $("uberStatus").className = "status success";
-    if (!remaining) setTimeout(() => $("uberModal").classList.add("hidden"), 1300);
+    if (!remaining) closeModalAndGoTop("uberModal", 1300);
   } catch (err) {
     console.error(err);
     $("uberStatus").textContent = err?.code === "permission-denied"
