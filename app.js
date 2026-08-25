@@ -952,11 +952,8 @@ function billingClosureClosesCashbox(item = {}) {
 }
 
 function lastCashboxResetMs() {
-  const automaticBilling = closures
-    .filter(closureUsesCutoff)
-    .filter(item => closureKind(item) === "facturacion" && billingClosureClosesCashbox(item))
-    .map(closureCutoffMs).filter(Boolean).sort((a,b)=>b-a)[0] || 0;
-  if (automaticBilling) return automaticBilling;
+  // Un cierre de Facturación NO reinicia la caja chica ni la facturación.
+  // Solo un cierre explícito del módulo Caja chica puede cortar ese módulo.
   return closures
     .filter(closureUsesCutoff)
     .filter(item => closureKind(item) === "caja_chica")
@@ -964,11 +961,14 @@ function lastCashboxResetMs() {
 }
 
 function openBillingPayments() {
-  const cutoff = lastBillingClosureMs();
-  return payments.filter(item => !movementIsDeleted(item) && recordTimestampMs(item) > cutoff);
+  // La facturación es acumulativa y nunca se reinicia por pedir o completar un cierre.
+  // Los cierres solo se reflejan como ajustes de liquidación que llevan el saldo a 0.
+  return payments.filter(item => !movementIsDeleted(item));
 }
 
 function openCashboxAmount() {
+  // Un cierre de Facturación no reinicia la caja chica. Solo un cierre específico
+  // de Caja chica puede iniciar un nuevo tramo para ese módulo independiente.
   const cutoff = lastCashboxResetMs();
   const regularCash = payments
     .filter(item => !movementIsDeleted(item) && !cashboxIsExcluded(item) && recordTimestampMs(item) > cutoff)
@@ -1022,7 +1022,7 @@ function settlementModel() {
   const compensationAvailable = Math.min(expenseReimbursement, Math.max(0, normalizedBalance));
 
   return {
-    cash, uber:uberClosures.filter(item => recordTimestampMs(item) > lastCashboxResetMs()).reduce((sum,item)=>sum+Number(item.amount||0),0), digital, expense,
+    cash, uber:uberClosures.filter(item => !movementIsDeleted(item)).reduce((sum,item)=>sum+Number(item.amount||0),0), digital, expense,
     adminDebt:debtsTotal(), advanceDebt:advancesOutstandingTotal(), advanceRepaidToday:advanceRepaymentAppliedTotal(),
     driverHeld:cashRevenue,
     cashShare, uberShare:0, digitalShare, digitalShareGross:digitalShare,
@@ -1038,7 +1038,7 @@ function settlementModel() {
     to:normalizedBalance > 0.5 ? "digital" : normalizedBalance < -0.5 ? "cash" : "balanced",
     grand:cashRevenue + digitalRevenue,
     billingShareEach:(cashRevenue + digitalRevenue) * 0.50,
-    billingCutoffMs:lastBillingClosureMs()
+    billingCutoffMs:0
   };
 }
 
@@ -1046,16 +1046,31 @@ function renderWalletStatus(elementId, walletBalance) {
   const element = $(elementId);
   if (!element) return;
 
+  const isDriver = elementId === "cashWalletStatus";
   element.classList.remove("is-paying", "is-receiving", "is-balanced");
-  if (walletBalance > 0.5) {
-    element.textContent = "Debe compensar";
-    element.classList.add("is-paying");
-  } else if (walletBalance < -0.5) {
-    element.textContent = "Debe recibir";
-    element.classList.add("is-receiving");
-  } else {
-    element.textContent = "Billetera equilibrada";
+
+  if (Math.abs(walletBalance) <= 0.5) {
+    element.textContent = "Cuentas equilibradas";
     element.classList.add("is-balanced");
+    return;
+  }
+
+  if (isDriver) {
+    if (walletBalance > 0.5) {
+      element.textContent = "Chofer debe liquidar a Explora";
+      element.classList.add("is-paying");
+    } else {
+      element.textContent = "Chofer debe recibir de Explora";
+      element.classList.add("is-receiving");
+    }
+  } else {
+    if (walletBalance < -0.5) {
+      element.textContent = "Explora debe recibir del chofer";
+      element.classList.add("is-receiving");
+    } else {
+      element.textContent = "Explora debe liquidar al chofer";
+      element.classList.add("is-paying");
+    }
   }
 }
 
@@ -1549,7 +1564,7 @@ onAuthStateChanged(auth, async user => {
   // Authentication ya fue validada. Mostramos la caja inmediatamente para
   // que una lectura lenta o una regla pendiente de Firestore no expulse al usuario.
   currentProfile = fallbackProfile(user);
-  $("operatorName").textContent = currentProfile.displayName;
+  $("operatorName").textContent = `Hola de nuevo ${currentProfile.displayName || currentProfile.username || user.email?.split("@")[0] || "Chofer"}!`;
   subscribeToday(user);
   applyRoleUI();
   subscribeClosures(user);
@@ -1563,7 +1578,7 @@ onAuthStateChanged(auth, async user => {
       $("loginStatus").className = "status error";
       return;
     }
-    $("operatorName").textContent = currentProfile.displayName || currentProfile.username || user.email.split("@")[0];
+    $("operatorName").textContent = `Hola de nuevo ${currentProfile.displayName || currentProfile.username || user.email.split("@")[0]}!`;
     applyRoleUI();
     subscribeClosures(user);
   } catch (err) {
@@ -2475,10 +2490,10 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
           moduleKey: "facturacion",
           payTab: "facturacion",
           billingClosure: true,
-          closureMode: "on_demand",
-          autoClosesCashbox: true,
-          cashboxClosedWithBilling: true,
-          affectsTabs: ["chofer", "explora", "caja_chica"],
+          closureMode: "settlement_only",
+          autoClosesCashbox: false,
+          cashboxClosedWithBilling: false,
+          affectsTabs: ["chofer", "explora"],
           cashTotal: model.cash,
           uberTotal: model.uber,
           debtTotal: model.adminDebt + model.advanceDebt,
@@ -2544,10 +2559,10 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
         moduleKey: "facturacion",
         payTab: "facturacion",
         billingClosure: true,
-        closureMode: "on_demand",
-        autoClosesCashbox: true,
-        cashboxClosedWithBilling: true,
-        affectsTabs: ["chofer", "explora", "caja_chica"],
+        closureMode: "settlement_only",
+        autoClosesCashbox: false,
+        cashboxClosedWithBilling: false,
+        affectsTabs: ["chofer", "explora"],
         cashTotal: model.cash,
         uberTotal: model.uber,
         debtTotal: model.adminDebt + model.advanceDebt,
