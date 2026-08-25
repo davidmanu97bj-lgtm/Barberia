@@ -254,11 +254,6 @@
       <div class="field"><label>Detalle / motivo</label><input id="expenseDetail" placeholder="Ej. Productos de limpieza" required></div>
       <div class="field"><label>Comprobante</label><input id="expenseProof" type="file" accept="image/*,.pdf" required><div class="file-note">Digital reconocerá automáticamente el 50% del gasto.</div></div>
       <div id="expenseStatus" class="status"></div>
-      <div id="expenseSummary" class="expense-summary hidden" aria-live="polite">
-        <div class="expense-summary-row"><span>Gasto cargado</span><strong id="expenseSummaryLoaded">$ 0</strong></div>
-        <div class="expense-summary-row"><span>Total acumulado</span><strong id="expenseSummaryTotal">$ 0</strong></div>
-        <div class="expense-summary-row expense-summary-reimbursement"><span>Explora debe reintegrar</span><strong id="expenseSummaryReimbursement">$ 0</strong></div>
-      </div>
       <div class="modal-actions"><button type="button" class="secondary" data-close="expenseModal">Cancelar</button><button id="saveExpenseBtn" type="submit" class="save">Registrar gasto</button></div>
     </form>
   </div>

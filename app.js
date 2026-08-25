@@ -1903,7 +1903,6 @@ $("addExpenseBtn")?.addEventListener("click", () => {
   $("expenseForm").reset();
   $("expenseStatus").textContent = "";
   $("expenseStatus").className = "status";
-  $("expenseSummary")?.classList.add("hidden");
   $("expenseModal").classList.remove("hidden");
 });
 
@@ -2032,8 +2031,12 @@ $("expenseForm")?.addEventListener("submit", async e => {
     const proofUrl = await getDownloadURL(storageRef);
 
     const expensesRef = collection(db, ROOT_COLLECTIONS.expenses);
+    // El resumen se informa por Telegram, no se agrega un panel nuevo en la app.
+    // Se guarda el mismo cálculo que usa la interfaz para garantizar que ambos coincidan.
     const expenseBefore = expensesTotal();
     const reimbursementAppliedBefore = reimbursementCompensationTotal();
+    const accumulatedTotal = expenseBefore + amount;
+    const exploraReimbursement = Math.max(0, accumulatedTotal * 0.50 - reimbursementAppliedBefore);
 
     await addDoc(expensesRef, {
       amount,
@@ -2062,18 +2065,16 @@ $("expenseForm")?.addEventListener("submit", async e => {
       payerRole: "driver",
       sharedRate: 0.5,
       porcentajeCompartido: 50,
+      // Snapshot para la notificación de Telegram. Coincide con "Total a reintegrar por Explora".
+      telegramExpenseLoadedAmount: amount,
+      telegramExpenseAccumulatedTotal: accumulatedTotal,
+      telegramExploraReimbursement: exploraReimbursement,
       status: "active",
       createdAtMs: Date.now(),
       businessId: BUSINESS_ID,
       createdAt: serverTimestamp()
     });
 
-    const accumulatedTotal = expenseBefore + amount;
-    const exploraReimbursement = Math.max(0, accumulatedTotal * 0.50 - reimbursementAppliedBefore);
-    $("expenseSummaryLoaded").textContent = money(amount);
-    $("expenseSummaryTotal").textContent = money(accumulatedTotal);
-    $("expenseSummaryReimbursement").textContent = money(exploraReimbursement);
-    $("expenseSummary")?.classList.remove("hidden");
     $("expenseStatus").textContent = "Gasto registrado correctamente.";
     $("expenseStatus").className = "status success";
     $("expenseAmount").value = "";
