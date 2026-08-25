@@ -338,6 +338,17 @@ input[type="file"]::file-selector-button {
 
 .status.error { color: var(--red); }
 .status.success { color: var(--green); }
+.status.success:not(:empty) {
+  display: block;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border: 1px solid rgba(22, 163, 74, .22);
+  border-radius: 14px;
+  background: rgba(22, 163, 74, .08);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
 
 .app { min-height: 100dvh; }
 
@@ -2950,4 +2961,203 @@ a.proof:hover { background: #e3e7f0; }
   .advance-box h3 { font-size: 16px; }
   .advance-box p { font-size: 11px; }
   .advance-btn { width: 100%; font-size: 12px; }
+}
+
+
+/* === Ajuste 24-08 23:32: simetría visual definitiva === */
+/* Los dos paneles reservan exactamente la misma altura para el bloque superior,
+   por lo que las acciones de Chofer y Explora arrancan en el mismo eje. */
+.workspace > .money-panel .panel-head {
+  height: 500px;
+  min-height: 500px;
+  box-sizing: border-box;
+}
+
+/* Dos filas idénticas para Cobrar efectivo / Cargar Uber y
+   Cobrar digital / Cargar gastos. */
+.panel-action-stack {
+  display: grid;
+  grid-template-rows: repeat(2, 54px);
+  gap: 10px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.panel-action-stack .collect,
+.panel-action-stack .panel-action,
+.panel-action-stack .panel-secondary-action {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  width: 100%;
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+  align-items: center;
+  justify-items: center;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border-radius: 16px;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+.panel-action-stack .collect .collect-icon {
+  grid-column: 1;
+  width: 30px;
+  height: 30px;
+  margin: 0 !important;
+  place-self: center;
+  border-radius: 10px;
+}
+
+.panel-action-stack .collect > span:not(.collect-icon) {
+  grid-column: 2;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+/* El aviso de Uber no mueve ni el + ni el texto. */
+.panel-action-stack .operation-pending-badge {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  grid-column: auto;
+  margin: 0;
+  transform: translateY(-50%);
+}
+.panel-action-stack .collect:not(:has(.operation-pending-badge))::after { display: none !important; }
+
+/* Comprobantes: todas las tarjetas usan exactamente el mismo alto y estructura. */
+.money-panel .panel-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+.proof-list {
+  display: grid;
+  grid-auto-rows: 146px;
+  gap: 10px;
+  align-content: start;
+}
+.proof-list .receipt,
+.proof-list .uber-receipt,
+.proof-list .expense-item {
+  display: flex;
+  width: 100%;
+  height: 146px !important;
+  min-height: 146px !important;
+  max-height: 146px !important;
+  margin: 0 !important;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.proof-list .receipt-main,
+.proof-list .expense-main {
+  min-height: 48px;
+}
+.proof-list .receipt-footer { margin-top: auto; }
+
+/* Header: saludo simple y botón Salir más proporcionado/simétrico. */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.brandline {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+.operator-greeting {
+  flex: 0 1 auto;
+  max-width: 210px;
+}
+.topbar #logoutBtn.logout-text {
+  display: inline-flex;
+  width: 70px;
+  height: 46px;
+  min-width: 70px;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 70px;
+  padding: 0;
+  border-radius: 15px;
+  box-sizing: border-box;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+}
+.topbar #logoutBtn.logout-text::after { content: none !important; }
+
+@media (max-width: 760px) {
+  .workspace > .money-panel .panel-head {
+    height: 430px;
+    min-height: 430px;
+  }
+  .panel-action-stack {
+    grid-template-rows: repeat(2, 48px);
+    gap: 8px;
+    padding-top: 10px;
+  }
+  .panel-action-stack .collect,
+  .panel-action-stack .panel-action,
+  .panel-action-stack .panel-secondary-action {
+    grid-template-columns: 26px minmax(0, 1fr) 26px;
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+    padding: 0 9px !important;
+    border-radius: 14px;
+    font-size: 10px;
+  }
+  .panel-action-stack .collect .collect-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+  }
+  .panel-action-stack .operation-pending-badge { right: 8px; }
+  .proof-list { grid-auto-rows: 150px; }
+  .proof-list .receipt,
+  .proof-list .uber-receipt,
+  .proof-list .expense-item {
+    height: 150px !important;
+    min-height: 150px !important;
+    max-height: 150px !important;
+  }
+  .operator-greeting {
+    max-width: 135px;
+    font-size: 11px;
+  }
+  .topbar #logoutBtn.logout-text {
+    width: 58px;
+    min-width: 58px;
+    flex-basis: 58px;
+    height: 44px;
+    min-height: 44px;
+    border-radius: 14px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .workspace > .money-panel .panel-head {
+    height: 420px;
+    min-height: 420px;
+  }
+  .operator-greeting { max-width: 112px; font-size: 10px; }
+  .topbar #logoutBtn.logout-text {
+    width: 54px;
+    min-width: 54px;
+    flex-basis: 54px;
+  }
 }

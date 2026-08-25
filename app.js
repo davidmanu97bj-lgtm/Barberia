@@ -1564,7 +1564,7 @@ onAuthStateChanged(auth, async user => {
   // Authentication ya fue validada. Mostramos la caja inmediatamente para
   // que una lectura lenta o una regla pendiente de Firestore no expulse al usuario.
   currentProfile = fallbackProfile(user);
-  $("operatorName").textContent = `Hola de nuevo ${currentProfile.displayName || currentProfile.username || user.email?.split("@")[0] || "Chofer"}!`;
+  $("operatorName").textContent = `Hola ${currentProfile.displayName || currentProfile.username || user.email?.split("@")[0] || "Chofer"}`;
   subscribeToday(user);
   applyRoleUI();
   subscribeClosures(user);
@@ -1578,7 +1578,7 @@ onAuthStateChanged(auth, async user => {
       $("loginStatus").className = "status error";
       return;
     }
-    $("operatorName").textContent = `Hola de nuevo ${currentProfile.displayName || currentProfile.username || user.email.split("@")[0]}!`;
+    $("operatorName").textContent = `Hola ${currentProfile.displayName || currentProfile.username || user.email.split("@")[0]}`;
     applyRoleUI();
     subscribeClosures(user);
   } catch (err) {
@@ -1888,6 +1888,12 @@ $("chargeForm")?.addEventListener("submit", async e => {
       });
     });
 
+    $("chargeStatus").textContent = mode === "cash"
+      ? "Cobro en efectivo registrado correctamente."
+      : "Cobro digital registrado correctamente.";
+    $("chargeStatus").className = "status success";
+    $("chargeForm").reset();
+    await new Promise(resolve => setTimeout(resolve, 1100));
     $("chargeModal").classList.add("hidden");
   } catch (err) {
     console.error(err);
@@ -2077,9 +2083,9 @@ $("expenseForm")?.addEventListener("submit", async e => {
 
     $("expenseStatus").textContent = "Gasto registrado correctamente.";
     $("expenseStatus").className = "status success";
-    $("expenseAmount").value = "";
-    $("expenseDetail").value = "";
-    $("expenseProof").value = "";
+    $("expenseForm").reset();
+    await new Promise(resolve => setTimeout(resolve, 1100));
+    $("expenseModal").classList.add("hidden");
   } catch (err) {
     console.error(err);
     $("expenseStatus").textContent = "No se pudo registrar el gasto.";
