@@ -1440,6 +1440,15 @@ function subscribeClosures(user) {
   }, err => console.error("Firestore cierres_semanales snapshot error:", err));
 }
 
+$("passwordToggle")?.addEventListener("click", () => {
+  const input = $("pass");
+  const btn = $("passwordToggle");
+  if (!input || !btn) return;
+  const showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  btn.textContent = showing ? "Ver" : "Ocultar";
+});
+
 $("loginForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   $("loginStatus").textContent = "";
