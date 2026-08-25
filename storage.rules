@@ -1,8 +1,327 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
-    match /businesses/{businessId}/users/{userId}/proofs/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    // =========================================================
+    // IDENTIDAD
+    // =========================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAuthorizedAdmin() {
+      return signedIn() && (
+        request.auth.uid == '2LziyTTdFcZzSOhK3hLbAKs2U4s2'
+        || request.auth.token.admin == true
+      );
+    }
+
+    function isOwner(ownerUid) {
+      return signedIn() && request.auth.uid == ownerUid;
+    }
+
+    // =========================================================
+    // VALIDACIÓN DE ARCHIVOS
+    // =========================================================
+
+    function validOperationalUpload() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 15 * 1024 * 1024
+        && request.resource.contentType != null
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf'
+        );
+    }
+
+    function validPermanentImageUpload() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 15 * 1024 * 1024
+        && request.resource.contentType != null
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    function validUberWeeklyUpload(driverUid, weekId) {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 15 * 1024 * 1024
+        && request.resource.contentType != null
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.metadata != null
+        && request.resource.metadata.module == 'uber_weekly'
+        && request.resource.metadata.driverUid == driverUid
+        && request.resource.metadata.weekId == weekId
+        && request.resource.metadata.uploadedByUid == request.auth.uid;
+    }
+
+    function validMileageKind(kind) {
+      return kind in ['start', 'late_start', 'end', 'vehicle_change_end'];
+    }
+
+    function validMileageUpload(driverUid, periodId, recordId, kind, revision, fileName) {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 15 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg'
+        && validMileageKind(kind)
+        && revision.matches('r[0-9]+')
+        && fileName.matches('op_[a-f0-9]{48}\\.jpg')
+        && request.resource.metadata != null
+        && request.resource.metadata.driverUid == driverUid
+        && request.resource.metadata.weeklyPeriodId == periodId
+        && request.resource.metadata.mileageRecordId == recordId
+        && request.resource.metadata.kind == kind
+        && request.resource.metadata.operationId.matches('op_[a-f0-9]{48}')
+        && request.resource.metadata.operationFingerprint.matches('sha256_[a-f0-9]{64}')
+        && request.resource.metadata.photoHash.matches('[a-f0-9]{64}');
+    }
+
+    // =========================================================
+    // CIERRE UBER SEMANAL
+    // uber_weekly/{driverUid}/{weekId}/{archivo}
+    // =========================================================
+
+    match /uber_weekly/{driverUid}/{weekId}/{fileName} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(driverUid);
+
+      allow create: if isOwner(driverUid)
+        && validUberWeeklyUpload(driverUid, weekId);
+
+      // La evidencia subida queda inmutable.
+      allow update: if false;
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // =========================================================
+    // KILOMETRAJE SEMANAL
+    // =========================================================
+
+    match /kilometraje_semanal/{driverUid}/{periodId}/{recordId}/{kind}/{revision}/{fileName} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(driverUid);
+      allow create: if (isAuthorizedAdmin() || isOwner(driverUid))
+        && validMileageUpload(driverUid, periodId, recordId, kind, revision, fileName);
+      allow update: if false;
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // =========================================================
+    // COBROS Y GASTOS
+    // =========================================================
+
+    match /gastos/{ownerUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(ownerUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /billing_receipts/{ownerUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(ownerUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /comprobantes/{ownerUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(ownerUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /transferencias/{ownerUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(ownerUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /pagos_clientes/{ownerUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(ownerUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /billing_receipts/{allPaths=**} {
+      allow read, write: if isAuthorizedAdmin();
+    }
+
+    match /comprobantes/{allPaths=**} {
+      allow read, write: if isAuthorizedAdmin();
+    }
+
+    match /transferencias/{allPaths=**} {
+      allow read, write: if isAuthorizedAdmin();
+    }
+
+    match /pagos_clientes/{allPaths=**} {
+      allow read, write: if isAuthorizedAdmin();
+    }
+
+    // =========================================================
+    // PRÉSTAMOS Y DEUDAS
+    // =========================================================
+
+    match /prestamos/{ownerUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(ownerUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /deudas/{ownerUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(ownerUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /prestamos/{allPaths=**} {
+      allow read, write: if isAuthorizedAdmin();
+    }
+
+    match /deudas/{allPaths=**} {
+      allow read, write: if isAuthorizedAdmin();
+    }
+
+    // =========================================================
+    // CIERRES SEMANALES
+    // =========================================================
+
+    match /cierres_semanales/{periodId}/{driverUid}/{allPaths=**} {
+      allow get, list: if isAuthorizedAdmin() || isOwner(driverUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(driverUid))
+        && validOperationalUpload();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    match /cierres_semanales/{allPaths=**} {
+      allow read, write: if isAuthorizedAdmin();
+    }
+
+    // =========================================================
+    // FOTOS DE PERFIL
+    // =========================================================
+
+    match /profiles/{profileUid}/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin() || isOwner(profileUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(profileUid))
+        && validPermanentImageUpload();
+      allow delete: if isAuthorizedAdmin() || isOwner(profileUid);
+    }
+
+    match /profile_photos/{profileUid}/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin() || isOwner(profileUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(profileUid))
+        && validPermanentImageUpload();
+      allow delete: if isAuthorizedAdmin() || isOwner(profileUid);
+    }
+
+    match /avatars/{profileUid}/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin() || isOwner(profileUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(profileUid))
+        && validPermanentImageUpload();
+      allow delete: if isAuthorizedAdmin() || isOwner(profileUid);
+    }
+
+    match /users/{profileUid}/avatar/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin() || isOwner(profileUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(profileUid))
+        && validPermanentImageUpload();
+      allow delete: if isAuthorizedAdmin() || isOwner(profileUid);
+    }
+
+    match /driver_photos/{profileUid}/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin() || isOwner(profileUid);
+      allow create, update: if (isAuthorizedAdmin() || isOwner(profileUid))
+        && validPermanentImageUpload();
+      allow delete: if isAuthorizedAdmin() || isOwner(profileUid);
+    }
+
+    // =========================================================
+    // VEHÍCULOS
+    // =========================================================
+
+    match /vehicle_photos/{vehicleId}/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin();
+      allow create, update: if isAuthorizedAdmin() && validPermanentImageUpload();
+      allow delete: if false;
+    }
+
+    match /vehicles/{vehicleId}/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin();
+      allow create, update: if isAuthorizedAdmin() && validPermanentImageUpload();
+      allow delete: if false;
+    }
+
+    match /vehiculos/{vehicleId}/{allPaths=**} {
+      allow get: if signedIn();
+      allow list: if isAuthorizedAdmin();
+      allow create, update: if isAuthorizedAdmin() && validPermanentImageUpload();
+      allow delete: if false;
+    }
+
+    // =========================================================
+    // LOGOS, DISEÑO Y RECURSOS MAESTROS
+    // =========================================================
+
+    match /logos/{allPaths=**} {
+      allow get: if true;
+      allow list: if isAuthorizedAdmin();
+      allow create, update: if isAuthorizedAdmin() && validPermanentImageUpload();
+      allow delete: if false;
+    }
+
+    match /branding/{allPaths=**} {
+      allow get: if true;
+      allow list: if isAuthorizedAdmin();
+      allow create, update: if isAuthorizedAdmin() && validPermanentImageUpload();
+      allow delete: if false;
+    }
+
+    match /assets/{allPaths=**} {
+      allow get: if true;
+      allow list: if isAuthorizedAdmin();
+      allow create, update: if isAuthorizedAdmin();
+      allow delete: if false;
+    }
+
+    match /config/{allPaths=**} {
+      allow get: if signedIn();
+      allow list, create, update: if isAuthorizedAdmin();
+      allow delete: if false;
+    }
+
+    match /permanent/{allPaths=**} {
+      allow get: if signedIn();
+      allow list, create, update: if isAuthorizedAdmin();
+      allow delete: if false;
+    }
+
+    match /master_data/{allPaths=**} {
+      allow get: if signedIn();
+      allow list, create, update: if isAuthorizedAdmin();
+      allow delete: if false;
+    }
+
+    // =========================================================
+    // DENEGACIÓN FINAL
+    // =========================================================
+
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

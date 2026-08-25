@@ -1,159 +1,32 @@
-# Conectar Explora con Firebase
+# Firebase de Barbería Main — configuración migrada
 
-Esta versión ya tiene código para:
+Este proyecto **ya está configurado** para usar el Firebase histórico de Santander Main/EXPLORA.
 
-- Firebase Authentication
-- Firestore en tiempo real
-- Firebase Storage para comprobantes
-- Pedido de cierre guardado en Firestore
+- Firebase Project ID: `explora-control-operativo`
+- Auth domain: `explora-control-operativo.firebaseapp.com`
+- Datos: colecciones históricas de nivel raíz
+- Comprobantes: Storage histórico de EXPLORA
+- Functions/Telegram: código incluido en `functions/`
 
-## 1. Crear o elegir proyecto Firebase
+No crees otro proyecto Firebase y no cambies `firebase-config.js` a `barberia-c25a1`, porque eso separaría nuevamente la app de los datos históricos.
 
-Entrá a Firebase Console y creá o elegí el proyecto de Explora, por ejemplo:
+## Login
 
-`republica-argentina-barberia`
+Se reutilizan las cuentas existentes de Firebase Authentication. El login acepta el esquema histórico `usuario@explora.local` y también consulta `login_aliases` cuando corresponde.
 
-## 2. Crear una app Web
+## Despliegue del backend
 
-En Configuración del proyecto > Tus apps > Web, registrá una app Web.
+Lee `CLOUD_SHELL_DESPLEGAR.md` o ejecuta:
 
-Firebase te mostrará algo parecido a:
-
-```js
-const firebaseConfig = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "...",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
-};
+```bash
+chmod +x tools/deploy-migracion-cloud-shell.sh
+./tools/deploy-migracion-cloud-shell.sh
 ```
 
-Copiá esos valores dentro de `firebase-config.js`.
+## Publicación web
 
-## 3. Authentication
+La interfaz puede seguir publicándose en GitHub Pages. Para la web, sube los archivos del proyecto nuevo al repositorio que vayas a usar como Barbería Main.
 
-Firebase Console > Authentication > Sign-in method
+## Regla clave
 
-Activá:
-
-- Email/Password
-
-La interfaz permite ingresar con el correo completo o con un usuario simple.
-
-Para el usuario principal de esta versión, tanto `barberia` como
-`barberia@gmail.com` intentan acceder al mismo usuario de Authentication.
-
-Internamente se convierte en:
-
-`barbero01@republica-argentina.local`
-
-Entonces, en Authentication > Users, creá al empleado con ese email y la contraseña que quieras.
-
-Ejemplo:
-
-- Usuario en la app: `barbero01`
-- Email que creás en Firebase: `barbero01@republica-argentina.local`
-- Contraseña: la que vos elijas
-
-El alias principal se configura en `LOGIN_ALIASES`, dentro de
-`firebase-config.js`. No se guarda ninguna contraseña en los archivos de la app.
-
-## 4. Firestore
-
-Creá Firestore Database.
-
-Después publicá el contenido de `firestore.rules`.
-
-Esta versión necesita volver a publicar `firestore.rules`, porque los cierres
-se comparten entre el chofer y el administrador y la nueva deuda solo puede
-ser creada por un perfil administrador.
-
-Los datos se guardan así:
-
-`businesses/republica-argentina/users/{uid}/payments`
-
-y los cierres en:
-
-`businesses/republica-argentina/closures/{closureId}`
-
-Las deudas administrativas de la jornada se guardan en:
-
-`businesses/republica-argentina/debts/{debtId}`
-
-### Usuario administrador
-
-El administrador usa la misma app. Después de crear su usuario en
-Authentication e ingresar una vez, buscá su perfil en Firestore:
-
-`businesses/republica-argentina/users/{uid-del-administrador}`
-
-Y cambiá el campo:
-
-`role: "admin"`
-
-Los usuarios normales conservan `role: "barber"`. El rol administrador debe
-asignarse desde Firebase Console, no desde la aplicación.
-
-## 5. Storage
-
-Activá Firebase Storage.
-
-Publicá el contenido de `storage.rules`.
-
-Los comprobantes se guardan dentro de una carpeta privada por usuario.
-
-## 6. Dominio autorizado
-
-En Authentication > Settings > Authorized domains agregá tu dominio de GitHub Pages si no aparece automáticamente:
-
-`davidmanu97bj-lgtm.github.io`
-
-## 7. Subir al GitHub
-
-Subí estos archivos al repositorio:
-
-- `index.html`
-- `app.js`
-- `styles.css`
-- `firebase-config.js`
-- `assets/explora-logo.png`
-
-Los archivos `.rules` y `firebase.json` no necesitan estar publicados en GitHub Pages para que la web funcione, pero conviene guardarlos en el repo.
-
-## Importante
-
-La configuración web de Firebase no es una contraseña secreta. La seguridad real está en Authentication y en las Rules.
-
-Esta primera versión hace que cada empleado vea únicamente sus propios cobros y cierres. Después se puede agregar un usuario administrador para ver toda la barbería.
-
-## Cierres semanales de Uber
-
-La app guarda un comprobante semanal de Uber por usuario en:
-
-`businesses/{businessId}/users/{uid}/uber/{YYYY-Www}`
-
-El identificador de semana evita que el mismo usuario cargue más de un comprobante para la misma semana. El cierre de Uber impacta el día en que se registra: suma al lado Efectivo/chofer y el 5% de caja chica se calcula sobre `Efectivo + Uber`.
-
-Si ya tenías Firebase configurado, volvé a desplegar `firestore.rules` para
-habilitar la colección compartida de cierres y los ajustes del administrador.
-
-## Pagos de cierre y ajustes
-
-- Si el chofer paga a Explora, puede pagar el total o un importe parcial y
-  debe adjuntar el comprobante. El movimiento se suma en Digital como
-  `Ajuste del chofer`.
-- Si Explora paga al chofer, el administrador puede pagar el total o un
-  importe parcial y debe adjuntar el comprobante. El movimiento se suma en
-  Efectivo como `Ajuste de Explora`.
-- Los ajustes reducen el saldo por el importe completo. No forman parte de la
-  facturación, no se reparten nuevamente 50/50 y no generan caja chica.
-
-## Deuda cargada por el administrador
-
-- Solo un perfil con `role: "admin"` ve el botón `+` junto a “Deuda”.
-- La deuda se suma al total de Chofer/Efectivo por el importe completo.
-- Aumenta el saldo que el chofer debe pagar a Explora sin volver a dividirse
-  50/50 y sin generar el 5% de caja chica.
-- El motivo es obligatorio y el comprobante es opcional.
+Puedes dejar de utilizar el código/frontend viejo de Santander Main, pero **no borres el proyecto Firebase `explora-control-operativo`**, porque ahora es el backend permanente del Barbería Main migrado.

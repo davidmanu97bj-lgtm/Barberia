@@ -9,8 +9,8 @@ import {
   setPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
-  initializeFirestore, collection, addDoc, doc, getDoc, setDoc,
-  onSnapshot, serverTimestamp, query, where, writeBatch, runTransaction
+  initializeFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc,
+  onSnapshot, serverTimestamp, query, where, limit, writeBatch, runTransaction
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {
   getStorage, ref, uploadBytes, getDownloadURL
@@ -55,6 +55,200 @@ const UBER_TRACKING_START_DATE = "2026-08-24";
 const ADVANCE_MAX_AMOUNT = 400000;
 const ADVANCE_INTEREST_RATE = 0.40;
 const ADVANCE_DIFFERENCE_LIMIT = 50000;
+const EXPLORA_ADMIN_UIDS = new Set(["2LziyTTdFcZzSOhK3hLbAKs2U4s2"]);
+const ROOT_COLLECTIONS = Object.freeze({
+  payments: "billing_records",
+  expenses: "gastos",
+  uber: "uber_weekly_closures",
+  closures: "cierres_semanales",
+  debts: "deudas_choferes",
+  advances: "prestamos_operativos"
+});
+
+function profileRole(profile = {}, user = auth.currentUser) {
+  if (user?.uid && EXPLORA_ADMIN_UIDS.has(user.uid)) return "admin";
+  const raw = String(profile.role || profile.rol || profile.tipoUsuario || profile.tipo || "chofer").trim().toLowerCase();
+  return ["admin", "administrador", "owner", "superadmin"].includes(raw) ? "admin" : "barber";
+}
+
+function recordAmount(item = {}) {
+  for (const value of [item.amount, item.monto, item.valor, item.finalPrice, item.totalAmount, item.total, item.importe]) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return 0;
+}
+
+function recordTimestampMs(item = {}) {
+  const candidates = [item.createdAt, item.completedAt, item.updatedAt, item.expenseDate, item.receiptUploadedAt];
+  for (const value of candidates) {
+    if (!value) continue;
+    if (typeof value.toMillis === "function") return value.toMillis();
+    if (typeof value.toDate === "function") return value.toDate().getTime();
+    if (value instanceof Date) return value.getTime();
+  }
+  for (const value of [item.createdAtMs, item.completedAtMs, item.updatedAtMs, item.timestampMs]) {
+    const parsed = Number(value || 0);
+    if (parsed > 0) return parsed;
+  }
+  for (const value of [item.fechaISO, item.date, item.fecha]) {
+    const parsed = Date.parse(String(value || ""));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function recordDayKey(item = {}) {
+  if (item.dayKey) return String(item.dayKey);
+  const ms = recordTimestampMs(item);
+  return ms ? localDayKey(new Date(ms)) : "";
+}
+
+function recordProofUrl(item = {}) {
+  return String(item.proofUrl || item.receiptUrl || item.downloadURL || item.comprobanteUrl || item.notificationPhotoUrl || "");
+}
+
+function recordProofPath(item = {}) {
+  return String(item.proofPath || item.receiptPath || item.storagePath || item.fullPath || item.comprobantePath || "");
+}
+
+function normalizePaymentRecord(id, item = {}) {
+  const rawMethod = String(item.method || item.paymentMethod || item.metodoPago || item.financialCategory || "").toLowerCase();
+  const method = /cash|efectivo/.test(rawMethod) ? "cash" : "digital";
+  const originalType = String(item.type || item.operationType || "");
+  const sourceModule = String(item.sourceModule || item.category || item.module || "").toLowerCase();
+  let adjustmentDirection = String(item.adjustmentDirection || item.settlementDirection || item.paymentDirection || "").toLowerCase();
+  if (["driver_pays_explora", "chofer_a_explora", "chofer_a_david"].includes(adjustmentDirection)) adjustmentDirection = "driver_to_explora";
+  if (["explora_pays_driver", "explora_a_chofer", "david_a_chofer"].includes(adjustmentDirection)) adjustmentDirection = "explora_to_driver";
+  const isLegacyBillingSettlement = item.affectsBillingSettlement === true ||
+    originalType.toLowerCase() === "admin_billing_settlement_payment" ||
+    (String(item.operationType || item.movementType || "").toLowerCase() === "driver_payment" && /factur|billing/.test(sourceModule));
+  if (isLegacyBillingSettlement && !adjustmentDirection) adjustmentDirection = "driver_to_explora";
+  let type = originalType;
+  // No convertir las compensaciones de gastos: también son internas, pero tienen
+  // una lógica propia distinta de un pago de cierre.
+  if (adjustmentDirection || isLegacyBillingSettlement) type = "settlement_adjustment";
+  return {
+    ...item,
+    id,
+    amount: recordAmount(item),
+    method,
+    type,
+    adjustmentDirection,
+    service: item.service || item.serviceDescription || item.categoryLabel || (method === "cash" ? "Cobro en efectivo" : "Cobro digital"),
+    detail: item.detail || item.notes || item.detalle || item.descripcion || "Servicio registrado",
+    proofUrl: recordProofUrl(item),
+    proofPath: recordProofPath(item),
+    dayKey: recordDayKey(item),
+    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || "",
+    operatorName: item.operatorName || item.driverName || item.choferNombre || item.nombreChofer || ""
+  };
+}
+
+function normalizeExpenseRecord(id, item = {}) {
+  return {
+    ...item,
+    id,
+    amount: recordAmount(item),
+    detail: item.detail || item.notes || item.detalle || item.descripcion || item.expenseType || item.tipo || "Gasto",
+    proofUrl: recordProofUrl(item),
+    proofPath: recordProofPath(item),
+    dayKey: recordDayKey(item),
+    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || item.ownerUid || "",
+    operatorName: item.operatorName || item.driverName || item.choferNombre || ""
+  };
+}
+
+function normalizeUberRecord(id, item = {}) {
+  const dayKey = recordDayKey(item);
+  const weekCloseDate = item.weekCloseDate || (item.weekDisplayEndMs ? localDayKey(new Date(Number(item.weekDisplayEndMs))) : dayKey);
+  return {
+    ...item,
+    id,
+    amount: recordAmount({ amount: item.grossAmount ?? item.totalAmount ?? item.amount ?? item.monto }),
+    weekKey: item.weekKey || item.weekId || id,
+    weekLabel: item.weekLabel || item.weekId || id,
+    weekStartDate: item.weekStartDate || (item.weekStartMs ? localDayKey(new Date(Number(item.weekStartMs))) : ""),
+    weekCloseDate,
+    proofUrl: recordProofUrl(item),
+    proofPath: recordProofPath(item),
+    dayKey,
+    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || "",
+    operatorName: item.operatorName || item.driverName || item.choferNombre || ""
+  };
+}
+
+function normalizeDebtRecord(id, item = {}) {
+  const remaining = Number(item.remainingAmount ?? item.saldoPendiente ?? item.amount ?? item.totalAmount ?? 0);
+  const status = String(item.status || item.debtStatus || item.estado || "active").toLowerCase();
+  return {
+    ...item,
+    id,
+    amount: /paid|pagad|closed|cerrad|cancel/.test(status) ? 0 : Math.max(0, Number.isFinite(remaining) ? remaining : 0),
+    detail: item.detail || item.reason || item.notes || item.descripcion || "Deuda",
+    proofUrl: recordProofUrl(item),
+    proofPath: recordProofPath(item),
+    dayKey: recordDayKey(item),
+    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || ""
+  };
+}
+
+function normalizeClosureRecord(id, item = {}) {
+  let direction = String(item.direction || item.paymentDirection || "");
+  if (["driver_to_explora", "chofer_a_david", "chofer_a_explora"].includes(direction)) direction = "driver_pays_explora";
+  if (["explora_to_driver", "david_a_chofer", "explora_a_chofer"].includes(direction)) direction = "explora_pays_driver";
+  if (!direction) {
+    if (Number(item.amountDueFromDriver || item.amountFromDriver || 0) > 0) direction = "driver_pays_explora";
+    else if (Number(item.amountDueToDriver || item.amountToDriver || 0) > 0) direction = "explora_pays_driver";
+  }
+  const settlementAmount = Number(item.settlementAmount ?? item.requestedAmount ?? item.amountDueFromDriver ?? item.amountFromDriver ?? item.amountDueToDriver ?? item.amountToDriver ?? 0) || 0;
+  const paidAmountTotal = Number(item.paidAmountTotal ?? item.amountPaid ?? item.billingSettlementPaymentTotal ?? 0) || 0;
+  return {
+    ...item,
+    id,
+    direction,
+    settlementAmount,
+    requestedAmount: Number(item.requestedAmount ?? settlementAmount) || settlementAmount,
+    paidAmountTotal,
+    remainingAmount: Number(item.remainingAmount ?? Math.max(0, settlementAmount - paidAmountTotal)) || 0,
+    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || "",
+    operatorName: item.operatorName || item.driverName || item.choferNombre || item.nombreChofer || "",
+    proofUrl: recordProofUrl(item),
+    proofPath: recordProofPath(item),
+    dayKey: recordDayKey(item),
+    requestedAt: item.requestedAt || item.createdAt || null
+  };
+}
+
+function normalizeAdvanceRecord(id, item = {}) {
+  return {
+    ...item,
+    id,
+    type: item.type || item.loanType || "",
+    remainingAmount: Number(item.remainingAmount ?? item.balance ?? item.saldoPendiente ?? item.totalDebt ?? 0) || 0,
+    totalDebt: Number(item.totalDebt ?? item.totalAmount ?? item.originalAmount ?? item.amount ?? 0) || 0
+  };
+}
+
+function currentWeeklyPeriodId(reference = new Date()) {
+  const date = new Date(reference);
+  date.setHours(12, 0, 0, 0);
+  const daysSinceSaturday = (date.getDay() - 6 + 7) % 7;
+  date.setDate(date.getDate() - daysSinceSaturday);
+  return localDayKey(date);
+}
+
+function currentDriverUid() {
+  return auth.currentUser?.uid || "";
+}
+
+function currentDriverName() {
+  return currentProfile?.displayName || currentProfile?.nombre || currentProfile?.nombreCompleto || currentProfile?.username || auth.currentUser?.displayName || "Chofer";
+}
+
+function ownedQuery(collectionName, uid = currentDriverUid()) {
+  return query(collection(db, collectionName), where("driverUid", "==", uid));
+}
 
 function setSplashProgress(value) {
   const progress = Math.max(0, Math.min(100, Number(value) || 0));
@@ -255,16 +449,30 @@ function safeUsername(value) {
   return value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"").replace(/[^a-z0-9._-]/g,"");
 }
 
-function loginEmailCandidates(usernameOrEmail) {
+async function loginEmailCandidates(usernameOrEmail) {
   const value = usernameOrEmail.trim().toLowerCase();
   if (value.includes("@")) return [value];
 
   const username = safeUsername(value);
-  return [...new Set([
+  const candidates = [
     LOGIN_ALIASES[value],
-    username === "barberia" ? "barberia@gmail.com" : "",
     username ? `${username}@${USER_EMAIL_DOMAIN}` : ""
-  ].filter(Boolean))];
+  ].filter(Boolean);
+
+  if (username) {
+    try {
+      const aliasSnap = await getDoc(doc(db, "login_aliases", username));
+      if (aliasSnap.exists()) {
+        const data = aliasSnap.data() || {};
+        const aliasEmail = String(data.authEmail || data.email || data.correo || data.firebaseEmail || "").trim().toLowerCase();
+        if (aliasEmail.includes("@")) candidates.push(aliasEmail);
+      }
+    } catch (err) {
+      console.warn("No se pudo consultar login_aliases; se intenta el acceso histórico.", err?.code || err);
+    }
+  }
+
+  return [...new Set(candidates)];
 }
 
 function isCredentialError(err) {
@@ -280,7 +488,7 @@ async function waitForAuthReady() {
 }
 
 async function signInFromLogin(usernameOrEmail, password) {
-  const candidates = loginEmailCandidates(usernameOrEmail);
+  const candidates = await loginEmailCandidates(usernameOrEmail);
   let lastError = Object.assign(new Error("Faltan credenciales"), { code: "auth/invalid-credential" });
 
   for (const email of candidates) {
@@ -316,8 +524,8 @@ function loginErrorMessage(err) {
 }
 
 function fallbackProfile(user) {
-  const username = user.email?.split("@")[0] || "barberia";
-  return { username, displayName: username, role: "barber", active: true };
+  const username = user.email?.split("@")[0] || "explora";
+  return { username, displayName: user.displayName || username, role: EXPLORA_ADMIN_UIDS.has(user.uid) ? "admin" : "barber", active: true, uid:user.uid };
 }
 function isSettlementAdjustment(item) {
   return item.type === "settlement_adjustment";
@@ -862,14 +1070,54 @@ function renderList(containerId, items, isDigital) {
 }
 
 async function loadProfile(user) {
-  const profileRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid);
-  const snap = await getDoc(profileRef);
-  if (snap.exists()) return snap.data();
+  const directRefs = [doc(db, "usuarios", user.uid), doc(db, "choferes", user.uid)];
+  for (const profileRef of directRefs) {
+    try {
+      const snap = await getDoc(profileRef);
+      if (snap.exists()) {
+        const data = snap.data() || {};
+        return {
+          ...data,
+          username: data.username || data.usuario || user.email?.split("@")[0] || "explora",
+          displayName: data.displayName || data.nombre || data.nombreCompleto || user.displayName || user.email?.split("@")[0] || "Explora",
+          role: profileRole(data, user),
+          active: !(data.active === false || data.activo === false || String(data.estado || "").toLowerCase() === "inactivo")
+        };
+      }
+    } catch (_) {}
+  }
 
-  const username = user.email?.split("@")[0] || "barbero";
-  const profile = { username, displayName: username, role: "barber", active: true, createdAt: serverTimestamp() };
-  await setDoc(profileRef, profile, { merge: true });
-  return profile;
+  try {
+    const byUid = await getDocs(query(collection(db, "choferes"), where("uid", "==", user.uid), limit(1)));
+    if (!byUid.empty) {
+      const data = byUid.docs[0].data() || {};
+      return {
+        ...data,
+        username: data.username || data.usuario || user.email?.split("@")[0] || "explora",
+        displayName: data.displayName || data.nombre || data.nombreCompleto || user.displayName || user.email?.split("@")[0] || "Explora",
+        role: profileRole(data, user),
+        active: !(data.active === false || data.activo === false || String(data.estado || "").toLowerCase() === "inactivo")
+      };
+    }
+  } catch (_) {}
+
+  if (user.email) {
+    try {
+      const byEmail = await getDocs(query(collection(db, "choferes"), where("email", "==", user.email.toLowerCase()), limit(1)));
+      if (!byEmail.empty) {
+        const data = byEmail.docs[0].data() || {};
+        return {
+          ...data,
+          username: data.username || data.usuario || user.email.split("@")[0],
+          displayName: data.displayName || data.nombre || data.nombreCompleto || user.displayName || user.email.split("@")[0],
+          role: profileRole(data, user),
+          active: !(data.active === false || data.activo === false || String(data.estado || "").toLowerCase() === "inactivo")
+        };
+      }
+    } catch (_) {}
+  }
+
+  return fallbackProfile(user);
 }
 
 function subscribeToday(user) {
@@ -880,29 +1128,25 @@ function subscribeToday(user) {
   if (unsubscribeAdvances) unsubscribeAdvances();
   advancesLoaded = false;
 
-  const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
-  const expensesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "expenses");
-  const uberRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "uber");
-  const advancesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "advances");
-  const debtsRef = collection(db, "businesses", BUSINESS_ID, "debts");
+  const paymentsRef = ownedQuery(ROOT_COLLECTIONS.payments, user.uid);
+  const expensesRef = ownedQuery(ROOT_COLLECTIONS.expenses, user.uid);
+  const uberRef = ownedQuery(ROOT_COLLECTIONS.uber, user.uid);
+  const advancesRef = ownedQuery(ROOT_COLLECTIONS.advances, user.uid);
+  const debtsRef = ownedQuery(ROOT_COLLECTIONS.debts, user.uid);
   $("syncStatus").textContent = "Sincronizando…";
   $("syncStatus").className = "sync";
 
   unsubscribePayments = onSnapshot(paymentsRef, snap => {
     const today = localDayKey();
     payments = snap.docs
-      .map(d => ({ id:d.id, ...d.data() }))
+      .map(d => normalizePaymentRecord(d.id, d.data()))
       .filter(item => item.dayKey === today)
-      .sort((a, b) => {
-        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return bMs - aMs;
-      });
+      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
     render();
     $("syncStatus").textContent = "En tiempo real";
     $("syncStatus").className = "sync ok";
   }, err => {
-    console.error("Firestore payments snapshot error:", err);
+    console.error("Firestore billing_records snapshot error:", err);
     $("syncStatus").textContent = "Error de datos";
     $("syncStatus").className = "sync bad";
   });
@@ -910,34 +1154,25 @@ function subscribeToday(user) {
   unsubscribeExpenses = onSnapshot(expensesRef, snap => {
     const today = localDayKey();
     expenses = snap.docs
-      .map(d => ({ id:d.id, ...d.data() }))
+      .map(d => normalizeExpenseRecord(d.id, d.data()))
       .filter(item => item.dayKey === today)
-      .sort((a, b) => {
-        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return bMs - aMs;
-      });
+      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
     render();
   }, err => {
-    console.error("Firestore expenses snapshot error:", err);
+    console.error("Firestore gastos snapshot error:", err);
     $("syncStatus").textContent = "Error de gastos";
     $("syncStatus").className = "sync bad";
   });
 
   unsubscribeUber = onSnapshot(uberRef, snap => {
     uberClosures = snap.docs
-      .map(d => ({ id:d.id, ...d.data() }))
-      .sort((a, b) => {
-        const dateCmp = String(b.weekCloseDate || "").localeCompare(String(a.weekCloseDate || ""));
-        if (dateCmp) return dateCmp;
-        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return bMs - aMs;
-      });
+      .map(d => normalizeUberRecord(d.id, d.data()))
+      .filter(item => item.noData !== true)
+      .sort((a, b) => String(b.weekCloseDate || "").localeCompare(String(a.weekCloseDate || "")) || recordTimestampMs(b) - recordTimestampMs(a));
     render();
     if (!$("uberModal")?.classList.contains("hidden")) renderUberWeekSelector();
   }, err => {
-    console.error("Firestore Uber snapshot error:", err);
+    console.error("Firestore uber_weekly_closures snapshot error:", err);
     $("syncStatus").textContent = "Error de Uber";
     $("syncStatus").className = "sync bad";
   });
@@ -945,34 +1180,25 @@ function subscribeToday(user) {
   unsubscribeDebts = onSnapshot(debtsRef, snap => {
     const today = localDayKey();
     debts = snap.docs
-      .map(d => ({ id:d.id, ...d.data() }))
-      .filter(item => item.dayKey === today)
-      .sort((a, b) => {
-        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return bMs - aMs;
-      });
+      .map(d => normalizeDebtRecord(d.id, d.data()))
+      .filter(item => item.dayKey === today && item.amount > 0)
+      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
     render();
   }, err => {
-    console.error("Firestore debts snapshot error:", err);
+    console.error("Firestore deudas_choferes snapshot error:", err);
     $("syncStatus").textContent = "Error de deudas";
     $("syncStatus").className = "sync bad";
   });
 
   unsubscribeAdvances = onSnapshot(advancesRef, snap => {
     advances = snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => {
-        const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return bMs - aMs;
-      });
+      .map(d => normalizeAdvanceRecord(d.id, d.data()))
+      .filter(item => item.type === "cash_advance" || item.loanType === "cash_advance")
+      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
     advancesLoaded = true;
     render();
   }, err => {
-    console.error("Firestore advances snapshot error:", err);
-    // Un fallo aislado del módulo de adelantos no debe bloquear los cobros
-    // digitales ni el ingreso al resto de la aplicación.
+    console.error("Firestore prestamos_operativos snapshot error:", err);
     advances = [];
     advancesLoaded = true;
     render();
@@ -982,7 +1208,7 @@ function subscribeToday(user) {
 }
 
 function isAdminProfile() {
-  return currentProfile?.role === "admin";
+  return EXPLORA_ADMIN_UIDS.has(auth.currentUser?.uid || "") || currentProfile?.role === "admin";
 }
 
 function applyRoleUI() {
@@ -1034,22 +1260,18 @@ function renderAdminClosures() {
 
 function subscribeClosures(user) {
   if (unsubscribeClosures) unsubscribeClosures();
-  const baseRef = collection(db, "businesses", BUSINESS_ID, "closures");
+  const baseRef = collection(db, ROOT_COLLECTIONS.closures);
   const source = isAdminProfile()
     ? baseRef
-    : query(baseRef, where("operatorUid", "==", user.uid));
+    : query(baseRef, where("driverUid", "==", user.uid));
 
   unsubscribeClosures = onSnapshot(source, snap => {
     closures = snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => {
-        const aMs = a.requestedAt?.toMillis ? a.requestedAt.toMillis() : 0;
-        const bMs = b.requestedAt?.toMillis ? b.requestedAt.toMillis() : 0;
-        return bMs - aMs;
-      });
+      .map(d => normalizeClosureRecord(d.id, d.data()))
+      .sort((a, b) => recordTimestampMs(b) - recordTimestampMs(a));
     renderAdminClosures();
   }, err => {
-    console.error("Firestore closures snapshot error:", err);
+    console.error("Firestore cierres_semanales snapshot error:", err);
     if (isAdminProfile()) {
       $("adminClosureList").innerHTML = `<div class="admin-empty error">No se pudieron cargar los cierres.</div>`;
     }
@@ -1190,11 +1412,16 @@ $("confirmDebtCompensation")?.addEventListener("click", async () => {
       Math.round(model.expenseHalf),
       Math.round(model.reimbursementApplied)
     ].join("_");
-    const compensationRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "payments", compensationId);
+    const compensationRef = doc(db, ROOT_COLLECTIONS.payments, compensationId);
     await setDoc(compensationRef, {
       method: "digital",
+      paymentMethod: "internal_compensation",
       type: "reimbursement_compensation",
+      internalSettlementAdjustment: true,
+      excludeFromBillingSettlement: true,
+      suppressTelegram: true,
       amount,
+      monto: amount,
       service: "Reintegro aplicado",
       detail: `Se utilizaron ${money(amount)} del reintegro de gastos para reducir la diferencia Chofer–Explora. Saldo restante: ${money(remainingBalance)}.`,
       compensationSource: "expense_reimbursement",
@@ -1207,8 +1434,14 @@ $("confirmDebtCompensation")?.addEventListener("click", async () => {
       proofPath: "",
       dayKey: localDayKey(),
       operatorUid: user.uid,
-      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      operatorName: currentDriverName(),
+      driverUid: user.uid,
+      choferUid: user.uid,
+      uid: user.uid,
+      driverName: currentDriverName(),
       businessId: BUSINESS_ID,
+      weeklyPeriodId: currentWeeklyPeriodId(),
+      createdAtMs: Date.now(),
       createdAt: serverTimestamp()
     });
 
@@ -1269,9 +1502,17 @@ $("advanceForm")?.addEventListener("submit", async event => {
   $("advanceStatus").textContent = "";
 
   try {
-    const advancesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "advances");
+    const advancesRef = collection(db, ROOT_COLLECTIONS.advances);
     await addDoc(advancesRef, {
       type: "cash_advance",
+      loanType: "cash_advance",
+      driverUid: user.uid,
+      choferUid: user.uid,
+      uid: user.uid,
+      driverId: user.uid,
+      driverName: currentDriverName(),
+      amount: quote.principal,
+      originalAmount: quote.principal,
       principalAmount: quote.principal,
       interestPercent: 40,
       interestAmount: quote.interest,
@@ -1281,9 +1522,11 @@ $("advanceForm")?.addEventListener("submit", async event => {
       status: "active",
       differenceAtRequest: difference,
       requestedDayKey: localDayKey(),
+      weeklyPeriodId: currentWeeklyPeriodId(),
       operatorUid: user.uid,
-      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      operatorName: currentDriverName(),
       businessId: BUSINESS_ID,
+      createdAtMs: Date.now(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
@@ -1335,19 +1578,19 @@ $("chargeForm")?.addEventListener("submit", async e => {
     let proofPath = "";
     if (mode === "digital" && file) {
       const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/${localDayKey()}/${Date.now()}_${cleanName}`;
+      proofPath = `billing_receipts/${user.uid}/${localDayKey()}/${Date.now()}_${cleanName}`;
       const storageRef = ref(storage, proofPath);
       await uploadBytes(storageRef, file);
       proofUrl = await getDownloadURL(storageRef);
     }
 
-    const paymentsRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments");
+    const paymentsRef = collection(db, ROOT_COLLECTIONS.payments);
     const paymentRef = doc(paymentsRef);
     const enteredDetail = $("detail").value.trim();
     const candidateAdvanceRefs = mode === "digital"
       ? advances
           .filter(item => advanceRemaining(item) > 0.5)
-          .map(item => doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id))
+          .map(item => doc(db, ROOT_COLLECTIONS.advances, item.id))
       : [];
 
     // La transacción vuelve a leer los adelantos antes de descontarlos. Así,
@@ -1369,9 +1612,18 @@ $("chargeForm")?.addEventListener("submit", async e => {
 
       transaction.set(paymentRef, {
         method: mode,
+        paymentMethod: mode === "cash" ? "cash" : "digital",
+        metodoPago: mode === "cash" ? "cash" : "digital",
+        financialCategory: mode === "cash" ? "cash" : "digital",
+        type: mode === "cash" ? "billing" : "payment",
         amount,
+        monto: amount,
+        valor: amount,
+        finalPrice: amount,
         service,
+        serviceDescription: service,
         detail: paymentDetail,
+        notes: paymentDetail,
         advanceRepaymentAmount: repaymentPlan.totalApplied,
         advanceAllocations: repaymentPlan.allocations.map(item => ({
           advanceId: item.id,
@@ -1379,14 +1631,27 @@ $("chargeForm")?.addEventListener("submit", async e => {
         })),
         proofUrl,
         proofPath,
+        receiptUrl: proofUrl,
+        receiptPath: proofPath,
+        receiptRequired: mode === "digital",
         dayKey: localDayKey(),
+        weeklyPeriodId: currentWeeklyPeriodId(),
         operatorUid: user.uid,
-        operatorName: currentProfile?.displayName || currentProfile?.username || "",
+        operatorName: currentDriverName(),
+        driverUid: user.uid,
+        choferUid: user.uid,
+        uid: user.uid,
+        ownerUid: user.uid,
+        driverId: user.uid,
+        driverName: currentDriverName(),
+        status: "completed",
+        source: "barberia-main-migrated",
+        createdAtMs: Date.now(),
         businessId: BUSINESS_ID,
         createdAt: serverTimestamp()
       });
       repaymentPlan.allocations.forEach(item => {
-        const advanceRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id);
+        const advanceRef = doc(db, ROOT_COLLECTIONS.advances, item.id);
         transaction.update(advanceRef, {
           remainingAmount: item.remainingAmount,
           repaidAmount: item.repaidAmount,
@@ -1451,23 +1716,43 @@ $("debtForm")?.addEventListener("submit", async event => {
     let proofPath = "";
     if (file) {
       const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      proofPath = `businesses/${BUSINESS_ID}/users/${admin.uid}/proofs/debts/${localDayKey()}_${Date.now()}_${cleanName}`;
+      proofPath = `deudas/${admin.uid}/${localDayKey()}_${Date.now()}_${cleanName}`;
       const storageRef = ref(storage, proofPath);
       await uploadBytes(storageRef, file);
       proofUrl = await getDownloadURL(storageRef);
     }
 
-    const debtsRef = collection(db, "businesses", BUSINESS_ID, "debts");
+    const debtsRef = collection(db, ROOT_COLLECTIONS.debts);
     await addDoc(debtsRef, {
       type: "admin_debt",
+      debtType: "admin_debt",
       amount,
+      totalAmount: amount,
+      remainingAmount: amount,
+      saldoPendiente: amount,
+      paidAmount: 0,
+      amountPaid: 0,
       detail,
+      reason: detail,
+      notes: detail,
       proofUrl,
       proofPath,
+      receiptUrl: proofUrl,
+      receiptPath: proofPath,
       dayKey: localDayKey(),
+      driverUid: admin.uid,
+      choferUid: admin.uid,
+      uid: admin.uid,
+      driverId: admin.uid,
+      driverName: currentDriverName(),
+      sourceModule: "pendientes",
+      status: "active",
+      debtStatus: "active",
+      createdByRole: "admin",
       businessId: BUSINESS_ID,
       createdByUid: admin.uid,
-      createdByName: currentProfile?.displayName || currentProfile?.username || "Administrador",
+      createdByName: currentDriverName() || "Administrador",
+      createdAtMs: Date.now(),
       createdAt: serverTimestamp()
     });
 
@@ -1513,20 +1798,41 @@ $("expenseForm")?.addEventListener("submit", async e => {
 
   try {
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/${localDayKey()}/expense_${Date.now()}_${cleanName}`;
+    const proofPath = `gastos/${user.uid}/expense_${Date.now()}/comprobante_${cleanName}`;
     const storageRef = ref(storage, proofPath);
     await uploadBytes(storageRef, file);
     const proofUrl = await getDownloadURL(storageRef);
 
-    const expensesRef = collection(db, "businesses", BUSINESS_ID, "users", user.uid, "expenses");
+    const expensesRef = collection(db, ROOT_COLLECTIONS.expenses);
     await addDoc(expensesRef, {
       amount,
+      monto: amount,
       detail,
+      notes: detail,
+      expenseType: "otros",
+      tipo: "otros",
+      category: "otros",
       proofUrl,
       proofPath,
+      receiptUrl: proofUrl,
+      receiptPath: proofPath,
       dayKey: localDayKey(),
+      weeklyPeriodId: currentWeeklyPeriodId(),
       operatorUid: user.uid,
-      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      operatorName: currentDriverName(),
+      driverUid: user.uid,
+      choferUid: user.uid,
+      uid: user.uid,
+      ownerUid: user.uid,
+      driverId: user.uid,
+      choferId: user.uid,
+      driverName: currentDriverName(),
+      choferNombre: currentDriverName(),
+      payerRole: "driver",
+      sharedRate: 0.5,
+      porcentajeCompartido: 50,
+      status: "active",
+      createdAtMs: Date.now(),
       businessId: BUSINESS_ID,
       createdAt: serverTimestamp()
     });
@@ -1585,7 +1891,8 @@ $("uberForm")?.addEventListener("submit", async e => {
   try {
     // Se usa una identificación determinística para impedir que la misma
     // semana se cargue dos veces, incluso desde dos dispositivos distintos.
-    const uberDocRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "uber", week.weekKey);
+    const uberDocumentId = `uber_${user.uid}_${week.weekKey.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+    const uberDocRef = doc(db, ROOT_COLLECTIONS.uber, uberDocumentId);
     const existing = await getDoc(uberDocRef);
     if (existing.exists() || isUberWeekLoaded(week)) {
       $("uberStatus").textContent = `La semana ${week.label} ya tiene comprobante.`;
@@ -1595,24 +1902,63 @@ $("uberForm")?.addEventListener("submit", async e => {
     }
 
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/uber/${week.weekKey}_${Date.now()}_${cleanName}`;
+    const proofPath = `uber_weekly/${user.uid}/${week.weekKey}/${Date.now()}_${cleanName}`;
     const storageRef = ref(storage, proofPath);
-    await uploadBytes(storageRef, file);
+    await uploadBytes(storageRef, file, {
+      contentType: file.type || "image/jpeg",
+      customMetadata: {
+        module: "uber_weekly",
+        driverUid: user.uid,
+        weekId: week.weekKey,
+        uploadedByUid: user.uid
+      }
+    });
     const proofUrl = await getDownloadURL(storageRef);
 
     await setDoc(uberDocRef, {
-      amount,
-      weekStartDate: week.weekStartDate,
-      weekCloseDate: week.weekCloseDate,
+      closureId: uberDocumentId,
+      weekId: week.weekKey,
       weekKey: week.weekKey,
       weekLabel: week.label,
+      weekStartDate: week.weekStartDate,
+      weekCloseDate: week.weekCloseDate,
+      weekStartMs: parseLocalDateKey(week.weekStartDate)?.getTime() || Date.now(),
+      weekEndMs: parseLocalDateKey(week.weekCloseDate)?.getTime() || Date.now(),
+      grossAmount: amount,
+      totalAmount: amount,
+      amount,
+      driverShare: amount * 0.50,
+      driverNetAmount: amount * 0.50,
+      exploraShare: amount * 0.50,
+      debtAmount: amount * 0.50,
+      cashboxRate: 0.05,
+      cashboxAmount: amount * 0.05,
+      uberCashboxAmount: amount * 0.05,
       proofUrl,
       proofPath,
+      receiptUrl: proofUrl,
+      receiptPath: proofPath,
+      notificationPhotoUrl: proofUrl,
+      telegramPhotoUrl: proofUrl,
+      firebasePhotoUrl: proofUrl,
       dayKey: localDayKey(),
+      driverUid: user.uid,
+      choferUid: user.uid,
+      uid: user.uid,
+      driverId: user.uid,
+      createdByUid: user.uid,
+      createdByRole: "driver",
+      driverName: currentDriverName(),
       operatorUid: user.uid,
-      operatorName: currentProfile?.displayName || currentProfile?.username || "",
+      operatorName: currentDriverName(),
+      reviewStatus: "pending",
+      status: "pending_review",
+      locked: true,
       businessId: BUSINESS_ID,
-      createdAt: serverTimestamp()
+      createdAtMs: Date.now(),
+      updatedAtMs: Date.now(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     });
 
     // Reflejo inmediato: permite continuar con la siguiente semana atrasada
@@ -1814,22 +2160,22 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
   $("confirmClose").disabled = true;
   $("confirmClose").textContent = isDriverPayment ? "Guardando pago…" : "Enviando pedido…";
   try {
-    const closureRef = doc(collection(db, "businesses", BUSINESS_ID, "closures"));
+    const closureRef = doc(collection(db, ROOT_COLLECTIONS.closures));
     let proofUrl = "";
     let proofPath = "";
     const remainingAmount = Math.max(0, model.amount - amount);
 
     if (isDriverPayment) {
       const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      proofPath = `businesses/${BUSINESS_ID}/users/${user.uid}/proofs/closures/${closureRef.id}_${Date.now()}_${cleanName}`;
+      proofPath = `cierres_semanales/${currentWeeklyPeriodId()}/${user.uid}/${closureRef.id}_${Date.now()}_${cleanName}`;
       const storageRef = ref(storage, proofPath);
       await uploadBytes(storageRef, file);
       proofUrl = await getDownloadURL(storageRef);
 
-      const paymentRef = doc(collection(db, "businesses", BUSINESS_ID, "users", user.uid, "payments"));
+      const paymentRef = doc(collection(db, ROOT_COLLECTIONS.payments));
       const candidateAdvanceRefs = advances
         .filter(item => advanceRemaining(item) > 0.5)
-        .map(item => doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id));
+        .map(item => doc(db, ROOT_COLLECTIONS.advances, item.id));
       await runTransaction(db, async transaction => {
         const freshAdvances = [];
         for (const advanceRef of candidateAdvanceRefs) {
@@ -1844,38 +2190,83 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
         ].filter(Boolean).join(" · ");
 
         transaction.set(paymentRef, {
+          // En la UI nueva se muestra como movimiento digital; para el backend histórico
+          // es un pago de liquidación por transferencia, con comprobante obligatorio.
           method: "digital",
-          type: "settlement_adjustment",
+          paymentMethod: "transfer",
+          metodoPago: "transfer",
+          financialCategory: "transfer",
+          type: "admin_billing_settlement_payment",
+          operationType: "admin_billing_settlement_payment",
+          movementType: "driver_payment",
+          sourceModule: "facturacion",
+          affectsBillingSettlement: true,
           adjustmentDirection: "driver_to_explora",
           amount,
+          monto: amount,
+          previousBillingBalance: model.amount,
+          newBillingBalance: remainingAmount,
           advanceRepaymentAmount: repaymentPlan.totalApplied,
           advanceAllocations: repaymentPlan.allocations.map(item => ({
             advanceId: item.id,
             amount: item.applied
           })),
           service: "Ajuste del chofer",
+          notes: detail,
           detail,
           proofUrl,
           proofPath,
+          receiptUrl: proofUrl,
+          receiptPath: proofPath,
           closureId: closureRef.id,
           dayKey: localDayKey(),
+          weeklyPeriodId: currentWeeklyPeriodId(),
+          driverUid: user.uid,
+          choferUid: user.uid,
+          uid: user.uid,
+          ownerUid: user.uid,
+          driverId: user.uid,
+          driverName: currentDriverName(),
           operatorUid: user.uid,
           operatorName: currentProfile?.displayName || currentProfile?.username || "",
           businessId: BUSINESS_ID,
+          createdAtMs: Date.now(),
           createdAt: serverTimestamp()
         });
+        const closureNowMs = Date.now();
         transaction.set(closureRef, {
           direction: "driver_pays_explora",
+          paymentDirection: "driver_to_explora",
           requestedAmount: model.amount,
           settlementAmount: model.amount,
           paidAmountTotal: amount,
           remainingAmount,
+          amountDueFromDriver: remainingAmount,
+          amountFromDriver: remainingAmount,
+          amountDueToDriver: 0,
+          amountToDriver: 0,
+          gross: model.grand,
+          grossAmount: model.grand,
+          expenseTotal: model.expense,
+          cashboxTotal: model.cashBox,
           proofUrl,
           proofPath,
+          receiptUrl: proofUrl,
+          receiptPath: proofPath,
           proofUploadedByUid: user.uid,
           proofUploadedByRole: "driver",
           status: remainingAmount <= 0.5 ? "completed" : "partial",
           dayKey: localDayKey(),
+          weeklyPeriodId: currentWeeklyPeriodId(),
+          closureKind: "facturacion",
+          closureType: "facturacion",
+          moduleKey: "facturacion",
+          payTab: "facturacion",
+          billingClosure: true,
+          closureMode: "on_demand",
+          autoClosesCashbox: true,
+          cashboxClosedWithBilling: true,
+          affectsTabs: ["chofer", "explora", "caja_chica"],
           cashTotal: model.cash,
           uberTotal: model.uber,
           debtTotal: model.adminDebt + model.advanceDebt,
@@ -1885,14 +2276,26 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
           digitalTotal: model.digital,
           expensesTotal: model.expense,
           total: model.grand,
+          driverUid: user.uid,
+          choferUid: user.uid,
+          uid: user.uid,
+          driverName: currentDriverName(),
           operatorUid: user.uid,
           operatorName: currentProfile?.displayName || currentProfile?.username || "",
+          requestedByUid: user.uid,
+          requestedByRole: "driver",
+          createdByUid: user.uid,
+          createdByRole: "driver",
           businessId: BUSINESS_ID,
+          cutoffAtMs: closureNowMs,
+          requestedAtMs: closureNowMs,
+          createdAtMs: closureNowMs,
           requestedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
           completedAt: remainingAmount <= 0.5 ? serverTimestamp() : null
         });
         repaymentPlan.allocations.forEach(item => {
-          const advanceRef = doc(db, "businesses", BUSINESS_ID, "users", user.uid, "advances", item.id);
+          const advanceRef = doc(db, ROOT_COLLECTIONS.advances, item.id);
           transaction.update(advanceRef, {
             remainingAmount: item.remainingAmount,
             repaidAmount: item.repaidAmount,
@@ -1905,14 +2308,34 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
         ? "Pago registrado. Las partes quedaron equilibradas."
         : `Pago parcial registrado. Quedan ${money(remainingAmount)} pendientes.`;
     } else {
+      const closureNowMs = Date.now();
       await setDoc(closureRef, {
         direction: "explora_pays_driver",
+        paymentDirection: "explora_to_driver",
         requestedAmount: model.amount,
         settlementAmount: model.amount,
         paidAmountTotal: 0,
         remainingAmount: model.amount,
+        amountDueFromDriver: 0,
+        amountFromDriver: 0,
+        amountDueToDriver: model.amount,
+        amountToDriver: model.amount,
+        gross: model.grand,
+        grossAmount: model.grand,
+        expenseTotal: model.expense,
+        cashboxTotal: model.cashBox,
         status: "awaiting_admin_proof",
         dayKey: localDayKey(),
+        weeklyPeriodId: currentWeeklyPeriodId(),
+        closureKind: "facturacion",
+        closureType: "facturacion",
+        moduleKey: "facturacion",
+        payTab: "facturacion",
+        billingClosure: true,
+        closureMode: "on_demand",
+        autoClosesCashbox: true,
+        cashboxClosedWithBilling: true,
+        affectsTabs: ["chofer", "explora", "caja_chica"],
         cashTotal: model.cash,
         uberTotal: model.uber,
         debtTotal: model.adminDebt + model.advanceDebt,
@@ -1921,10 +2344,22 @@ $("driverCloseForm")?.addEventListener("submit", async event => {
         digitalTotal: model.digital,
         expensesTotal: model.expense,
         total: model.grand,
+        driverUid: user.uid,
+        choferUid: user.uid,
+        uid: user.uid,
+        driverName: currentDriverName(),
         operatorUid: user.uid,
         operatorName: currentProfile?.displayName || currentProfile?.username || "",
+        requestedByUid: user.uid,
+        requestedByRole: "driver",
+        createdByUid: user.uid,
+        createdByRole: "driver",
         businessId: BUSINESS_ID,
-        requestedAt: serverTimestamp()
+        cutoffAtMs: closureNowMs,
+        requestedAtMs: closureNowMs,
+        createdAtMs: closureNowMs,
+        requestedAt: serverTimestamp(),
+        createdAt: serverTimestamp()
       });
       $("closeStatus").textContent = "Cobro solicitado. Falta el pago y comprobante del administrador.";
     }
@@ -1977,44 +2412,73 @@ $("adminPaymentForm")?.addEventListener("submit", async event => {
   $("confirmAdminPayment").textContent = "Guardando pago…";
   try {
     const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const proofPath = `businesses/${BUSINESS_ID}/users/${admin.uid}/proofs/closures/admin_${item.id}_${Date.now()}_${cleanName}`;
+    const proofPath = `cierres_semanales/${currentWeeklyPeriodId()}/${item.operatorUid}/admin_${item.id}_${Date.now()}_${cleanName}`;
     const storageRef = ref(storage, proofPath);
     await uploadBytes(storageRef, file);
     const proofUrl = await getDownloadURL(storageRef);
 
-    const paymentRef = doc(collection(db, "businesses", BUSINESS_ID, "users", item.operatorUid, "payments"));
-    const closureRef = doc(db, "businesses", BUSINESS_ID, "closures", item.id);
+    const paymentRef = doc(collection(db, ROOT_COLLECTIONS.payments));
+    const closureRef = doc(db, ROOT_COLLECTIONS.closures, item.id);
     const newPaidTotal = Number(item.paidAmountTotal || 0) + amount;
     const newRemaining = Math.max(0, remaining - amount);
     const batch = writeBatch(db);
     batch.set(paymentRef, {
+      // Ajuste interno: la UI lo muestra del lado efectivo del chofer, pero no debe
+      // sumarse otra vez a la facturación histórica ni disparar un Telegram de cobro.
       method: "cash",
+      paymentMethod: "internal_admin_payment",
+      metodoPago: "internal_admin_payment",
+      financialCategory: "internal_admin_payment",
       type: "settlement_adjustment",
+      operationType: "settlement_adjustment",
       adjustmentDirection: "explora_to_driver",
+      internalSettlementAdjustment: true,
+      excludeFromBillingSettlement: true,
+      suppressTelegram: true,
       amount,
+      monto: amount,
       service: "Ajuste de Explora",
+      notes: newRemaining <= 0.5 ? "Pago total de Explora" : "Pago parcial de Explora",
       detail: newRemaining <= 0.5 ? "Pago total de Explora" : "Pago parcial de Explora",
       proofUrl,
       proofPath,
+      receiptUrl: proofUrl,
+      receiptPath: proofPath,
       closureId: item.id,
       dayKey: localDayKey(),
+      weeklyPeriodId: currentWeeklyPeriodId(),
+      driverUid: item.operatorUid,
+      choferUid: item.operatorUid,
+      uid: item.operatorUid,
+      ownerUid: item.operatorUid,
+      driverId: item.operatorUid,
+      driverName: item.operatorName || "Chofer",
       operatorUid: item.operatorUid,
       operatorName: item.operatorName || "",
       createdByUid: admin.uid,
+      createdByRole: "admin",
       createdByName: currentProfile?.displayName || currentProfile?.username || "Administrador",
       businessId: BUSINESS_ID,
+      createdAtMs: Date.now(),
       createdAt: serverTimestamp()
     });
     batch.update(closureRef, {
       paidAmountTotal: newPaidTotal,
       remainingAmount: newRemaining,
+      amountDueToDriver: newRemaining,
+      amountToDriver: newRemaining,
+      amountDueFromDriver: 0,
+      amountFromDriver: 0,
       lastProofUrl: proofUrl,
       lastProofPath: proofPath,
       proofUrl,
       proofPath,
+      receiptUrl: proofUrl,
+      receiptPath: proofPath,
       proofUploadedByUid: admin.uid,
       proofUploadedByRole: "admin",
       status: newRemaining <= 0.5 ? "completed" : "partially_paid",
+      updatedAtMs: Date.now(),
       lastPaymentAt: serverTimestamp(),
       completedAt: newRemaining <= 0.5 ? serverTimestamp() : null
     });

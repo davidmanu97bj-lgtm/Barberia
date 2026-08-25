@@ -1,0 +1,35 @@
+MIGRACIÓN SANTANDER MAIN -> BARBERÍA MAIN
+
+Frontend/base Barbería conservados:
+- index.html
+- styles.css
+- manifest.json
+- service-worker.js
+- assets/*
+- icon-192.png
+- icon-512.png
+
+Archivos adaptados para el backend histórico EXPLORA:
+- app.js
+- firebase-config.js
+- firebase.json
+- firestore.rules
+- storage.rules
+- .firebaserc
+
+Cloud Functions heredadas de Santander Main:
+- functions/index.js
+- functions/telegram-billing-balance.js
+- functions/telegram-debt-payment.js
+- functions/telegram-driver-debt.js
+- functions/package.json
+- functions/package-lock.json
+- functions/test/*
+
+Ayuda de migración/despliegue:
+- MIGRACION_SANTANDER_A_BARBERIA.md
+- CONFIGURAR_FIREBASE.md
+- CLOUD_SHELL_DESPLEGAR.md
+- tools/deploy-migracion-cloud-shell.sh
+
+Backend Firebase usado: explora-control-operativo

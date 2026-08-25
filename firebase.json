@@ -2,6 +2,32 @@
   "firestore": {
     "rules": "firestore.rules"
   },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "tests/**",
+      "tools/**",
+      "*.md",
+      "*.zip",
+      "*.json.map"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default"
+    }
+  ],
   "storage": {
     "rules": "storage.rules"
   }
