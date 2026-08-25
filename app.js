@@ -967,18 +967,19 @@ function openBillingPayments() {
 }
 
 function openCashboxAmount() {
-  // Un cierre de Facturación no reinicia la caja chica. Solo un cierre específico
-  // de Caja chica puede iniciar un nuevo tramo para ese módulo independiente.
-  const cutoff = lastCashboxResetMs();
+  // Regla autoritativa: la caja chica NO se reinicia con cierres.
+  // Siempre es exactamente el 5% del acumulado histórico vigente de
+  // Efectivo + Uber. Los pagos de liquidación compensan el saldo, pero
+  // no reducen ni reinician la base de caja chica.
   const regularCash = payments
-    .filter(item => !movementIsDeleted(item) && !cashboxIsExcluded(item) && recordTimestampMs(item) > cutoff)
+    .filter(item => !movementIsDeleted(item) && !cashboxIsExcluded(item))
     .filter(item => item.method === "cash" && !isSettlementAdjustment(item) && !isReimbursementCompensation(item))
-    .reduce((sum,item) => sum + Number(item.amount || 0) * 0.05, 0);
-  const uberCashbox = uberClosures
-    .filter(item => !movementIsDeleted(item) && recordTimestampMs(item) > cutoff)
+    .reduce((sum,item) => sum + Number(item.amount || 0), 0);
+  const uberCash = uberClosures
+    .filter(item => !movementIsDeleted(item))
     .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
-    .reduce((sum,item) => sum + Number(item.amount || 0) * 0.05, 0);
-  return regularCash + uberCashbox;
+    .reduce((sum,item) => sum + Number(item.amount || 0), 0);
+  return (regularCash + uberCash) * 0.05;
 }
 
 function openExpenses() {
