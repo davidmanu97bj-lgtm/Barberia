@@ -5,14 +5,23 @@ const path = require("node:path");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "index.js"), "utf8");
 
-test("expone solamente los callables administrativos de barbería", () => {
+test("expone los callables administrativos y los avisos de Telegram de barbería", () => {
   const exported = [...source.matchAll(/exports\.([A-Za-z0-9_]+)\s*=/g)].map(match => match[1]).sort();
-  assert.deepEqual(exported, ["adminCreateBarber", "adminUpdateBarber"]);
+  assert.deepEqual(exported, [
+    "adminCreateBarber",
+    "adminUpdateBarber",
+    "telegramBarberChargeCreated",
+    "telegramBarberClosureCompleted",
+    "telegramBarberClosureRequested"
+  ]);
 });
 
-test("no conserva funciones ni grupos de Telegram de Explora", () => {
-  assert.doesNotMatch(source, /TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID|notify.*Telegram/i);
-  assert.doesNotMatch(source, /adminCreateDriver|adminUpdateDriver/);
+test("Telegram apunta al grupo Barbería y mantiene el token fuera del código", () => {
+  assert.match(source, /TELEGRAM_CHAT_ID = "-5393018000"/);
+  assert.match(source, /defineSecret\("BARBERIA_TELEGRAM_BOT_TOKEN"\)/);
+  assert.match(source, /_telegram_delivery/);
+  assert.doesNotMatch(source, /8952546800:/);
+  assert.doesNotMatch(source, /adminCreateDriver|adminUpdateDriver|explora-control-operativo/i);
 });
 
 test("fija el proyecto lógico de la barbería", () => {
