@@ -1,0 +1,15 @@
+BARBERÍA REPÚBLICA ARGENTINA · ACTUALIZACIÓN V5
+
+- Efectivo: acento rojo discreto en tarjeta, botón Cobrar efectivo y comprobantes.
+- Digital: acento verde discreto en tarjeta, botón Cobrar digital y comprobantes.
+- Los comprobantes de efectivo usan fondo rojo traslúcido y los digitales fondo verde traslúcido.
+- Caja para publicidad se mantiene neutra y compacta.
+- Caja para publicidad ahora detalla claramente: Efectivo 5% y Digital 5%, con sus importes reales.
+- Lógica: 5% de cada cobro (efectivo y digital) va a publicidad. El 95% restante se divide 50/50: 47,5% barbero y 47,5% barbería.
+- Saldo: efectivo aporta 52,5% hacia barbería; digital genera 47,5% a pagar al barbero.
+- Vista previa, cierres, historial y Telegram actualizados al 5%.
+- Telegram de cierres detalla publicidad efectivo 5%, digital 5% y total de caja.
+- Los comprobantes digitales mantienen envío de foto a Telegram; PDF se envía como documento.
+- Se normaliza visualmente a 5% el comprobante de publicidad si el registro conserva grossChargeAmount de una versión anterior.
+- Cache PWA incrementada para forzar la actualización en iPhone.
+- Firestore Rules mantienen la corrección del campo service y exigen rate 0.05 para nuevos comprobantes de publicidad.

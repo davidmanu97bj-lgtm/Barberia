@@ -1,45 +1,42 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-BARBERIA_PROJECT_ID="barberia-c25a1"
-TELEGRAM_SECRET="BARBERIA_TELEGRAM_BOT_TOKEN"
-TELEGRAM_CHAT_ID="-5393018000"
+PROJECT_ID="barberia-c25a1"
+SECRET_NAME="BARBERIA_TELEGRAM_BOT_TOKEN"
+CHAT_ID="-5393018000"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-for required in firebase.json firebase-config.js index.html app.js firestore.rules storage.rules functions/package.json; do
-  if [[ ! -f "$required" ]]; then
-    echo "Falta $required. Ejecuta este archivo dentro de la carpeta del proyecto."
-    exit 1
-  fi
+trap 'echo ""; echo "❌ El despliegue se detuvo en la línea $LINENO. Revisa el mensaje anterior."' ERR
+
+for required in .firebaserc firebase.json firebase-config.js index.html app.js styles.css service-worker.js firestore.rules storage.rules functions/package.json functions/index.js; do
+  [[ -f "$required" ]] || { echo "❌ Falta $required."; exit 1; }
 done
 
 if ! command -v firebase >/dev/null 2>&1; then
   npm install -g firebase-tools
 fi
 
-firebase login --reauth
-firebase use "$BARBERIA_PROJECT_ID"
+if ! firebase projects:list --json >/dev/null 2>&1; then
+  firebase login --no-localhost
+fi
 
-echo "Telegram Barbería: grupo ${TELEGRAM_CHAT_ID}"
-if firebase functions:secrets:get "$TELEGRAM_SECRET" >/dev/null 2>&1; then
-  echo "El token de Telegram ya está guardado de forma segura en Firebase."
-else
-  echo "Primera configuración de Telegram."
-  echo "Cuando Firebase lo pida, pega el TOKEN NUEVO completo de @Explora_notificaciones_bot."
-  echo "El token no se guarda dentro de los archivos del proyecto."
-  firebase functions:secrets:set "$TELEGRAM_SECRET"
+firebase use "$PROJECT_ID"
+
+if ! firebase functions:secrets:get "$SECRET_NAME" --project "$PROJECT_ID" >/dev/null 2>&1; then
+  echo "Configura por única vez el token de Telegram cuando Firebase lo solicite."
+  firebase functions:secrets:set "$SECRET_NAME" --project "$PROJECT_ID"
 fi
 
 npm ci --prefix functions
 npm test --prefix functions
 node --test tests/*.test.mjs
+node --check app.js
+node --check functions/index.js
 
 firebase deploy \
-  --project "$BARBERIA_PROJECT_ID" \
+  --project "$PROJECT_ID" \
   --only "firestore:rules,storage,hosting,functions:barberia"
 
-echo "Barbería República Argentina desplegada correctamente."
-echo "Telegram configurado para el grupo Barbería: ${TELEGRAM_CHAT_ID}"
-echo "Sitio: https://${BARBERIA_PROJECT_ID}.web.app"
-
+echo "✅ Barbería desplegada correctamente: https://${PROJECT_ID}.web.app"
+echo "✅ Telegram configurado para el grupo ${CHAT_ID}."

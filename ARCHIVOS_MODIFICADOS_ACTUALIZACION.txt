@@ -1,0 +1,12 @@
+ARCHIVOS MODIFICADOS · BARBERÍA v2
+
+- index.html
+- styles.css
+- app.js
+- service-worker.js
+- functions/index.js
+- functions/test/callables-contract.test.js
+- tests/project-contract.test.mjs
+- DESPLEGAR_BARBERIA.sh
+- DESPLEGAR_IPHONE.sh
+- CAMBIOS_BARBERIA_v2.txt

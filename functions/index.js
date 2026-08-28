@@ -71,22 +71,26 @@ function buildChargeTelegramMessage(data = {}) {
     `Servicio: ${text(data.service) || "Sin detalle"}`,
     `Método: ${paymentMethodLabel(data.method || data.paymentMethod)}`,
     `Cobro: ${money(amount)}`,
-    `Publicidad 10%: ${money(amount * 0.10)} (5% efectivo + 5% digital)`,
-    `Barbero 45%: ${money(amount * 0.45)}`,
-    `Barbería 45%: ${money(amount * 0.45)}`,
+    `Publicidad 5% ${paymentMethodLabel(data.method || data.paymentMethod)}: ${money(amount * 0.05)}`,
+    `Barbero 47,5%: ${money(amount * 0.475)}`,
+    `Barbería 47,5%: ${money(amount * 0.475)}`,
     settlementLine(direction, Math.abs(balanceAfter), barberName)
   ].join("\n");
 }
 
 function buildClosureRequestedTelegramMessage(data = {}) {
   const barberName = text(data.barberName || data.barberoNombre) || "Barbero";
+  const cashAdvertising = Number(data.advertisingCashReceipt ?? (Number(data.cashTotal || 0) * 0.05));
+  const digitalAdvertising = Number(data.advertisingDigitalReceipt ?? (Number(data.digitalTotal || 0) * 0.05));
   return [
     "🧾 CIERRE SOLICITADO · BARBERÍA",
     `Barbero: ${barberName}`,
     `Total facturado: ${money(data.totalBilled)}`,
     `Efectivo: ${money(data.cashTotal)}`,
     `Digital: ${money(data.digitalTotal)}`,
-    `Publicidad 10%: ${money(data.advertisingFund)}`,
+    `Publicidad efectivo 5%: ${money(cashAdvertising)}`,
+    `Publicidad digital 5%: ${money(digitalAdvertising)}`,
+    `Caja publicidad total: ${money(data.advertisingFund)}`,
     settlementLine(data.direction, data.settlementAmount, barberName),
     "Estado: pendiente de resolución."
   ].join("\n");
@@ -94,11 +98,16 @@ function buildClosureRequestedTelegramMessage(data = {}) {
 
 function buildClosureCompletedTelegramMessage(data = {}) {
   const barberName = text(data.barberName || data.barberoNombre) || "Barbero";
+  const cashAdvertising = Number(data.advertisingCashReceipt ?? (Number(data.cashTotal || 0) * 0.05));
+  const digitalAdvertising = Number(data.advertisingDigitalReceipt ?? (Number(data.digitalTotal || 0) * 0.05));
   return [
     "✅ CIERRE COMPLETADO · BARBERÍA",
     `Barbero: ${barberName}`,
     settlementLine(data.direction, data.settlementAmount, barberName),
     `Total del período: ${money(data.totalBilled)}`,
+    `Publicidad efectivo 5%: ${money(cashAdvertising)}`,
+    `Publicidad digital 5%: ${money(digitalAdvertising)}`,
+    `Caja publicidad total: ${money(data.advertisingFund)}`,
     `Resuelto por: ${text(data.completedByName) || "Administrador"}`,
     "Estado: completado."
   ].join("\n");
@@ -108,18 +117,14 @@ function safeDeliveryId(value) {
   return text(value).replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 240);
 }
 
-async function sendTelegramMessage(message) {
+async function telegramRequest(method, body) {
   const token = TELEGRAM_BOT_TOKEN.value();
   if (!token) throw new Error("Falta configurar BARBERIA_TELEGRAM_BOT_TOKEN.");
 
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      chat_id: TELEGRAM_CHAT_ID,
-      text: message,
-      disable_web_page_preview: true
-    })
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -128,7 +133,56 @@ async function sendTelegramMessage(message) {
   }
 }
 
-async function deliverTelegramOnce(deliveryId, message) {
+async function sendTelegramMessage(message) {
+  return telegramRequest("sendMessage", {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: message,
+    disable_web_page_preview: true
+  });
+}
+
+function proofDelivery(data = {}) {
+  const method = normalized(data.method || data.paymentMethod);
+  const url = text(data.proofUrl || data.comprobanteUrl);
+  if (method !== "digital" || !url) return null;
+
+  const contentType = normalized(data.proofContentType || data.comprobanteContentType);
+  const fileName = normalized(data.proofFileName || data.comprobanteNombre);
+  const isPdf = contentType === "application/pdf" || fileName.endsWith(".pdf") || /\.pdf(?:$|[?#])/i.test(url);
+  return { url, kind: isPdf ? "document" : "photo" };
+}
+
+async function sendTelegramCharge(message, data = {}) {
+  const proof = proofDelivery(data);
+  if (!proof) return sendTelegramMessage(message);
+
+  if (proof.kind === "document") {
+    return telegramRequest("sendDocument", {
+      chat_id: TELEGRAM_CHAT_ID,
+      document: proof.url,
+      caption: message
+    });
+  }
+
+  try {
+    return await telegramRequest("sendPhoto", {
+      chat_id: TELEGRAM_CHAT_ID,
+      photo: proof.url,
+      caption: message
+    });
+  } catch (error) {
+    logger.warn("Telegram no pudo tratar el comprobante como foto; se reintenta como archivo.", {
+      error: error?.message || String(error)
+    });
+    return telegramRequest("sendDocument", {
+      chat_id: TELEGRAM_CHAT_ID,
+      document: proof.url,
+      caption: message
+    });
+  }
+}
+
+async function deliverTelegramOnce(deliveryId, message, sender = sendTelegramMessage) {
   const ref = db.collection(TELEGRAM_DELIVERY_COLLECTION).doc(safeDeliveryId(deliveryId));
   try {
     await ref.create({
@@ -146,7 +200,7 @@ async function deliverTelegramOnce(deliveryId, message) {
   }
 
   try {
-    await sendTelegramMessage(message);
+    await sender(message);
     await ref.set({ status: "sent", sentAt: FieldValue.serverTimestamp() }, { merge: true });
     return true;
   } catch (error) {
@@ -193,6 +247,77 @@ async function assertAdmin(request) {
     }
   }
   throw new HttpsError("permission-denied", "Tu cuenta no tiene permisos de administrador.");
+}
+
+function profileIsActive(data = {}) {
+  const status = normalized(data.status || data.estado);
+  return data.active !== false && data.activo !== false && !/inactiv|disabled|eliminad|deleted/.test(status);
+}
+
+function profileName(data = {}) {
+  return text(data.displayName || data.nombreCompleto || data.nombre || data.username || data.usuario) || "Barbero";
+}
+
+function recordTime(data = {}) {
+  return Number(data.createdAtMs || data.requestedAtMs || data.cutoffAtMs || 0);
+}
+
+async function publicBalanceForBarber(barberUid) {
+  const [charges, closures] = await Promise.all([
+    db.collection("cobros").where("barberUid", "==", barberUid).get(),
+    db.collection("cierres").where("barberUid", "==", barberUid).get()
+  ]);
+  let cutoffAtMs = 0;
+  closures.forEach(snapshot => {
+    const data = snapshot.data() || {};
+    if (data.deleted === true || data.cutoffActive === false) return;
+    cutoffAtMs = Math.max(cutoffAtMs, Number(data.cutoffAtMs || data.requestedAtMs || recordTime(data) || 0));
+  });
+  let cashTotal = 0;
+  let digitalTotal = 0;
+  charges.forEach(snapshot => {
+    const data = snapshot.data() || {};
+    if (data.deleted === true || data.voided === true || recordTime(data) <= cutoffAtMs) return;
+    const amount = Math.max(0, Number(data.amount || data.monto || 0));
+    if (/cash|efectivo/.test(normalized(data.method || data.metodo))) cashTotal += amount;
+    else digitalTotal += amount;
+  });
+  const rawBalance = cashTotal * 0.525 - digitalTotal * 0.475;
+  const balance = Math.abs(rawBalance) > 0.5 ? rawBalance : 0;
+  return {
+    cashTotal,
+    digitalTotal,
+    advertisingCash: cashTotal * 0.05,
+    advertisingDigital: digitalTotal * 0.05,
+    balance,
+    amount: Math.abs(balance),
+    direction: directionFromBalance(balance),
+    cutoffAtMs
+  };
+}
+
+async function refreshPublicBarberSummary(barberUid, suppliedProfile = null) {
+  if (!barberUid) return;
+  let profile = suppliedProfile;
+  if (!profile) {
+    const primary = await db.collection("barberos").doc(barberUid).get();
+    if (primary.exists) profile = primary.data() || {};
+    else {
+      const fallback = await db.collection("usuarios").doc(barberUid).get();
+      profile = fallback.exists ? (fallback.data() || {}) : {};
+    }
+  }
+  if (isAdminProfile(profile || {})) return;
+  const totals = await publicBalanceForBarber(barberUid);
+  await db.collection("saldos_barberos").doc(barberUid).set({
+    businessId: BUSINESS_ID,
+    barberUid,
+    barberName: profileName(profile || {}),
+    active: profileIsActive(profile || {}),
+    ...totals,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedAtMs: Date.now()
+  }, { merge: true });
 }
 
 function publicBarberProfile({ uid, username, email, name, active, adminUid, now }) {
@@ -292,6 +417,20 @@ exports.adminCreateBarber = onCall({
     targetUsername: username,
     createdAt: now
   });
+  batch.set(db.collection("saldos_barberos").doc(uid), {
+    businessId: BUSINESS_ID,
+    barberUid: uid,
+    barberName: name,
+    active: true,
+    cashTotal: 0,
+    digitalTotal: 0,
+    advertisingCash: 0,
+    advertisingDigital: 0,
+    balance: 0,
+    amount: 0,
+    direction: "balanced",
+    updatedAt: now
+  }, { merge: true });
 
   try {
     await batch.commit();
@@ -367,9 +506,34 @@ exports.adminUpdateBarber = onCall({
     passwordChanged: Boolean(password),
     createdAt: now
   });
+  batch.set(db.collection("saldos_barberos").doc(barberUid), {
+    businessId: BUSINESS_ID,
+    barberUid,
+    barberName: name,
+    active,
+    updatedAt: now
+  }, { merge: true });
   await batch.commit();
 
   return { ok: true, barberUid, name, active, passwordChanged: Boolean(password) };
+});
+
+exports.syncPublicBarberBoard = onCall({
+  region: REGION,
+  timeoutSeconds: 120,
+  memory: "512MiB",
+  invoker: "public"
+}, async request => {
+  if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+  const profiles = await db.collection("barberos").get();
+  let updated = 0;
+  for (const snapshot of profiles.docs) {
+    const profile = snapshot.data() || {};
+    if (isAdminProfile(profile)) continue;
+    await refreshPublicBarberSummary(snapshot.id, profile);
+    updated += 1;
+  }
+  return { ok: true, updated };
 });
 
 exports.telegramBarberChargeCreated = onDocumentCreated({
@@ -382,11 +546,13 @@ exports.telegramBarberChargeCreated = onDocumentCreated({
   const snapshot = event.data;
   if (!snapshot) return;
   const data = snapshot.data() || {};
+  await refreshPublicBarberSummary(text(data.barberUid || data.barberoUid));
   if (data.businessId !== BUSINESS_ID || data.telegramReady !== true || data.telegramEventType !== "barber_charge_created") return;
 
   const sent = await deliverTelegramOnce(
     `charge_created_${event.params.chargeId}`,
-    buildChargeTelegramMessage(data)
+    buildChargeTelegramMessage(data),
+    message => sendTelegramCharge(message, data)
   );
   if (sent) {
     await snapshot.ref.set({
@@ -407,6 +573,7 @@ exports.telegramBarberClosureRequested = onDocumentCreated({
   const snapshot = event.data;
   if (!snapshot) return;
   const data = snapshot.data() || {};
+  await refreshPublicBarberSummary(text(data.barberUid || data.barberoUid));
   if (data.businessId !== BUSINESS_ID || data.telegramReady !== true || data.telegramEventType !== "barber_closure_requested") return;
 
   const sent = await deliverTelegramOnce(
@@ -447,4 +614,3 @@ exports.telegramBarberClosureCompleted = onDocumentUpdated({
     }, { merge: true });
   }
 });
-

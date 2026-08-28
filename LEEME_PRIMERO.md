@@ -4,12 +4,14 @@ Esta PWA está separada de Explora y conectada exclusivamente al proyecto Fireba
 
 ## Lógica del reparto
 
-- El 10% de cada corte se reserva para **Caja para publicidad**.
-- Se crean dos comprobantes internos del 5%: uno identificado como efectivo y otro como digital.
-- El 90% restante se divide: 45% para el barbero y 45% para la barbería.
-- El efectivo queda físicamente en manos del barbero: debe entregar 55% a la barbería.
-- El digital entra a la cuenta de la barbería: la barbería entrega 45% al barbero.
-- Saldo neto: `55% del efectivo - 45% del digital`.
+- El **5% de cada cobro en efectivo** y el **5% de cada cobro digital** se reservan para **Caja para publicidad**.
+- Cada cobro crea un solo comprobante de publicidad del 5% en el mismo medio: efectivo o digital.
+- Los comprobantes de efectivo, publicidad y digital aparecen en secciones separadas.
+- Todos los usuarios ven el saldo en tiempo real de los barberos activos, sin acceso a comprobantes ajenos.
+- El 95% restante se divide en partes iguales: 47,5% para el barbero y 47,5% para la barbería.
+- El efectivo queda físicamente en manos del barbero: debe entregar 52,5% a la barbería.
+- El digital entra a la cuenta de la barbería: la barbería entrega 47,5% al barbero.
+- Saldo neto: `52,5% del efectivo - 47,5% del digital`.
 
 ## Cierres
 

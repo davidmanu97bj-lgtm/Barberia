@@ -60,7 +60,7 @@ service cloud.firestore {
         data.businessId == 'barberia-c25a1' &&
         data.amount is number && data.amount > 0 && data.amount <= 10000000 &&
         data.method in ['cash', 'digital'] &&
-        data.service is string && data.service.size() > 0 && data.service.size() <= 100 &&
+        data['service'] is string && data['service'].size() > 0 && data['service'].size() <= 100 &&
         data.barberName is string && data.barberName.size() > 0 && data.barberName.size() <= 120 &&
         data.createdAtMs is number && data.createdAtMs > 0;
     }
@@ -134,6 +134,11 @@ service cloud.firestore {
         request.resource.data.beneficiary == 'barberia' &&
         request.resource.data.destination == 'barberia_account';
       allow update, delete: if isAdmin();
+    }
+
+    match /saldos_barberos/{barberUid} {
+      allow read: if signedIn();
+      allow write: if false;
     }
 
     match /cierres/{closureId} {

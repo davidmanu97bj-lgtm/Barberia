@@ -1,0 +1,13 @@
+index.html
+styles.css
+app.js
+barberia-core.mjs
+firestore.rules
+functions/index.js
+functions/test/callables-contract.test.js
+tests/barberia-core.test.mjs
+tests/project-contract.test.mjs
+service-worker.js
+LEEME_PRIMERO.md
+DESPLEGAR_IPHONE.sh
+CAMBIOS_BARBERIA_v5.txt

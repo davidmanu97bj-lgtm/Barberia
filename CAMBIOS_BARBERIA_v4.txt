@@ -1,0 +1,11 @@
+BARBERÍA · CAMBIOS V4
+
+- Efectivo: visual en tono rojo (tarjeta resumen, botón y comprobantes).
+- Digital: visual en tono verde (tarjeta resumen, botón y comprobantes).
+- Caja para publicidad: se mantuvo discreta y se simplificó el texto.
+- Se eliminó el detalle separado "Efectivo 10% / Digital 10%" y quedó un texto único: 5% de facturación en efectivo y 5% de facturación digital.
+- La lógica del fondo publicitario pasó de 10% a 5% para efectivo y digital.
+- Se actualizó el cálculo de liquidación: 47,5% para barbero, 47,5% para barbería, 5% publicidad.
+- Se actualizó la vista previa, cierres y mensajes de Telegram al nuevo 5%.
+- Se incrementó la versión del service worker para forzar actualización en iPhone.
+- Se dejó un SH completo para iPhone que detecta el ZIP más nuevo, corrige firestore.rules si hace falta, instala dependencias, prueba y despliega.

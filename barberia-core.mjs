@@ -1,4 +1,6 @@
 export const SETTLEMENT_EPSILON = 0.5;
+export const ADVERTISING_RATE = 0.05;
+export const SETTLEMENT_SHARE_RATE = 0.475;
 
 export const SERVICES = Object.freeze([
   { id: "clasico", name: "Clásico", price: 10000 },
@@ -47,13 +49,14 @@ export function normalizedBalance(value) {
 export function calculateSettlement({ cashTotal = 0, digitalTotal = 0 } = {}) {
   const cash = Math.max(0, Number(cashTotal || 0));
   const digital = Math.max(0, Number(digitalTotal || 0));
-  const cashAdvertising = cash * 0.10;
-  const digitalAdvertising = digital * 0.10;
-  const cashShare = cash * 0.45;
-  const digitalShare = digital * 0.45;
-  // El barbero conserva el efectivo: de ahí debe entregar el 45 % de la
-  // barbería más el 10 % de publicidad. Ese fondo se documenta en dos aportes
-  // del 5 %. En digital, la barbería conserva el cobro y entrega 45 % al barbero.
+  const cashAdvertising = cash * ADVERTISING_RATE;
+  const digitalAdvertising = digital * ADVERTISING_RATE;
+  const cashShare = cash * SETTLEMENT_SHARE_RATE;
+  const digitalShare = digital * SETTLEMENT_SHARE_RATE;
+  // El barbero conserva el efectivo: de ahí debe entregar el 47,5 % de la
+  // barbería más el 5 % de publicidad. El fondo se documenta una sola vez en
+  // el medio de pago del cobro. En digital, la barbería conserva el cobro y
+  // entrega 47,5 % al barbero.
   const cashDueToBusiness = cashShare + cashAdvertising;
   const digitalDueToBarber = digitalShare;
   const balance = normalizedBalance(cashDueToBusiness - digitalDueToBarber);
@@ -67,8 +70,8 @@ export function calculateSettlement({ cashTotal = 0, digitalTotal = 0 } = {}) {
     cashAdvertising,
     digitalAdvertising,
     advertisingFund: cashAdvertising + digitalAdvertising,
-    advertisingCashReceipt: (cash + digital) * 0.05,
-    advertisingDigitalReceipt: (cash + digital) * 0.05,
+    advertisingCashReceipt: cashAdvertising,
+    advertisingDigitalReceipt: digitalAdvertising,
     cashDueToBusiness,
     digitalDueToBarber,
     barberShare: cashShare + digitalShare,
@@ -135,7 +138,7 @@ export function modelForPeriod(charges = [], closures = []) {
 
 export function impactForCharge(method, amount) {
   const gross = Math.max(0, Number(amount || 0));
-  return method === "cash" ? gross * 0.55 : -(gross * 0.45);
+  return method === "cash" ? gross * 0.525 : -(gross * 0.475);
 }
 
 export function settlementLabel(balance, barberName = "El barbero", businessName = "la barbería") {

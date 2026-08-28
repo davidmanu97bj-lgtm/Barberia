@@ -1,0 +1,24 @@
+BARBERÍA · CORRECCIÓN DE DESPLIEGUE FIRESTORE · v3
+Fecha: 2026-08-28
+
+ARCHIVOS MODIFICADOS
+- Barberia-main/firestore.rules
+- Barberia-main/DESPLEGAR_IPHONE.sh
+- DESPLEGAR_IPHONE_CORREGIDO.sh
+
+CORRECCIÓN
+- Se corrigió la referencia al campo "service" en firestore.rules.
+- "service" coincide con una palabra reservada del lenguaje de Firebase Security Rules; ahora se accede como data['service'].
+- Se eliminó el error de parser que hacía aparecer después "Unexpected match".
+
+MEJORA DEL DESPLEGABLE PARA IPHONE
+- Detecta y descomprime el ZIP automáticamente.
+- Si se usa accidentalmente el ZIP anterior, corrige automáticamente la referencia incompatible a data.service antes de desplegar.
+- Ejecuta pruebas de Functions, proyecto y sintaxis JavaScript.
+- Despliega por etapas: Firestore Rules, Storage, todas las Functions de Barbería y Hosting.
+- Conserva y reutiliza el secreto de Telegram si ya existe.
+- Verifica que Hosting responda al finalizar.
+
+TELEGRAM DIGITAL
+- Se conserva el flujo ya agregado: los cobros digitales guardan URL, MIME y nombre del comprobante.
+- La Function envía imágenes con sendPhoto; PDF con sendDocument; si Telegram rechaza una imagen como foto, reintenta como documento.

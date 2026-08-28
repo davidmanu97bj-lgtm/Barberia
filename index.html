@@ -8,15 +8,15 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Barbería RA">
   <title>Barbería República Argentina</title>
-  <link rel="manifest" href="./manifest.json?v=1">
-  <link rel="apple-touch-icon" href="./icon-192.png?v=1">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=1">
-  <link rel="stylesheet" href="./styles.css?v=1">
+  <link rel="manifest" href="./manifest.json?v=4">
+  <link rel="apple-touch-icon" href="./icon-192.png?v=4">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=4">
+  <link rel="stylesheet" href="./styles.css?v=4">
 </head>
 <body>
   <section id="splashScreen" class="splash-screen" aria-label="Cargando Barbería República Argentina">
     <div class="splash-content">
-      <img src="./assets/barberia-logo.png?v=1" alt="Barbería República Argentina">
+      <img src="./assets/barberia-logo.png?v=4" alt="Barbería República Argentina">
       <div class="splash-ring" aria-hidden="true"><span></span></div>
       <p>Cargando</p>
     </div>
@@ -25,7 +25,7 @@
   <section id="loginScreen" class="login-screen hidden" aria-label="Iniciar sesión">
     <form id="loginForm" class="login-card" autocomplete="off">
       <div class="login-brand">
-        <img src="./assets/barberia-logo.png?v=1" alt="Barbería República Argentina">
+        <img src="./assets/barberia-logo.png?v=4" alt="Barbería República Argentina">
       </div>
       <div class="login-copy">
         <span>CONTROL DE COBROS</span>
@@ -51,7 +51,7 @@
   <section id="appScreen" class="app-screen hidden">
     <header class="topbar">
       <div class="topbar-brand">
-        <img src="./icon-192.png?v=1" alt="">
+        <img src="./icon-192.png?v=4" alt="">
         <div>
           <strong>Barbería República Argentina</strong>
           <span id="operatorGreeting">Hola</span>
@@ -97,30 +97,41 @@
       </section>
 
       <section id="barberDashboard" class="barber-dashboard hidden">
+        <section class="team-board" aria-labelledby="teamBoardTitle">
+          <div class="team-board-heading">
+            <div>
+              <span class="kicker">SALDOS DEL EQUIPO</span>
+              <h1 id="teamBoardTitle">Barberos activos</h1>
+            </div>
+            <span class="live-pill"><i></i> En tiempo real</span>
+          </div>
+          <div id="teamBarberList" class="team-barber-list" aria-live="polite">
+            <div class="empty-state">Cargando barberos activos…</div>
+          </div>
+        </section>
+
         <div class="summary-grid">
-          <article class="summary-card total-card">
-            <span>Total facturado</span>
-            <strong id="totalBilled">$ 0</strong>
+          <article class="summary-card cash-summary-card">
+            <span>Efectivo</span>
+            <strong id="cashTotal">$ 0</strong>
+            <small>Queda en manos del barbero</small>
           </article>
           <article class="summary-card advertising-card">
             <span>Caja para publicidad</span>
             <strong id="advertisingFund">$ 0</strong>
-            <small>5% efectivo + 5% digital</small>
+            <div class="advertising-note" aria-label="Detalle del aporte para publicidad">
+              <small><span>Efectivo 5%</span><b id="cashAdvertisingFund">$ 0</b></small>
+              <small><span>Digital 5%</span><b id="digitalAdvertisingFund">$ 0</b></small>
+            </div>
           </article>
-          <article class="summary-card method-card">
-            <div><span>Efectivo</span><strong id="cashTotal">$ 0</strong></div>
-            <div><span>Digital</span><strong id="digitalTotal">$ 0</strong></div>
+          <article class="summary-card digital-summary-card">
+            <span>Digital</span>
+            <strong id="digitalTotal">$ 0</strong>
+            <small>Ingresa a la cuenta de la barbería</small>
           </article>
         </div>
 
         <article id="settlementCard" class="finance-card balanced">
-          <div class="finance-head">
-            <div class="barber-chip">
-              <span class="avatar-dot" aria-hidden="true"></span>
-              <span id="currentBarberName">Barbero</span>
-            </div>
-            <span id="syncStatus" class="sync-status">Sincronizando…</span>
-          </div>
           <div class="settlement-copy">
             <span id="settlementDirection">Cuentas equilibradas</span>
             <strong id="settlementAmount">$ 0</strong>
@@ -139,8 +150,8 @@
               <span>Comprobantes del período</span>
               <b id="receiptCount">0</b>
             </div>
-            <div id="receiptList" class="receipt-list">
-              <div class="empty-state compact">Los cobros aparecerán acá.</div>
+            <div id="receiptList" class="receipt-list unified-receipt-list">
+              <div class="empty-state compact">Todavía no hay comprobantes en este período.</div>
             </div>
             <button id="receiptToggle" class="text-button hidden" type="button">Ver más comprobantes</button>
           </div>
@@ -207,7 +218,7 @@
         <i>↓</i>
         <div class="after"><small>DESPUÉS DE CONFIRMAR</small><span id="previewAfterLabel">Equilibrado</span><strong id="previewAfterAmount">$ 0</strong></div>
       </div>
-      <p class="notice">Se crearán el comprobante del corte y dos comprobantes de publicidad: efectivo 5% y digital 5%.</p>
+      <p class="notice">Se reservará el 5% de este cobro para publicidad. El 95% restante se divide 50/50: 47,5% para el barbero y 47,5% para la barbería.</p>
       <div id="previewStatus" class="status" aria-live="polite"></div>
       <div class="modal-actions">
         <button id="backToChargeButton" class="button secondary" type="button">Volver</button>
@@ -313,6 +324,6 @@
     <span>✓</span><div><strong id="toastTitle">Operación exitosa</strong><small id="toastMessage">Los datos se guardaron correctamente.</small></div>
   </div>
 
-  <script type="module" src="./app.js?v=1"></script>
+  <script type="module" src="./app.js?v=4"></script>
 </body>
 </html>

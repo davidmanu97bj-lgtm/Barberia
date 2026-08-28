@@ -4,7 +4,7 @@ import {
   USER_EMAIL_DOMAIN,
   FUNCTIONS_REGION,
   LOGIN_ALIASES
-} from "./firebase-config.js?v=1";
+} from "./firebase-config.js?v=4";
 import {
   SERVICES,
   numberFromMoney,
@@ -14,7 +14,7 @@ import {
   normalizedBalance,
   timestampMs,
   safeText
-} from "./barberia-core.mjs?v=1";
+} from "./barberia-core.mjs?v=4";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
@@ -52,6 +52,7 @@ const storage = getStorage(firebaseApp);
 const functions = getFunctions(firebaseApp, FUNCTIONS_REGION);
 const adminCreateBarber = httpsCallable(functions, "adminCreateBarber");
 const adminUpdateBarber = httpsCallable(functions, "adminUpdateBarber");
+const syncPublicBarberBoard = httpsCallable(functions, "syncPublicBarberBoard");
 const authReady = setPersistence(auth, browserLocalPersistence)
   .catch(() => setPersistence(auth, browserSessionPersistence))
   .catch(() => setPersistence(auth, inMemoryPersistence));
@@ -69,8 +70,10 @@ let adminBarbers = [];
 let adminCharges = [];
 let adminAdvertisingReceipts = [];
 let adminClosures = [];
+let teamBarberSummaries = [];
 let currentUnsubscribers = [];
 let adminUnsubscribers = [];
+let teamSummaryUnsubscribe = null;
 let pendingCharge = null;
 let selectedAdminClosureId = "";
 let managerMode = "create";
@@ -266,13 +269,30 @@ function normalizeCharge(id, data = {}) {
 }
 
 function normalizeAdvertisingReceipt(id, data = {}) {
+  const receiptMethod = data.advertisingMethod || data.sourcePaymentMethod || data.method || "";
+  const grossChargeAmount = Math.max(0, Number(data.grossChargeAmount || data.sourceGrossAmount || 0));
+  const normalizedAmount = grossChargeAmount > 0 ? grossChargeAmount * 0.05 : Number(data.amount || 0);
   return {
     ...data,
     id,
-    amount: Number(data.amount || 0),
+    amount: normalizedAmount,
+    rate: 0.05,
     barberUid: data.barberUid || data.barberoUid || data.uid || "",
     barberName: data.barberName || data.barberoNombre || "Barbero",
-    method: /cash|efectivo/.test(String(data.method || "").toLowerCase()) ? "cash" : "digital"
+    method: /cash|efectivo/.test(String(receiptMethod).toLowerCase()) ? "cash" : "digital"
+  };
+}
+
+function normalizeBarberSummary(id, data = {}) {
+  const balance = normalizedBalance(Number(data.balance || 0));
+  return {
+    ...data,
+    id,
+    barberUid: data.barberUid || data.barberoUid || data.uid || id,
+    barberName: data.barberName || data.barberoNombre || data.displayName || data.nombre || "Barbero",
+    active: data.active !== false && data.activo !== false,
+    balance,
+    amount: Math.abs(balance)
   };
 }
 
@@ -301,12 +321,16 @@ function listenOwned(collectionName, uid, normalizer, assign) {
   return onSnapshot(query(collection(db, collectionName), where("barberUid", "==", uid)), snapshot => {
     assign(snapshot.docs.map(item => normalizer(item.id, item.data())).sort((a, b) => timestampMs(b) - timestampMs(a)));
     renderBarberDashboard();
-    $("syncStatus").textContent = "En tiempo real";
-    $("syncStatus").className = "sync-status ok";
+    if ($("syncStatus")) {
+      $("syncStatus").textContent = "En tiempo real";
+      $("syncStatus").className = "sync-status ok";
+    }
   }, error => {
     console.error(`No se pudo sincronizar ${collectionName}`, error);
-    $("syncStatus").textContent = "Error de conexión";
-    $("syncStatus").className = "sync-status error";
+    if ($("syncStatus")) {
+      $("syncStatus").textContent = "Error de conexión";
+      $("syncStatus").className = "sync-status error";
+    }
   });
 }
 
@@ -318,6 +342,37 @@ function subscribeBarber(user) {
   currentUnsubscribers.push(listenOwned("cobros", user.uid, normalizeCharge, rows => { currentCharges = rows; }));
   currentUnsubscribers.push(listenOwned("caja_publicidad", user.uid, normalizeAdvertisingReceipt, rows => { currentAdvertisingReceipts = rows; }));
   currentUnsubscribers.push(listenOwned("cierres", user.uid, normalizeClosure, rows => { currentClosures = rows; }));
+}
+
+function subscribeTeamBarberBoard() {
+  try { teamSummaryUnsubscribe?.(); } catch (_) {}
+  teamBarberSummaries = [];
+  teamSummaryUnsubscribe = onSnapshot(collection(db, "saldos_barberos"), snapshot => {
+    teamBarberSummaries = snapshot.docs
+      .map(item => normalizeBarberSummary(item.id, item.data()))
+      .filter(item => item.active)
+      .sort((a, b) => a.barberName.localeCompare(b.barberName, "es", { sensitivity: "base" }));
+    renderTeamBarberBoard();
+  }, error => {
+    console.error("No se pudo sincronizar el tablero de barberos", error);
+    if ($("teamBarberList")) $("teamBarberList").innerHTML = `<div class="empty-state">No se pudo cargar el tablero general.</div>`;
+  });
+}
+
+function renderTeamBarberBoard() {
+  const list = $("teamBarberList");
+  if (!list) return;
+  if (!teamBarberSummaries.length) {
+    list.innerHTML = `<div class="empty-state">No hay barberos activos para mostrar.</div>`;
+    return;
+  }
+  list.innerHTML = teamBarberSummaries.map(barber => {
+    const presentation = settlementPresentation(barber.balance, barber.barberName, true);
+    return `<article class="team-barber-row ${presentation.className}">
+      <strong>${safeText(barber.barberName)}</strong>
+      <div><span>${safeText(presentation.label)}</span><b>${formatMoney(barber.amount)}</b></div>
+    </article>`;
+  }).join("");
 }
 
 function mergeAdminBarbers() {
@@ -370,9 +425,46 @@ function subscribeAdmin() {
 
 function advertisingReceiptsForOpenPeriod(receipts, closures) {
   const cutoff = modelForPeriod([], closures).cutoffAtMs;
-  return receipts
+  const open = receipts
     .filter(item => item.deleted !== true && timestampMs(item) > cutoff)
     .sort((a, b) => timestampMs(b) - timestampMs(a));
+  const consolidated = new Map();
+  for (const item of open) {
+    const key = String(item.sourceChargeId || item.operationId || item.id);
+    const method = /cash|efectivo/.test(String(item.sourcePaymentMethod || item.method || "").toLowerCase()) ? "cash" : "digital";
+    const previous = consolidated.get(key);
+    if (previous) {
+      previous.amount += Number(item.amount || 0);
+      continue;
+    }
+    consolidated.set(key, { ...item, method, advertisingMethod: method });
+  }
+  return [...consolidated.values()].sort((a, b) => timestampMs(b) - timestampMs(a));
+}
+
+function receiptCardHtml(item, type) {
+  const methodLabel = item.method === "cash" ? "Efectivo" : "Digital";
+  if (type === "advertising") {
+    return `<article class="receipt advertising ${item.method}">
+      <div class="receipt-top"><strong>Caja para publicidad · ${safeText(methodLabel)}</strong><b>${formatMoney(item.amount)}</b></div>
+      <p>5% de este cobro reservado para publicidad</p>
+      <div class="receipt-foot"><span>${safeText(formatDate(timestampMs(item)))}</span><em>${safeText(methodLabel)}</em></div>
+    </article>`;
+  }
+  return `<article class="receipt ${item.method}">
+    <div class="receipt-top"><strong>${safeText(methodLabel)} · ${safeText(item.service)}</strong><b>${formatMoney(item.amount)}</b></div>
+    <p>${safeText(item.detail || `${methodLabel} · Corte registrado`)}</p>
+    <div class="receipt-foot"><span>${safeText(formatDate(timestampMs(item)))}</span>${item.proofUrl ? `<a href="${safeText(item.proofUrl)}" target="_blank" rel="noopener">Ver archivo</a>` : ""}</div>
+  </article>`;
+}
+
+function renderReceiptGroup(listId, items, type, emptyMessage) {
+  const list = $(listId);
+  if (!list) return;
+  const visible = receiptsExpanded ? items : items.slice(0, MAX_VISIBLE_RECEIPTS);
+  list.innerHTML = visible.length
+    ? visible.map(item => receiptCardHtml(item, type)).join("")
+    : `<div class="empty-state compact">${safeText(emptyMessage)}</div>`;
 }
 
 function renderBarberDashboard() {
@@ -381,47 +473,32 @@ function renderBarberDashboard() {
   const openAdvertising = advertisingReceiptsForOpenPeriod(currentAdvertisingReceipts, currentClosures);
   const presentation = settlementPresentation(model.balance, profileName(currentProfile));
 
-  $("currentBarberName").textContent = profileName(currentProfile);
-  $("totalBilled").textContent = formatMoney(model.total);
   $("advertisingFund").textContent = formatMoney(model.advertisingFund);
   $("cashTotal").textContent = formatMoney(model.cash);
   $("digitalTotal").textContent = formatMoney(model.digital);
+    const cashAdvertisingFundEl = $("cashAdvertisingFund");
+  if (cashAdvertisingFundEl) cashAdvertisingFundEl.textContent = formatMoney(model.cashAdvertising);
+    const digitalAdvertisingFundEl = $("digitalAdvertisingFund");
+  if (digitalAdvertisingFundEl) digitalAdvertisingFundEl.textContent = formatMoney(model.digitalAdvertising);
   $("settlementDirection").textContent = presentation.label;
   $("settlementAmount").textContent = formatMoney(model.amount);
   $("settlementHint").textContent = presentation.hint;
   $("settlementCard").classList.remove("barber-owes", "business-owes", "balanced");
   $("settlementCard").classList.add(presentation.className);
 
-  const receipts = [
+  const unifiedReceipts = [
     ...model.charges.map(item => ({ ...item, receiptType: "charge" })),
     ...openAdvertising.map(item => ({ ...item, receiptType: "advertising" }))
   ].sort((a, b) => timestampMs(b) - timestampMs(a));
-  $("receiptCount").textContent = String(receipts.length);
-  const visible = receiptsExpanded ? receipts : receipts.slice(0, MAX_VISIBLE_RECEIPTS);
-  $("receiptToggle").classList.toggle("hidden", receipts.length <= MAX_VISIBLE_RECEIPTS);
+  $("receiptCount").textContent = String(unifiedReceipts.length);
+  const hasMore = unifiedReceipts.length > MAX_VISIBLE_RECEIPTS;
+  $("receiptToggle").classList.toggle("hidden", !hasMore);
   $("receiptToggle").textContent = receiptsExpanded ? "Ver menos comprobantes" : "Ver más comprobantes";
-
-  if (!visible.length) {
-    $("receiptList").innerHTML = `<div class="empty-state compact">Los cobros aparecerán acá.</div>`;
-    return;
-  }
-
-  $("receiptList").innerHTML = visible.map(item => {
-    const advertising = item.receiptType === "advertising";
-    const methodLabel = item.method === "cash" ? "Efectivo" : "Digital";
-    const contributionLabel = item.advertisingMethod === "cash" || item.contributionFrom === "cash" ? "Comprobante efectivo · 5%" : item.advertisingMethod === "digital" || item.contributionFrom === "digital" ? "Comprobante digital · 5%" : "Aporte de publicidad";
-    return `<article class="receipt ${advertising ? "advertising" : item.method}">
-      <div class="receipt-top">
-        <strong>${safeText(advertising ? "Caja para publicidad" : item.service)}</strong>
-        <b>${formatMoney(item.amount)}</b>
-      </div>
-      <p>${safeText(advertising ? `${contributionLabel} · ${methodLabel}` : (item.detail || `${methodLabel} · Corte registrado`))}</p>
-      <div class="receipt-foot">
-        <span>${safeText(formatDate(timestampMs(item)))}</span>
-        ${item.proofUrl ? `<a href="${safeText(item.proofUrl)}" target="_blank" rel="noopener">Ver archivo</a>` : ""}
-      </div>
-    </article>`;
-  }).join("");
+  const visibleReceipts = receiptsExpanded ? unifiedReceipts : unifiedReceipts.slice(0, MAX_VISIBLE_RECEIPTS);
+  const receiptList = $("receiptList");
+  receiptList.innerHTML = visibleReceipts.length
+    ? visibleReceipts.map(item => receiptCardHtml(item, item.receiptType)).join("")
+    : `<div class="empty-state compact">Todavía no hay comprobantes en este período.</div>`;
 }
 
 function recordsForBarber(rows, barber) {
@@ -557,6 +634,8 @@ function applyRoleUI() {
 function resetState() {
   unsubscribeAll(currentUnsubscribers);
   unsubscribeAll(adminUnsubscribers);
+  try { teamSummaryUnsubscribe?.(); } catch (_) {}
+  teamSummaryUnsubscribe = null;
   currentProfile = null;
   currentCharges = [];
   currentAdvertisingReceipts = [];
@@ -565,6 +644,7 @@ function resetState() {
   adminCharges = [];
   adminAdvertisingReceipts = [];
   adminClosures = [];
+  teamBarberSummaries = [];
   adminProfileSources.clear();
 }
 
@@ -572,17 +652,23 @@ function showAuthenticatedApp() {
   $("loginScreen").classList.add("hidden");
   $("appScreen").classList.remove("hidden");
   applyRoleUI();
-  if (profileIsAdmin()) subscribeAdmin();
-  else subscribeBarber(auth.currentUser);
+  syncPublicBarberBoard().catch(error => console.warn("No se pudo actualizar el tablero público", error));
+  if (profileIsAdmin()) {
+    subscribeAdmin();
+  } else {
+    subscribeTeamBarberBoard();
+    subscribeBarber(auth.currentUser);
+  }
 }
 
 async function uploadProof(file, storagePath) {
-  if (!file) return { url: "", path: "" };
+  if (!file) return { url: "", path: "", contentType: "", fileName: "" };
   const safeName = String(file.name || "comprobante").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
   const path = `${storagePath}/${Date.now()}_${safeName}`;
   const fileRef = ref(storage, path);
-  await uploadBytes(fileRef, file, { contentType: file.type || "application/octet-stream" });
-  return { url: await getDownloadURL(fileRef), path };
+  const contentType = file.type || "application/octet-stream";
+  await uploadBytes(fileRef, file, { contentType });
+  return { url: await getDownloadURL(fileRef), path, contentType, fileName: safeName };
 }
 
 function renderServiceOptions() {
@@ -648,7 +734,7 @@ function openChargePreview() {
   };
 
   $("previewChargeAmount").textContent = formatMoney(amount);
-  $("previewAdvertisingAmount").textContent = `${formatMoney(amount * 0.10)} · 2 × ${formatMoney(amount * 0.05)}`;
+  $("previewAdvertisingAmount").textContent = `${formatMoney(amount * 0.05)} · ${mode === "cash" ? "Efectivo" : "Digital"}`;
   $("previewImpactAmount").textContent = `${impact >= 0 ? "+" : "−"}${formatMoney(Math.abs(impact))}`;
   $("previewBeforeLabel").textContent = beforePresentation.label;
   $("previewBeforeAmount").textContent = formatMoney(Math.abs(model.balance));
@@ -664,15 +750,14 @@ async function savePendingCharge() {
   chargeSubmitting = true;
   $("confirmChargeButton").disabled = true;
   $("confirmChargeButton").textContent = "Guardando…";
-  statusMessage("previewStatus", "Registrando cobro y comprobantes…");
+  statusMessage("previewStatus", "Registrando el cobro y su publicidad…");
   const item = pendingCharge;
   try {
     const uid = auth.currentUser.uid;
     const proof = await uploadProof(item.proof, `cobros/${uid}/${item.operationId}`);
     const createdAtMs = Date.now();
     const chargeRef = doc(db, "cobros", item.operationId);
-    const advertisingCashRef = doc(db, "caja_publicidad", `${item.operationId}_efectivo`);
-    const advertisingDigitalRef = doc(db, "caja_publicidad", `${item.operationId}_digital`);
+    const advertisingRef = doc(db, "caja_publicidad", `${item.operationId}_${item.mode}`);
     const base = {
       businessId: BUSINESS_ID,
       barberUid: uid,
@@ -696,10 +781,12 @@ async function savePendingCharge() {
       detail: item.detail,
       proofUrl: proof.url,
       proofPath: proof.path,
-      barberShareAmount: item.amount * 0.45,
-      businessShareAmount: item.amount * 0.45,
-      advertisingAmount: item.amount * 0.10,
-      advertisingContributionEach: item.amount * 0.05,
+      proofContentType: proof.contentType,
+      proofFileName: proof.fileName,
+      barberShareAmount: item.amount * 0.475,
+      businessShareAmount: item.amount * 0.475,
+      advertisingAmount: item.amount * 0.05,
+      advertisingReceiptAmount: item.amount * 0.05,
       balanceBefore: item.beforeBalance,
       balanceImpact: item.impact,
       balanceAfter: item.afterBalance,
@@ -709,29 +796,24 @@ async function savePendingCharge() {
       telegramEventType: "barber_charge_created",
       telegramPayloadVersion: 1
     });
-    for (const [reference, advertisingMethod, label] of [
-      [advertisingCashRef, "cash", "Caja para publicidad · Efectivo 5%"],
-      [advertisingDigitalRef, "digital", "Caja para publicidad · Digital 5%"]
-    ]) {
-      batch.set(reference, {
-        ...base,
-        sourceChargeId: item.operationId,
-        sourcePaymentMethod: item.mode,
-        amount: item.amount * 0.05,
-        grossChargeAmount: item.amount,
-        rate: 0.05,
-        contributionFrom: advertisingMethod,
-        advertisingMethod,
-        label,
-        beneficiary: "barberia",
-        destination: "barberia_account",
-        internalReceipt: true
-      });
-    }
+    batch.set(advertisingRef, {
+      ...base,
+      sourceChargeId: item.operationId,
+      sourcePaymentMethod: item.mode,
+      amount: item.amount * 0.05,
+      grossChargeAmount: item.amount,
+      rate: 0.05,
+      contributionFrom: item.mode,
+      advertisingMethod: item.mode,
+      label: `Caja para publicidad · ${item.mode === "cash" ? "Efectivo" : "Digital"} 5%`,
+      beneficiary: "barberia",
+      destination: "barberia_account",
+      internalReceipt: true
+    });
     await batch.commit();
     pendingCharge = null;
     hideModal("previewModal");
-    showToast("Cobro registrado", "Se crearon el cobro y los dos comprobantes de publicidad.");
+    showToast("Cobro registrado", `Comprobante ${item.mode === "cash" ? "en efectivo" : "digital"} y publicidad del 5% guardados.`);
     scrollToTop();
   } catch (error) {
     console.error(error);
@@ -745,14 +827,18 @@ async function savePendingCharge() {
 
 function closureSummaryHtml(model, barberName = profileName(currentProfile)) {
   const presentation = settlementPresentation(model.balance, barberName);
+  const cashAdvertising = Number(model.cashAdvertising ?? model.advertisingCashReceipt ?? (Number(model.cash || 0) * 0.05));
+  const digitalAdvertising = Number(model.digitalAdvertising ?? model.advertisingDigitalReceipt ?? (Number(model.digital || 0) * 0.05));
   return `<div class="closure-direction"><span>${safeText(presentation.label)}</span><strong>${formatMoney(model.amount)}</strong></div>
     <div class="closure-figures">
       <div><span>Total facturado</span><strong>${formatMoney(model.total)}</strong></div>
-      <div><span>Publicidad 10%</span><strong>${formatMoney(model.advertisingFund)}</strong></div>
+      <div><span>Publicidad efectivo 5%</span><strong>${formatMoney(cashAdvertising)}</strong></div>
+      <div><span>Publicidad digital 5%</span><strong>${formatMoney(digitalAdvertising)}</strong></div>
+      <div><span>Caja publicidad total</span><strong>${formatMoney(model.advertisingFund)}</strong></div>
       <div><span>Efectivo</span><strong>${formatMoney(model.cash)}</strong></div>
       <div><span>Digital</span><strong>${formatMoney(model.digital)}</strong></div>
-      <div><span>Barbero 45%</span><strong>${formatMoney(model.barberShare)}</strong></div>
-      <div><span>Barbería 45%</span><strong>${formatMoney(model.businessShare)}</strong></div>
+      <div><span>Barbero 47,5%</span><strong>${formatMoney(model.barberShare)}</strong></div>
+      <div><span>Barbería 47,5%</span><strong>${formatMoney(model.businessShare)}</strong></div>
     </div>`;
 }
 
@@ -803,8 +889,8 @@ async function createClosure() {
       digitalTotal: model.digital,
       totalBilled: model.total,
       advertisingFund: model.advertisingFund,
-      advertisingCashReceipt: model.total * 0.05,
-      advertisingDigitalReceipt: model.total * 0.05,
+      advertisingCashReceipt: model.cashAdvertising,
+      advertisingDigitalReceipt: model.digitalAdvertising,
       barberShare: model.barberShare,
       businessShare: model.businessShare,
       periodStartAtMs: model.cutoffAtMs,
@@ -905,6 +991,8 @@ function openResolveClosure(id) {
     digital: item.digitalTotal,
     total: item.totalBilled,
     advertisingFund: item.advertisingFund,
+    advertisingCashReceipt: item.advertisingCashReceipt,
+    advertisingDigitalReceipt: item.advertisingDigitalReceipt,
     barberShare: item.barberShare,
     businessShare: item.businessShare
   }, item.barberName);

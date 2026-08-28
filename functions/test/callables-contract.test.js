@@ -10,6 +10,7 @@ test("expone los callables administrativos y los avisos de Telegram de barbería
   assert.deepEqual(exported, [
     "adminCreateBarber",
     "adminUpdateBarber",
+    "syncPublicBarberBoard",
     "telegramBarberChargeCreated",
     "telegramBarberClosureCompleted",
     "telegramBarberClosureRequested"
@@ -29,3 +30,22 @@ test("fija el proyecto lógico de la barbería", () => {
   assert.match(source, /barberia\.local/);
 });
 
+
+test("los cobros digitales envían el comprobante a Telegram como foto o documento", () => {
+  assert.match(source, /function proofDelivery/);
+  assert.match(source, /method !== "digital"/);
+  assert.match(source, /sendPhoto/);
+  assert.match(source, /photo: proof\.url/);
+  assert.match(source, /sendDocument/);
+  assert.match(source, /document: proof\.url/);
+  assert.match(source, /sendTelegramCharge/);
+  assert.match(source, /se reintenta como archivo/);
+});
+
+
+test("Telegram detalla por separado el 5% de publicidad efectivo y digital", () => {
+  assert.match(source, /Publicidad efectivo 5%/);
+  assert.match(source, /Publicidad digital 5%/);
+  assert.match(source, /Caja publicidad total/);
+  assert.doesNotMatch(source, /Publicidad 10%/);
+});

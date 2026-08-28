@@ -1,0 +1,30 @@
+BARBERÍA REPÚBLICA ARGENTINA · ACTUALIZACIÓN v2
+Fecha: 28/08/2026
+
+INTERFAZ
+- Caja para publicidad más pequeña y centrada entre Efectivo y Digital.
+- Tarjetas principales y botones con diseño más neutro, menos colorido y más parecido a una app.
+- Se quitó del bloque de liquidación la fila duplicada con punto amarillo, nombre del barbero y segundo “En tiempo real”.
+- Se conserva el “En tiempo real” del tablero superior SALDOS DEL EQUIPO.
+- Todos los comprobantes del período aparecen en una sola lista cronológica.
+- Cada comprobante se identifica como Efectivo, Digital o Caja para publicidad.
+- Efectivo y Caja para publicidad usan el mismo acento verde discreto; Digital mantiene un acento distinto.
+
+TELEGRAM
+- Los cobros digitales guardan tipo y nombre del archivo del comprobante.
+- Si el comprobante digital es imagen, Telegram lo envía como FOTO con el detalle del cobro en el mismo mensaje.
+- Si el comprobante es PDF, Telegram lo envía como documento.
+- Si Telegram no puede procesar una imagen como foto, reintenta automáticamente como archivo para no perder el comprobante.
+- El grupo configurado se mantiene en -5393018000.
+
+IPHONE / DESPLIEGUE
+- Nuevo DESPLEGAR_IPHONE.sh: busca el ZIP automáticamente, lo descomprime, valida el proyecto, instala Firebase CLI si hace falta, instala dependencias, ejecuta pruebas y despliega Firestore Rules, Storage, Hosting y todas las Functions de la codebase barberia.
+- Si Firebase y el secreto de Telegram ya están autorizados/configurados, no vuelve a pedirlos.
+- Cache de la PWA actualizado a v3 para que el iPhone reciba la nueva interfaz después del deploy.
+
+CHEQUEOS EJECUTADOS
+- node --check app.js: OK
+- node --check functions/index.js: OK
+- bash -n scripts de despliegue: OK
+- Tests Functions: 4/4 OK
+- Tests del proyecto: 11/11 OK

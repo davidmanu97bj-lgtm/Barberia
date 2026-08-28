@@ -7,8 +7,8 @@ BARBERÍA REPÚBLICA ARGENTINA · VERSIÓN 1
 - Admin: lista de barberos activos con saldo individual en tiempo real.
 - Cobros: Clásico, Sombreado, Corte + barba y Solo barba.
 - Métodos: efectivo en manos del barbero; digital en cuenta de la barbería.
-- Reparto: publicidad 10% (comprobante efectivo 5% + comprobante digital 5%) + 45% barbero + 45% barbería.
-- Saldo: 55% efectivo menos 45% digital.
+- Reparto: publicidad 5% (comprobante efectivo 5% + comprobante digital 5%) + 47,5% barbero + 47,5% barbería.
+- Saldo: 52,5% efectivo menos 47,5% digital.
 - Confirmación previa con saldo anterior y posterior.
 - Cierres con reinicio inmediato a cero e historial conservado.
 - Préstamos, adelantos, Uber, gastos y toda referencia a Explora eliminados.
@@ -23,4 +23,14 @@ ACTUALIZACIÓN TELEGRAM
 - Token del bot protegido con Firebase Secret Manager; no queda dentro del código.
 - Registro anti-duplicado para entregas de Telegram.
 - DESPLEGAR_BARBERIA.sh configura el secreto en el primer despliegue.
+ACTUALIZACIÓN DE TABLERO Y COMPROBANTES
+
+- Total facturado fue reemplazado por el tablero en tiempo real de barberos activos.
+- Cada fila muestra el nombre, quién debe pagar y el importe pendiente.
+- El tablero compartido expone solamente el resumen; los comprobantes ajenos continúan privados.
+- El resumen del período ahora está ordenado: Efectivo | Caja para publicidad | Digital.
+- Caja para publicidad muestra por separado el 5% efectivo y el 5% digital.
+- Cada cobro genera un único comprobante de corte en su medio de pago.
+- Cada cobro genera un único comprobante de publicidad del 5% en el mismo medio.
+- Los comprobantes quedaron separados en tres secciones visuales.
 

@@ -1,0 +1,11 @@
+Archivos modificados en V4:
+- app.js
+- styles.css
+- index.html
+- barberia-core.mjs
+- service-worker.js
+- functions/index.js
+- tests/barberia-core.test.mjs
+- tests/project-contract.test.mjs
+- DESPLEGAR_IPHONE.sh
+- CAMBIOS_BARBERIA_v4.txt

@@ -1,4 +1,4 @@
-const CACHE_NAME = "barberia-ra-shell-v1";
+const CACHE_NAME = "barberia-ra-shell-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -37,4 +37,3 @@ self.addEventListener("fetch", event => {
       .catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html")))
   );
 });
-

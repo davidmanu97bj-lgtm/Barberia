@@ -7,33 +7,35 @@ import {
   openCharges
 } from "../barberia-core.mjs";
 
-test("efectivo: 10% publicidad, 45/45 y el barbero entrega 55%", () => {
+test("efectivo: 5% publicidad, 47,5/47,5 y el barbero entrega 52,5%", () => {
   const model = calculateSettlement({ cashTotal: 10000, digitalTotal: 0 });
-  assert.equal(model.advertisingFund, 1000);
+  assert.equal(model.advertisingFund, 500);
   assert.equal(model.advertisingCashReceipt, 500);
-  assert.equal(model.advertisingDigitalReceipt, 500);
-  assert.equal(model.barberShare, 4500);
-  assert.equal(model.businessShare, 4500);
-  assert.equal(model.balance, 5500);
+  assert.equal(model.advertisingDigitalReceipt, 0);
+  assert.equal(model.barberShare, 4750);
+  assert.equal(model.businessShare, 4750);
+  assert.equal(model.balance, 5250);
   assert.equal(model.direction, "barber_pays_business");
 });
 
-test("digital: la barbería conserva publicidad y entrega 45% al barbero", () => {
+test("digital: la barbería conserva publicidad y entrega 47,5% al barbero", () => {
   const model = calculateSettlement({ cashTotal: 0, digitalTotal: 10000 });
-  assert.equal(model.advertisingFund, 1000);
-  assert.equal(model.barberShare, 4500);
-  assert.equal(model.businessShare, 4500);
-  assert.equal(model.balance, -4500);
+  assert.equal(model.advertisingFund, 500);
+  assert.equal(model.advertisingCashReceipt, 0);
+  assert.equal(model.advertisingDigitalReceipt, 500);
+  assert.equal(model.barberShare, 4750);
+  assert.equal(model.businessShare, 4750);
+  assert.equal(model.balance, -4750);
   assert.equal(model.direction, "business_pays_barber");
 });
 
 test("saldo neto respeta dónde está físicamente cada medio", () => {
   const model = calculateSettlement({ cashTotal: 10000, digitalTotal: 10000 });
   assert.equal(model.total, 20000);
-  assert.equal(model.advertisingFund, 2000);
-  assert.equal(model.balance, 1000);
-  assert.equal(impactForCharge("cash", 10000), 5500);
-  assert.equal(impactForCharge("digital", 10000), -4500);
+  assert.equal(model.advertisingFund, 1000);
+  assert.equal(model.balance, 500);
+  assert.equal(impactForCharge("cash", 10000), 5250);
+  assert.equal(impactForCharge("digital", 10000), -4750);
 });
 
 test("pedir cierre corta el período y vuelve los totales a cero", () => {
@@ -46,5 +48,5 @@ test("pedir cierre corta el período y vuelve los totales a cero", () => {
   const model = modelForPeriod(charges, closures);
   assert.equal(model.cash, 0);
   assert.equal(model.digital, 12000);
-  assert.equal(model.balance, -5400);
+  assert.equal(model.balance, -5700);
 });
