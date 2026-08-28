@@ -28,8 +28,14 @@ test("cada cobro crea dos comprobantes del 5%", () => {
   assert.match(source, /item\.amount \* 0\.05/);
 });
 
-test("Telegram queda preparado pero sin grupo heredado", () => {
-  const source = read("app.js");
-  assert.match(source, /telegramEventType/);
-  assert.doesNotMatch(source, /TELEGRAM_CHAT_ID|TELEGRAM_BOT_TOKEN/);
+test("Telegram queda conectado solamente al grupo Barbería", () => {
+  const appSource = read("app.js");
+  const functionSource = read("functions/index.js");
+  assert.match(appSource, /telegramEventType/);
+  assert.match(functionSource, /TELEGRAM_CHAT_ID = "-5393018000"/);
+  assert.match(functionSource, /defineSecret\("BARBERIA_TELEGRAM_BOT_TOKEN"\)/);
+  assert.match(functionSource, /telegramBarberChargeCreated/);
+  assert.match(functionSource, /telegramBarberClosureRequested/);
+  assert.match(functionSource, /telegramBarberClosureCompleted/);
+  assert.doesNotMatch(functionSource, /explora-control-operativo/i);
 });
