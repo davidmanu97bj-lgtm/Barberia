@@ -1,18 +1,18 @@
-// Firebase principal de EXPLORA — reutiliza la base histórica de Santander Main.
 export const firebaseConfig = {
-  apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
-  authDomain: "explora-control-operativo.firebaseapp.com",
-  projectId: "explora-control-operativo",
-  storageBucket: "explora-control-operativo.firebasestorage.app",
-  messagingSenderId: "708368554540",
-  appId: "1:708368554540:web:05871472b575484bc98f89"
+  apiKey: "AIzaSyA6ENfXp_RNNgMf1bWlkYxlrsUqANlcxf0",
+  authDomain: "barberia-c25a1.firebaseapp.com",
+  projectId: "barberia-c25a1",
+  storageBucket: "barberia-c25a1.firebasestorage.app",
+  messagingSenderId: "493066844999",
+  appId: "1:493066844999:web:c87342eb99456bd1132a62"
 };
 
-// Se conserva por compatibilidad con la interfaz nueva. Los datos operativos
-// reales viven en las colecciones históricas de nivel raíz de EXPLORA.
-export const BUSINESS_ID = "explora-control-operativo";
-export const USER_EMAIL_DOMAIN = "explora.local";
+export const BUSINESS_ID = "barberia-c25a1";
+export const BUSINESS_NAME = "Barbería República Argentina";
+export const USER_EMAIL_DOMAIN = "barberia.local";
+export const FUNCTIONS_REGION = "southamerica-east1";
 
-// El login prioriza usuario@explora.local y luego consulta login_aliases.
-// Se dejan aliases opcionales para accesos directos conocidos.
+// Se pueden agregar accesos antiguos sin modificar la lógica del login.
+// Ejemplo: { david: "correo-real@dominio.com" }
 export const LOGIN_ALIASES = {};
+

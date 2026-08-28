@@ -2,1135 +2,149 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // =========================================================
-    // IDENTIDAD Y ROLES
-    // =========================================================
-
     function signedIn() {
       return request.auth != null;
     }
 
-    function uid() {
-      return request.auth.uid;
+    function roleIsAdmin(data) {
+      return data != null && (
+        (data.keys().hasAny(['role']) && data.role in ['admin', 'administrador', 'owner', 'propietario', 'superadmin']) ||
+        (data.keys().hasAny(['rol']) && data.rol in ['admin', 'administrador', 'owner', 'propietario', 'superadmin']) ||
+        (data.keys().hasAny(['admin']) && data.admin == true) ||
+        (data.keys().hasAny(['isAdmin']) && data.isAdmin == true)
+      );
     }
 
-    function isHardcodedAdmin() {
-      return signedIn()
-        && uid() == '2LziyTTdFcZzSOhK3hLbAKs2U4s2';
-    }
-
-    function hasAdminClaim() {
-      return signedIn()
-        && request.auth.token.admin == true;
-    }
-
-    function hasAdminDocument() {
+    function adminFromToken() {
       return signedIn() && (
-        exists(/databases/$(database)/documents/administradores/$(uid()))
-        || exists(/databases/$(database)/documents/admins/$(uid()))
+        request.auth.token.admin == true ||
+        request.auth.token.role in ['admin', 'administrador', 'owner', 'propietario', 'superadmin'] ||
+        request.auth.token.rol in ['admin', 'administrador', 'owner', 'propietario', 'superadmin']
+      );
+    }
+
+    function adminFromDocument() {
+      return signedIn() && (
+        exists(/databases/$(database)/documents/administradores/$(request.auth.uid)) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/barberos/$(request.auth.uid)) &&
+          roleIsAdmin(get(/databases/$(database)/documents/barberos/$(request.auth.uid)).data)) ||
+        (exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+          roleIsAdmin(get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          roleIsAdmin(get(/databases/$(database)/documents/users/$(request.auth.uid)).data)) ||
+        (exists(/databases/$(database)/documents/perfiles/$(request.auth.uid)) &&
+          roleIsAdmin(get(/databases/$(database)/documents/perfiles/$(request.auth.uid)).data))
       );
     }
 
     function isAdmin() {
-      return isHardcodedAdmin()
-        || hasAdminClaim()
-        || hasAdminDocument();
+      return adminFromToken() || adminFromDocument();
     }
 
     function owns(data) {
       return signedIn() && data != null && (
-        (data.keys().hasAny(['driverUid']) && data.driverUid == uid())
-        || (data.keys().hasAny(['choferUid']) && data.choferUid == uid())
-        || (data.keys().hasAny(['userUid']) && data.userUid == uid())
-        || (data.keys().hasAny(['ownerUid']) && data.ownerUid == uid())
-        || (data.keys().hasAny(['uid']) && data.uid == uid())
-        || (data.keys().hasAny(['authUid']) && data.authUid == uid())
-        || (data.keys().hasAny(['firebaseUid']) && data.firebaseUid == uid())
-        || (data.keys().hasAny(['createdByUid']) && data.createdByUid == uid())
-        || (data.keys().hasAny(['updatedByUid']) && data.updatedByUid == uid())
-        || (data.keys().hasAny(['senderUid']) && data.senderUid == uid())
-        || (data.keys().hasAny(['emisorUid']) && data.emisorUid == uid())
-        || (data.keys().hasAny(['derivadorUid']) && data.derivadorUid == uid())
-        || (data.keys().hasAny(['receiverUid']) && data.receiverUid == uid())
-        || (data.keys().hasAny(['receptorUid']) && data.receptorUid == uid())
-        || (data.keys().hasAny(['driverId']) && data.driverId == uid())
-        || (data.keys().hasAny(['choferId']) && data.choferId == uid())
-        || (data.keys().hasAny(['profileDocumentId']) && data.profileDocumentId == uid())
+        (data.keys().hasAny(['barberUid']) && data.barberUid == request.auth.uid) ||
+        (data.keys().hasAny(['barberoUid']) && data.barberoUid == request.auth.uid) ||
+        (data.keys().hasAny(['uid']) && data.uid == request.auth.uid) ||
+        (data.keys().hasAny(['ownerUid']) && data.ownerUid == request.auth.uid)
       );
     }
 
-    function ownershipFieldsUnchanged() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-        'driverUid', 'choferUid', 'userUid', 'ownerUid', 'uid',
-        'authUid', 'firebaseUid', 'createdByUid',
-        'senderUid', 'emisorUid', 'derivadorUid',
-        'receiverUid', 'receptorUid', 'driverId', 'choferId',
-        'profileDocumentId', 'enteredOnBehalfOf'
-      ]);
+    function isValidCharge(data) {
+      return data.keys().hasAll([
+          'barberUid', 'barberName', 'amount', 'method', 'service',
+          'createdAt', 'createdAtMs', 'businessId'
+        ]) &&
+        data.barberUid == request.auth.uid &&
+        data.businessId == 'barberia-c25a1' &&
+        data.amount is number && data.amount > 0 && data.amount <= 10000000 &&
+        data.method in ['cash', 'digital'] &&
+        data.service is string && data.service.size() > 0 && data.service.size() <= 100 &&
+        data.barberName is string && data.barberName.size() > 0 && data.barberName.size() <= 120 &&
+        data.createdAtMs is number && data.createdAtMs > 0;
     }
 
-    function adminFieldsUnchanged() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-        'rol', 'role', 'admin', 'isAdmin', 'claims', 'permissions',
-        'reviewedByAdmin', 'reviewedByUid', 'reviewedAt',
-        'reviewStatus', 'resolution', 'approvedByUid', 'approvedAt',
-        'rejectedByUid', 'rejectedAt'
-      ]);
+    function isValidClosure(data) {
+      return data.keys().hasAll([
+          'barberUid', 'barberName', 'status', 'direction', 'settlementAmount',
+          'cashTotal', 'digitalTotal', 'advertisingFund', 'totalBilled', 'cutoffAtMs',
+          'requestedAt', 'requestedAtMs', 'businessId'
+        ]) &&
+        data.barberUid == request.auth.uid &&
+        data.businessId == 'barberia-c25a1' &&
+        data.status == 'pending' &&
+        data.direction in ['barber_pays_business', 'business_pays_barber', 'balanced'] &&
+        data.settlementAmount is number && data.settlementAmount >= 0 &&
+        data.cashTotal is number && data.cashTotal >= 0 &&
+        data.digitalTotal is number && data.digitalTotal >= 0 &&
+        data.advertisingFund is number && data.advertisingFund >= 0 &&
+        data.totalBilled is number && data.totalBilled > 0 &&
+        data.cutoffAtMs is number && data.cutoffAtMs > 0 &&
+        data.requestedAtMs is number && data.requestedAtMs > 0;
     }
 
-    function isFinalAlertStatus(status) {
-      return status in ['reviewed', 'resolved', 'closed', 'dismissed', 'archived'];
+    match /administradores/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
     }
 
-    // =========================================================
-    // LOGIN Y ADMINISTRADORES
-    // =========================================================
+    match /admins/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
+    }
 
-    match /login_aliases/{username} {
-      allow get: if true;
-      allow list: if false;
+    match /barberos/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create, update, delete: if isAdmin();
     }
 
-    match /administradores/{adminUid} {
-      allow read: if isAdmin();
-      allow write: if isHardcodedAdmin() || hasAdminClaim();
-    }
-
-    match /admins/{adminUid} {
-      allow read: if isAdmin();
-      allow write: if isHardcodedAdmin() || hasAdminClaim();
-    }
-
-    // =========================================================
-    // USUARIOS Y CHOFERES
-    // =========================================================
-
-    match /usuarios/{userId} {
-      allow read: if isAdmin()
-        || (signedIn() && (userId == uid() || owns(resource.data)));
-
-      allow create: if isAdmin();
-
-      allow update: if isAdmin() || (
-        signedIn()
-        && (userId == uid() || owns(resource.data))
-        && ownershipFieldsUnchanged()
-        && adminFieldsUnchanged()
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'activo', 'active', 'assignedVehicleId', 'vehicleId',
-          'vehiculoId', 'autoId', 'vehiculoAsignado',
-          'deleted', 'isDeleted', 'eliminado'
-        ])
-      );
-
-      allow delete: if isAdmin();
-
-      match /technical_events/{eventId} {
-        allow read, create: if isAdmin() || (signedIn() && userId == uid());
-        allow update, delete: if isAdmin();
-      }
-
-      match /mi_auto_history/{eventId} {
-        allow read: if isAdmin() || (signedIn() && userId == uid());
-        allow create: if signedIn()
-          && request.resource.data.updatedByUid == uid()
-          && request.resource.data.driverUid == uid();
-        allow update, delete: if isAdmin();
-      }
-    }
-
-    match /choferes/{driverId} {
-      allow read: if signedIn();
-      allow create, delete: if isAdmin();
-
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && ownershipFieldsUnchanged()
-        && adminFieldsUnchanged()
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'activo', 'active', 'status', 'estado',
-          'assignedVehicleId', 'vehicleId', 'vehiculoId',
-          'autoId', 'vehiculoAsignado', 'deleted', 'isDeleted', 'eliminado'
-        ])
-      );
-
-      match /mi_auto_history/{eventId} {
-        allow read: if isAdmin() || owns(resource.data);
-        allow create: if signedIn()
-          && request.resource.data.updatedByUid == uid()
-          && request.resource.data.driverUid == uid();
-        allow update, delete: if isAdmin();
-      }
-    }
-
-    match /drivers/{driverId} {
-      allow read: if signedIn();
+    match /usuarios/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create, update, delete: if isAdmin();
     }
 
-    // =========================================================
-    // VEHÍCULOS Y MI AUTO
-    // =========================================================
-
-    match /vehiculos/{vehicleId} {
-      allow read: if signedIn();
-      allow create, delete: if isAdmin();
-
-      allow update: if isAdmin() || (
-        signedIn()
-        && request.resource.data.miAutoUpdatedByUid == uid()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'currentKm', 'kilometraje',
-          'lastServiceKm', 'kilometrajeUltimoService',
-          'nextServiceKm', 'proximoServiceKm', 'serviceIntervalKm',
-          'vtvExpiry', 'vencimientoVTV',
-          'vehicleInsuranceExpiry', 'vencimientoSeguro',
-          'plateExpiry', 'vencimientoPatente',
-          'municipalControlExpiry', 'vencimientoControlMunicipal',
-          'miAutoUpdatedAt', 'miAutoUpdatedByUid',
-          'miAutoUpdatedByRole', 'miAutoSchemaVersion'
-        ])
-      );
-
-      match /mi_auto_history/{eventId} {
-        allow read: if signedIn();
-        allow create: if signedIn()
-          && request.resource.data.updatedByUid == uid()
-          && request.resource.data.driverUid == uid();
-        allow update, delete: if isAdmin();
-      }
-    }
-
-    match /vehicles/{vehicleId} {
-      allow read: if signedIn();
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create, update, delete: if isAdmin();
     }
 
-    match /autos/{vehicleId} {
-      allow read: if signedIn();
+    match /perfiles/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create, update, delete: if isAdmin();
     }
 
-    match /asignaciones_autos/{assignmentId} {
-      allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
+    match /login_aliases/{alias} {
+      allow read, write: if isAdmin();
     }
 
-    // =========================================================
-    // FACTURACIÓN Y COLECCIONES HISTÓRICAS
-    // =========================================================
-
-    match /billing_records/{recordId} {
-      allow read: if signedIn();
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && owns(request.resource.data)
-        && ownershipFieldsUnchanged()
-        && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /facturaciones/{recordId} {
-      allow read: if signedIn();
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /cobros/{recordId} {
-      allow read: if signedIn();
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /servicios/{recordId} {
-      allow read: if signedIn();
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /receipt_index/{receiptId} {
-      allow get: if signedIn();
-      allow list: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /payment_operations/{operationId} {
-      allow get: if signedIn();
-      allow list: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    // =========================================================
-    // GASTOS, PRÉSTAMOS Y DEUDAS
-    // =========================================================
-
-    match /gastos/{expenseId} {
+    match /cobros/{chargeId} {
       allow read: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /prestamos_operativos/{loanId} {
-      allow read: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /deudas_choferes/{debtId} {
-      function driverDebtAckUpdate() {
-        return signedIn()
-          && owns(resource.data)
-          && ownershipFieldsUnchanged()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'acknowledgedByDriver', 'acknowledgedAt', 'updatedAt'
-          ]);
-      }
-
-      function hasValidDebtRemainingDecrease() {
-        return request.resource.data.remainingAmount is number
-          && request.resource.data.saldoPendiente is number
-          && request.resource.data.remainingAmount >= 0
-          && request.resource.data.saldoPendiente >= 0
-          && request.resource.data.remainingAmount == request.resource.data.saldoPendiente
-          && (
-            (
-              resource.data.keys().hasAny(['remainingAmount'])
-              && resource.data.remainingAmount is number
-              && request.resource.data.remainingAmount <= resource.data.remainingAmount
-            )
-            || (
-              resource.data.keys().hasAny(['saldoPendiente'])
-              && resource.data.saldoPendiente is number
-              && request.resource.data.saldoPendiente <= resource.data.saldoPendiente
-            )
-            || (
-              resource.data.keys().hasAny(['totalAmount'])
-              && resource.data.totalAmount is number
-              && request.resource.data.remainingAmount <= resource.data.totalAmount
-            )
-            || (
-              resource.data.keys().hasAny(['amount'])
-              && resource.data.amount is number
-              && request.resource.data.remainingAmount <= resource.data.amount
-            )
-          );
-      }
-
-      function hasValidPaidIncrease() {
-        return request.resource.data.paidAmount is number
-          && request.resource.data.amountPaid is number
-          && request.resource.data.paidAmount >= 0
-          && request.resource.data.amountPaid >= 0
-          && request.resource.data.paidAmount == request.resource.data.amountPaid
-          && (
-            !resource.data.keys().hasAny(['paidAmount'])
-            || !(resource.data.paidAmount is number)
-            || request.resource.data.paidAmount >= resource.data.paidAmount
-          );
-      }
-
-      function driverDebtPaymentUpdate() {
-        return signedIn()
-          && owns(resource.data)
-          && owns(request.resource.data)
-          && ownershipFieldsUnchanged()
-          && adminFieldsUnchanged()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'remainingAmount',
-            'saldoPendiente',
-            'paidAmount',
-            'amountPaid',
-            'status',
-            'debtStatus',
-            'lastPaymentAt',
-            'lastPaymentAtMs',
-            'lastPaymentMethod',
-            'updatedAt',
-            'updatedAtMs',
-            'sourceModule'
-          ])
-          && hasValidDebtRemainingDecrease()
-          && hasValidPaidIncrease()
-          && (
-            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastPaymentMethod'])
-            || request.resource.data.lastPaymentMethod == 'expense_offset'
-          )
-          && request.resource.data.sourceModule == 'pendientes'
-          && request.resource.data.status in [
-            'active', 'pending', 'installment', 'paid', 'open', 'approved'
-          ]
-          && request.resource.data.debtStatus in [
-            'active', 'pending', 'installment', 'paid', 'open', 'approved'
-          ];
-      }
-
-      allow read: if isAdmin() || owns(resource.data);
-      function isUberWeeklyDebtCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.choferUid == uid()
-          && request.resource.data.driverId == uid()
-          && request.resource.data.createdByUid == uid()
-          && request.resource.data.sourceModule == 'uber_weekly'
-          && request.resource.data.type == 'uber_weekly'
-          && request.resource.data.debtType == 'uber_weekly'
-          && request.resource.data.uberGrossAmount is number
-          && request.resource.data.uberGrossAmount > 0
-          && request.resource.data.totalAmount is number
-          && request.resource.data.totalAmount > 0
-          && request.resource.data.totalAmount * 2 == request.resource.data.uberGrossAmount
-          && request.resource.data.amount == request.resource.data.totalAmount
-          && request.resource.data.remainingAmount == request.resource.data.totalAmount
-          && request.resource.data.saldoPendiente == request.resource.data.totalAmount
-          && request.resource.data.paidAmount == 0
-          && request.resource.data.amountPaid == 0
-          && request.resource.data.uberCashboxRate == 0.05
-          && request.resource.data.uberCashboxAmount is number
-          && request.resource.data.uberCashboxAmount * 20 == request.resource.data.uberGrossAmount
-          && request.resource.data.reviewStatus == 'pending'
-          && request.resource.data.status == 'pending'
-          && request.resource.data.debtStatus == 'pending'
-          && request.resource.data.receiptUrl is string
-          && request.resource.data.receiptUrl.size() > 0
-          && request.resource.data.receiptPath is string
-          && request.resource.data.receiptPath.size() > 0;
-      }
-      function driverUberDebtResubmissionUpdate() {
-        return signedIn()
-          && owns(resource.data)
-          && owns(request.resource.data)
-          && resource.data.sourceModule == 'uber_weekly'
-          && resource.data.reviewStatus == 'rejected'
-          && isUberWeeklyDebtCreate()
-          && ownershipFieldsUnchanged();
-      }
-
-      allow create: if isAdmin() || isUberWeeklyDebtCreate();
-      allow update: if isAdmin()
-        || driverDebtAckUpdate()
-        || driverDebtPaymentUpdate()
-        || driverUberDebtResubmissionUpdate();
-      allow delete: if isAdmin();
-
-      match /payments/{paymentId} {
-        allow read: if isAdmin()
-          || owns(get(/databases/$(database)/documents/deudas_choferes/$(debtId)).data);
-        allow write: if isAdmin();
-      }
-
-      match /payment_history/{paymentId} {
-        allow read: if isAdmin()
-          || owns(get(/databases/$(database)/documents/deudas_choferes/$(debtId)).data);
-        allow write: if isAdmin();
-      }
-    }
-
-
-    match /uber_weekly_closures/{closureId} {
-      function validUberWeeklyClosure(data) {
-        return data.driverUid == uid()
-          && data.choferUid == uid()
-          && data.driverId == uid()
-          && data.createdByUid == uid()
-          && data.closureId == closureId
-          && data.weekId is string
-          && data.weekId.size() > 0
-          && data.locked == true
-          && (
-            (
-              data.noData == true
-              && data.noDataReason == 'driver_not_working'
-              && data.grossAmount == 0
-              && data.totalAmount == 0
-              && data.exploraShare == 0
-              && data.debtAmount == 0
-              && data.cashboxRate == 0.05
-              && data.cashboxAmount == 0
-              && data.uberCashboxAmount == 0
-              && data.receiptUrl == ''
-              && data.receiptPath == ''
-              && data.reviewStatus == 'no_data'
-              && data.status == 'no_data'
-            )
-            ||
-            (
-              data.grossAmount is number
-              && data.grossAmount > 0
-              && data.totalAmount == data.grossAmount
-              && data.exploraShare is number
-              && data.exploraShare * 2 == data.grossAmount
-              && data.debtAmount == data.exploraShare
-              && data.cashboxRate == 0.05
-              && data.cashboxAmount is number
-              && data.cashboxAmount * 20 == data.grossAmount
-              && data.uberCashboxAmount == data.cashboxAmount
-              && data.receiptUrl is string
-              && data.receiptUrl.size() > 0
-              && data.receiptPath is string
-              && data.receiptPath.size() > 0
-              && data.telegramPhotoUrl == data.receiptUrl
-              && data.notificationPhotoUrl == data.receiptUrl
-              && data.reviewStatus == 'pending'
-              && data.status == 'pending_review'
-            )
-          );
-      }
-
-      // La transacción consulta primero un ID determinístico aunque el documento aún no exista.
-      allow get: if isAdmin()
-        || owns(resource.data)
-        || (signedIn() && closureId.matches('^uber_' + uid() + '_.*$'));
-
-      allow list: if isAdmin() || owns(resource.data);
-
-      allow create: if signedIn()
-        && owns(request.resource.data)
-        && validUberWeeklyClosure(request.resource.data);
-
-      // El chofer sólo puede volver a presentar una semana previamente rechazada.
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && owns(request.resource.data)
-        && resource.data.reviewStatus == 'rejected'
-        && validUberWeeklyClosure(request.resource.data)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'weekLabel', 'weekStartMs', 'weekEndMs', 'weekDisplayEndMs', 'weekEndBoundaryMs', 'uploadDeadlineMs', 'uploadDeadlineLabel',
-          'driverName', 'grossAmount', 'totalAmount',
-          'driverShare', 'driverNetAmount',
-          'exploraShare', 'debtAmount',
-          'cashboxRate', 'cashboxAmount', 'uberCashboxAmount',
-          'receiptUrl', 'receiptPath',
-          'notificationPhotoUrl', 'telegramPhotoUrl', 'firebasePhotoUrl',
-          'reviewStatus', 'status', 'locked',
-          'createdAt', 'createdAtMs',
-          'updatedAt', 'updatedAtMs', 'version'
-        ])
-      );
-
-      allow delete: if isAdmin();
-    }
-
-    match /deuda_pagos/{paymentId} {
-      function isStandardDebtPaymentCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.createdByUid == uid()
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.choferUid == uid()
-          && request.resource.data.driverId == uid()
-          && request.resource.data.sourceModule == 'pendientes'
-          && request.resource.data.status == 'applied'
-          && request.resource.data.amount is number
-          && request.resource.data.amount > 0
-          && request.resource.data.previousBalance is number
-          && request.resource.data.newBalance is number
-          && request.resource.data.previousBalance >= request.resource.data.newBalance
-          && request.resource.data.previousBalance - request.resource.data.newBalance == request.resource.data.amount
-          && request.resource.data.receiptUrl is string
-          && request.resource.data.receiptUrl.size() > 0
-          && request.resource.data.receiptPath is string
-          && request.resource.data.receiptPath.size() > 0;
-      }
-
-      function isExpenseDebtOffsetCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.createdByUid == uid()
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.choferUid == uid()
-          && request.resource.data.driverId == uid()
-          && request.resource.data.sourceModule == 'gastos_deuda'
-          && request.resource.data.status == 'applied'
-          && request.resource.data.amount is number
-          && request.resource.data.amount > 0
-          && request.resource.data.previousBalance is number
-          && request.resource.data.newBalance is number
-          && request.resource.data.newBalance >= 0
-          && request.resource.data.previousBalance >= request.resource.data.newBalance
-          && request.resource.data.previousBalance - request.resource.data.newBalance == request.resource.data.amount
-          && request.resource.data.debtReductionMethod == 'expense_offset'
-          && request.resource.data.paymentMethod == 'expense_offset'
-          && request.resource.data.method == 'expense_offset'
-          && request.resource.data.expenseOffset == true
-          && request.resource.data.usedExpenseBalance == true
-          && request.resource.data.receiptRequired == false
-          && request.resource.data.receiptStatus == 'not_required'
-          && request.resource.data.expenseAmountBeforeOffset is number
-          && request.resource.data.expenseAmountAfterOffset is number
-          && request.resource.data.expenseAmountAfterOffset >= 0
-          && request.resource.data.expenseAmountBeforeOffset >= request.resource.data.expenseAmountAfterOffset
-          && request.resource.data.expenseAmountBeforeOffset - request.resource.data.expenseAmountAfterOffset == request.resource.data.amount
-          && request.resource.data.adminAcknowledged == true
-          && request.resource.data.acknowledged == true
-          && request.resource.data.adminAccepted == true
-          && request.resource.data.accepted == true;
-      }
-
-      allow get: if isAdmin() || owns(resource.data);
-      allow list: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || isStandardDebtPaymentCreate() || isExpenseDebtOffsetCreate();
+      allow create: if signedIn() && isValidCharge(request.resource.data);
       allow update, delete: if isAdmin();
     }
 
-    match /deuda_movimientos/{movementId} {
-      function isStandardDebtMovementCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.sourceModule == 'pendientes'
-          && request.resource.data.type == 'payment'
-          && request.resource.data.amount is number
-          && request.resource.data.amount > 0
-          && request.resource.data.previousBalance is number
-          && request.resource.data.newBalance is number
-          && request.resource.data.newBalance >= 0
-          && request.resource.data.previousBalance >= request.resource.data.newBalance
-          && request.resource.data.previousBalance - request.resource.data.newBalance == request.resource.data.amount;
-      }
-
-      function isExpenseDebtMovementCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.sourceModule == 'gastos_deuda'
-          && request.resource.data.type == 'expense_offset'
-          && request.resource.data.amount is number
-          && request.resource.data.amount > 0
-          && request.resource.data.previousBalance is number
-          && request.resource.data.newBalance is number
-          && request.resource.data.newBalance >= 0
-          && request.resource.data.previousBalance >= request.resource.data.newBalance
-          && request.resource.data.previousBalance - request.resource.data.newBalance == request.resource.data.amount
-          && request.resource.data.expenseAmountBeforeOffset is number
-          && request.resource.data.expenseAmountAfterOffset is number
-          && request.resource.data.expenseAmountAfterOffset >= 0
-          && request.resource.data.expenseAmountBeforeOffset >= request.resource.data.expenseAmountAfterOffset
-          && request.resource.data.expenseAmountBeforeOffset - request.resource.data.expenseAmountAfterOffset == request.resource.data.amount;
-      }
-
-      allow get: if isAdmin() || owns(resource.data);
-      allow list: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || isStandardDebtMovementCreate() || isExpenseDebtMovementCreate();
+    match /caja_publicidad/{receiptId} {
+      allow read: if isAdmin() || owns(resource.data);
+      allow create: if signedIn() && owns(request.resource.data) &&
+        request.resource.data.businessId == 'barberia-c25a1' &&
+        request.resource.data.amount is number && request.resource.data.amount > 0 &&
+        request.resource.data.rate == 0.05 &&
+        request.resource.data.contributionFrom in ['cash', 'digital'] &&
+        request.resource.data.beneficiary == 'barberia' &&
+        request.resource.data.destination == 'barberia_account';
       allow update, delete: if isAdmin();
     }
 
-    // =========================================================
-    // DERIVACIONES
-    // =========================================================
-
-    match /derivaciones/{derivationId} {
-      allow read: if signedIn();
-
-      allow create: if isAdmin() || (
-        signedIn() && (
-          owns(request.resource.data)
-          || (request.resource.data.keys().hasAny(['emisorUid']) && request.resource.data.emisorUid == uid())
-          || (request.resource.data.keys().hasAny(['senderUid']) && request.resource.data.senderUid == uid())
-        )
-      );
-
-      allow update: if isAdmin() || (
-        signedIn()
-        && (owns(resource.data) || owns(request.resource.data))
-        && ownershipFieldsUnchanged()
-        && adminFieldsUnchanged()
-      );
-
-      allow delete: if isAdmin();
-    }
-
-    // =========================================================
-    // ACUMULADOS Y CIERRE SEMANAL EN TIEMPO REAL
-    // =========================================================
-
-    match /acumulados_semanales/{snapshotId} {
-      allow read: if signedIn();
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && owns(request.resource.data)
-        && ownershipFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /cierres_semanales/{closureId} {
-      allow get: if signedIn();
-      allow list: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && owns(request.resource.data)
-        && ownershipFieldsUnchanged()
-        && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /pagos_semanales/{paymentId} {
-      allow get: if signedIn();
-      allow list: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && owns(request.resource.data)
-        && ownershipFieldsUnchanged()
-        && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /pagos/{paymentId} {
-      allow get: if signedIn();
-      allow list: if isAdmin() || owns(resource.data);
-      allow create: if isAdmin() || (signedIn() && owns(request.resource.data));
-      allow update: if isAdmin() || (
-        signedIn() && owns(resource.data) && owns(request.resource.data)
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    // =========================================================
-    // RANKING DIARIO, BONOS Y BURBUJAS
-    // =========================================================
-
-    match /dailyRankingPublic/{dayId} {
-      allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /dailyRankingBonus/{dayId} {
-      allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /dailyRankingPublic_test/{dayId} {
-      allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /dailyRankingBonus_test/{dayId} {
-      allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /performance_awards/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /performance_cycles/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /performance_derivation_winners/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /performance_public/{periodId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-
-      match /drivers/{driverId} {
-        allow read: if signedIn();
-        allow write: if isAdmin();
-      }
-    }
-
-    match /performance_weeks/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /derivation_ranking_public/{periodId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-
-      match /drivers/{driverId} {
-        allow read: if signedIn();
-        allow write: if isAdmin();
-      }
-    }
-
-    match /ranking_derivaciones_public/{periodId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-
-      match /drivers/{driverId} {
-        allow read: if signedIn();
-        allow write: if isAdmin();
-      }
-    }
-
-    match /ranking_metas_public/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    // =========================================================
-    // PRÉSTAMO EXPLORA
-    // =========================================================
-
-    match /prestamos_explora/{driverUid} {
-      allow read: if isAdmin() || (signedIn() && driverUid == uid()) || owns(resource.data);
-      allow create: if signedIn() && driverUid == uid() && owns(request.resource.data);
-      allow update: if isAdmin() || (
-        signedIn() && driverUid == uid()
-        && ownershipFieldsUnchanged() && adminFieldsUnchanged()
-      );
-      allow delete: if isAdmin();
-    }
-
-    match /prestamos_explora_historial/{historyId} {
+    match /cierres/{closureId} {
       allow read: if isAdmin() || owns(resource.data);
-      allow write: if isAdmin();
+      allow create: if signedIn() && isValidClosure(request.resource.data);
+      allow update, delete: if isAdmin();
     }
 
-    match /prestamos_explora_ventanas_8s/{historyId} {
-      allow read: if isAdmin() || owns(resource.data);
-      allow write: if isAdmin();
-    }
-
-    match /prestamos_explora_ventanas_publicas_8s/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /prestamos_explora_ciclos/{docId} {
-      allow read: if isAdmin() || owns(resource.data);
-      allow write: if isAdmin();
-    }
-
-    match /prestamos_explora_ciclos_publicos/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    // =========================================================
-    // KILOMETRAJE SEMANAL
-    // =========================================================
-
-    match /weekly_mileage/{recordId} {
-      function isOwnMileageRecordId() {
-        return signedIn()
-          && recordId.matches('^' + uid() + '_[0-9]{4}-[0-9]{2}-[0-9]{2}$');
-      }
-
-      allow get: if isAdmin() || isOwnMileageRecordId() || owns(resource.data);
-      allow list: if isAdmin() || owns(resource.data);
-
-      allow create: if signedIn()
-        && isOwnMileageRecordId()
-        && owns(request.resource.data)
-        && request.resource.data.driverUid == uid()
-        && request.resource.data.revision == 1
-        && request.resource.data.status in ['tracking', 'late_start_pending_review']
-        && request.resource.data.startKm is number
-        && request.resource.data.startKm > 0
-        && request.resource.data.startPhotoPath is string
-        && request.resource.data.startPhotoPath.size() > 0
-        && request.resource.data.startOperationId is string
-        && request.resource.data.startOperationId.size() > 0
-        && request.resource.data.startOperationFingerprint is string
-        && request.resource.data.startOperationFingerprint.size() > 0
-        && request.resource.data.fingerprintAlgorithm == 'sha256';
-
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && owns(request.resource.data)
-        && ownershipFieldsUnchanged()
-        && request.resource.data.fingerprintAlgorithm == 'sha256'
-        && (
-          (
-            request.resource.data.revision == resource.data.revision + 1
-            && resource.data.status in ['tracking', 'late_start_pending_review']
-            && request.resource.data.status in ['finalized', 'finalized_review_required']
-            && request.resource.data.endKm is number
-            && request.resource.data.endKm >= resource.data.startKm
-            && request.resource.data.endPhotoPath is string
-            && request.resource.data.endPhotoPath.size() > 0
-            && request.resource.data.endOperationId is string
-            && request.resource.data.endOperationId.size() > 0
-            && request.resource.data.endOperationFingerprint is string
-            && request.resource.data.endOperationFingerprint.size() > 0
-          )
-          ||
-          (
-            request.resource.data.revision == resource.data.revision
-            && request.resource.data.status == resource.data.status
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-              'alertOutbox', 'operationState', 'adminReviewRequired',
-              'reviewedByAdmin', 'reviewStatus', 'updatedAt'
-            ])
-          )
-        )
-      );
-
-      allow delete: if isAdmin();
-    }
-
-    match /weekly_mileage_alerts/{alertId} {
-      allow read: if isAdmin() || owns(resource.data);
-
-      allow create: if signedIn()
-        && owns(request.resource.data)
-        && request.resource.data.driverUid == uid()
-        && request.resource.data.status == 'pending_admin_review'
-        && request.resource.data.alertId == alertId;
-
-      allow update: if isAdmin() || (
-        signedIn()
-        && owns(resource.data)
-        && ownershipFieldsUnchanged()
-        && !isFinalAlertStatus(resource.data.status)
-        && request.resource.data.status == 'pending_admin_review'
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'reviewed', 'reviewStatus', 'reviewedByUid', 'reviewedAt',
-          'resolution', 'resolvedAt', 'closedAt', 'dismissedAt', 'archivedAt'
-        ])
-      );
-
-      allow delete: if isAdmin();
-    }
-
-    // =========================================================
-    // RÉCORDS PERSONALES
-    // =========================================================
-
-    match /driverPersonalRecords/{driverUid} {
-      allow get: if isAdmin() || (signedIn() && driverUid == uid());
-      allow list: if isAdmin();
-
-      allow create, update, delete: if false;
-    }
-
-    match /personalRecordEvents/{eventId} {
-      allow get: if isAdmin()
-        || (
-          signedIn()
-          && (
-            eventId.matches('^' + uid() + '_.*')
-            || owns(resource.data)
-          )
-        );
-
-      allow list: if isAdmin();
-
-      allow create, update, delete: if false;
-    }
-
-    match /personalRecordPublic/{id} {
-      allow read: if signedIn();
-
-      allow create, update, delete: if false;
-    }
-
-    // =========================================================
-    // CONFIGURACIÓN, RELOJ Y NOTIFICACIONES
-    // =========================================================
-
-    match /configuracion_sistema/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /explora_config/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /configuracion/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /configuraciones/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /reloj_operativo/{driverUid} {
-      allow read: if isAdmin() || (signedIn() && driverUid == uid());
-      allow write: if isAdmin();
-    }
-
-    match /technical_clock/{id} {
+    match /admin_audit/{auditId} {
       allow read, write: if isAdmin();
     }
-
-    match /notificaciones/{id} {
-      function isStandardDebtNotificationCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.type == 'debt_payment'
-          && request.resource.data.category == 'pendientes'
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.createdByUid == uid()
-          && request.resource.data.amount is number
-          && request.resource.data.amount > 0
-          && request.resource.data.previousBalance is number
-          && request.resource.data.newBalance is number
-          && request.resource.data.newBalance >= 0
-          && request.resource.data.previousBalance >= request.resource.data.newBalance
-          && request.resource.data.previousBalance - request.resource.data.newBalance == request.resource.data.amount;
-      }
-
-      function isExpenseDebtNotificationCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.type == 'debt_expense_offset'
-          && request.resource.data.category == 'gastos'
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.createdByUid == uid()
-          && request.resource.data.amount is number
-          && request.resource.data.amount > 0
-          && request.resource.data.previousBalance is number
-          && request.resource.data.newBalance is number
-          && request.resource.data.newBalance >= 0
-          && request.resource.data.previousBalance >= request.resource.data.newBalance
-          && request.resource.data.previousBalance - request.resource.data.newBalance == request.resource.data.amount
-          && request.resource.data.expenseAmountBeforeOffset is number
-          && request.resource.data.expenseAmountAfterOffset is number
-          && request.resource.data.expenseAmountAfterOffset >= 0
-          && request.resource.data.expenseAmountBeforeOffset >= request.resource.data.expenseAmountAfterOffset
-          && request.resource.data.expenseAmountBeforeOffset - request.resource.data.expenseAmountAfterOffset == request.resource.data.amount;
-      }
-
-      allow read: if isAdmin() || owns(resource.data);
-      function isUberWeeklyNotificationCreate() {
-        return signedIn()
-          && owns(request.resource.data)
-          && request.resource.data.driverUid == uid()
-          && request.resource.data.choferUid == uid()
-          && request.resource.data.createdByUid == uid()
-          && request.resource.data.type == 'uber_weekly_review'
-          && request.resource.data.category == 'uber'
-          && request.resource.data.amount is number
-          && request.resource.data.amount > 0
-          && request.resource.data.exploraShare is number
-          && request.resource.data.exploraShare * 2 == request.resource.data.amount
-          && request.resource.data.cashboxAmount is number
-          && request.resource.data.cashboxAmount * 20 == request.resource.data.amount
-          && request.resource.data.uberCashboxAmount == request.resource.data.cashboxAmount
-          && request.resource.data.receiptUrl is string
-          && request.resource.data.receiptUrl.size() > 0
-          && request.resource.data.telegramPhotoUrl == request.resource.data.receiptUrl
-          && request.resource.data.notificationPhotoUrl == request.resource.data.receiptUrl;
-      }
-      function isUberWeeklyNotificationResubmission() {
-        return signedIn()
-          && owns(resource.data)
-          && owns(request.resource.data)
-          && resource.data.type == 'uber_weekly_review'
-          && isUberWeeklyNotificationCreate()
-          && ownershipFieldsUnchanged();
-      }
-
-      allow create: if isAdmin() || isStandardDebtNotificationCreate() || isExpenseDebtNotificationCreate() || isUberWeeklyNotificationCreate();
-
-      allow update: if isAdmin()
-        || isUberWeeklyNotificationResubmission()
-        || (
-          signedIn()
-          && owns(resource.data)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'read', 'readAt', 'updatedAt'
-          ])
-        );
-
-      allow delete: if isAdmin();
-    }
-
-    // =========================================================
-    // SIMULACIÓN, RESET, AUDITORÍA Y SISTEMA
-    // =========================================================
-
-    match /simulaciones_choferes/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /simulation_operations/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /app_operational_state/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /app_reset_audit/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /app_reset_storage_manifests/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /app_reset_storage_manifest_items/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /admin_driver_deletion_jobs/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /admin_audit/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /system/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    // =========================================================
-    // DENEGACIÓN FINAL
-    // =========================================================
 
     match /{document=**} {
       allow read, write: if false;

@@ -1,399 +1,318 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#050505" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="Explora" />
-  <link rel="manifest" href="./manifest.json?v=20260824-1" />
-  <link rel="apple-touch-icon" href="./icon-192.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
-  <title>Explora — Control operativo</title>
-  <style>
-    :root{
-      --bg:#f3f5f7;--panel:#ffffff;--ink:#0e1116;--muted:#737a85;--line:#e7eaee;
-      --soft:#f6f7f9;--dark:#0f1115;--dark2:#181b21;--accent:#19a463;--accent-soft:#e9f8f0;
-      --radius:24px;--radius-sm:16px;--shadow:0 14px 42px rgba(17,24,39,.07);--shadow-soft:0 5px 18px rgba(17,24,39,.045)
-    }
-    *{box-sizing:border-box}
-    html{-webkit-text-size-adjust:100%}
-    body{margin:0;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);letter-spacing:-.01em}
-    button,input,select,textarea{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}.hidden{display:none!important}
-
-    .login-screen{min-height:100dvh;display:grid;place-items:center;padding:24px;background:
-      radial-gradient(circle at 15% 5%,rgba(25,164,99,.09),transparent 28%),
-      radial-gradient(circle at 92% 90%,rgba(15,17,21,.06),transparent 30%),var(--bg)}
-    .login-card{width:min(100%,410px);background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.85);border-radius:30px;box-shadow:0 28px 80px rgba(17,24,39,.11);padding:32px 28px 28px;backdrop-filter:blur(18px)}
-    .brand-mark{width:62px;height:62px;border-radius:20px;background:linear-gradient(145deg,#0e1014,#252932);color:#fff;display:grid;place-items:center;font-weight:900;font-size:21px;letter-spacing:-1px;margin-bottom:24px;box-shadow:0 10px 28px rgba(15,17,21,.18)}
-    .eyebrow{text-transform:uppercase;font-size:10px;letter-spacing:.18em;color:var(--accent);font-weight:900;margin:0 0 9px}
-    h1{font-size:30px;line-height:1.02;margin:0 0 9px;letter-spacing:-1px}.sub{color:var(--muted);font-size:13px;line-height:1.45;margin:0 0 24px}
-    label{display:block;font-size:11px;font-weight:800;margin:0 0 7px;color:#343943}.field{margin-bottom:15px}
-    input,select,textarea{width:100%;border:1px solid var(--line);background:#fafbfc;border-radius:14px;padding:13px 14px;outline:none;transition:.18s ease;color:var(--ink)}
-    input:focus,select:focus,textarea:focus{border-color:#aeb4bc;background:#fff;box-shadow:0 0 0 4px rgba(15,17,21,.04)}
-    .primary{width:100%;border:0;border-radius:14px;padding:14px 16px;background:var(--dark);color:#fff;font-weight:850;box-shadow:0 8px 20px rgba(15,17,21,.16)}
-    .status{margin:13px 0 0;text-align:center;color:#777;font-size:11px;min-height:15px}.status.error{color:#c83737}
-
-    .app{min-height:100dvh}
-    .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:13px clamp(14px,4vw,34px);background:rgba(243,245,247,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(15,17,21,.055)}
-    .brandline{display:flex;gap:11px;align-items:center}.mini-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#0e1014,#242831);color:#fff;display:grid;place-items:center;font-weight:950;font-size:13px;box-shadow:0 7px 18px rgba(15,17,21,.14)}
-    .brand-title{font-weight:900;line-height:1;font-size:14px;letter-spacing:-.25px}.brand-sub{color:var(--muted);font-size:10px;margin-top:4px;font-weight:650}
-    .ghost{border:1px solid var(--line);background:rgba(255,255,255,.9);border-radius:13px;padding:10px 13px;font-weight:800;font-size:11px;color:#333944;box-shadow:var(--shadow-soft)}
-
-    .main{max-width:1380px;margin:auto;padding:24px clamp(12px,3vw,30px) 44px}
-    .summary{position:relative;overflow:hidden;background:linear-gradient(135deg,#0d0f13 0%,#171a20 62%,#1f242b 100%);color:#fff;border-radius:26px;padding:23px 24px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:17px;box-shadow:0 18px 40px rgba(15,17,21,.17)}
-    .summary:after{content:"";position:absolute;width:210px;height:210px;border-radius:50%;right:-75px;top:-120px;background:radial-gradient(circle,rgba(25,164,99,.28),rgba(25,164,99,0) 68%);pointer-events:none}
-    .summary small{color:#a8afb9;font-weight:750;font-size:10px;text-transform:uppercase;letter-spacing:.12em}.summary .summary-payee{font-size:13px;color:#f1f3f5;font-weight:850;margin-top:7px}.summary .summary-when{font-size:9px;color:#8e96a0;margin-top:4px;font-weight:650}.summary .value{font-size:clamp(28px,4vw,42px);font-weight:950;letter-spacing:-1.6px;margin-top:2px;line-height:1}.summary .day{position:relative;z-index:1;font-size:11px;color:#c7ccd2;text-align:right;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);padding:8px 10px;border-radius:999px;white-space:nowrap}
-
-    .workspace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
-    .money-panel,.settlement{background:rgba(255,255,255,.96);border:1px solid rgba(15,17,21,.065);border-radius:var(--radius);box-shadow:var(--shadow-soft);overflow:hidden}
-    .money-panel{transition:.18s ease}.money-panel:hover{box-shadow:var(--shadow)}
-    .panel-head{padding:19px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff 0%,#fdfdfd 100%)}
-    .panel-tag{display:inline-flex;align-items:center;gap:7px;font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:900}
-    .panel-tag:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
-    .money-panel:last-child .panel-tag:before{background:#5c67ea;box-shadow:0 0 0 4px #eff0ff}
-    .panel-total{font-size:clamp(27px,3.5vw,36px);font-weight:950;letter-spacing:-1.25px;margin:9px 0 10px;line-height:1}
-    .adjustment{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:var(--muted);padding:7px 0;border-top:1px solid var(--line);font-weight:650}
-    .adjustment strong{color:#343943;font-size:11px;font-weight:850}.adjustment-total{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;padding:10px 0 13px;border-top:1px solid var(--line);margin-top:1px}
-    .adjustment-total span{font-size:10px;color:var(--muted);font-weight:850;text-transform:uppercase;letter-spacing:.08em}.adjustment-total strong{font-size:20px;letter-spacing:-.55px;font-weight:950}
-    .collect{border:0;border-radius:14px;padding:13px 14px;width:100%;background:var(--dark);color:#fff;font-weight:850;font-size:12px;transition:.16s ease;box-shadow:0 7px 16px rgba(15,17,21,.11)}
-    .collect:hover{transform:translateY(-1px);background:#050607}.collect:active{transform:translateY(0) scale(.99)}
-    .collect.secondary-action{margin-top:8px;background:var(--soft);color:var(--ink);border:1px solid var(--line);box-shadow:none}.collect.secondary-action:hover{background:#eef0f3}
-    .panel-body{padding:13px;background:#fbfcfd}.empty{padding:34px 14px;text-align:center;color:#a0a6ae;font-size:11px;border:1px dashed #d8dce1;border-radius:15px;background:#fff}
-
-    .expense-section{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.expense-title{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:900;margin-bottom:8px}
-    .expense-empty{font-size:10px;color:#aaa;padding:8px 0}.expense-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;align-items:center;padding:10px 1px;border-bottom:1px solid var(--line);font-size:11px}.expense-item:last-child{border-bottom:0}.expense-item strong{font-size:11px}.expense-item small{display:block;color:var(--muted);font-size:9px;margin-top:3px;line-height:1.35}.expense-item .proof{grid-column:1/-1;justify-self:start;margin-top:4px}.expense-amount{font-weight:950}
-    .receipt{border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:9px;background:#fff;box-shadow:0 2px 8px rgba(17,24,39,.025)}.receipt-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.receipt strong{font-size:13px}.receipt .amount{font-weight:950;font-size:13px}
-    .receipt-meta{font-size:10px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;gap:8px;align-items:center}.proof{font-size:9px;background:#f0f2f4;padding:4px 7px;border-radius:999px;color:#4a5059;text-decoration:none;font-weight:750}
-
-    .settlement{position:sticky;top:84px;padding:17px 12px;text-align:center;background:linear-gradient(180deg,#fff 0%,#f9fafb 100%)}
-    .settle-icon{width:44px;height:44px;border-radius:14px;background:#11141a;color:#fff;display:grid;place-items:center;margin:0 auto 11px;font-size:14px;font-weight:950;box-shadow:0 8px 18px rgba(15,17,21,.14)}
-    .settlement h3{font-size:13px;margin:0 0 9px;font-weight:900}.divider{height:1px;background:var(--line);margin:12px 0}.mini-total{font-size:9px;color:var(--muted);font-weight:750;text-transform:uppercase;letter-spacing:.06em}.mini-total strong{display:block;color:var(--ink);font-size:19px;margin-top:4px;letter-spacing:-.5px;font-weight:950;text-transform:none}
-    .uber-button{margin-top:10px;padding:10px 7px;font-size:9px;box-shadow:none}.uber-list{margin-top:10px;text-align:left;max-height:290px;overflow:auto}.uber-empty{font-size:9px;color:#a8adb4;text-align:center;padding:10px 2px;line-height:1.35}.uber-receipt{padding:9px 1px;border-top:1px solid var(--line)}.uber-receipt:first-child{border-top:0}.uber-receipt strong{display:block;font-size:10px;line-height:1.2;font-weight:900}.uber-receipt small{display:block;color:var(--muted);font-size:8px;margin:3px 0;line-height:1.35}.uber-receipt .proof{font-size:8px;padding:2px 5px}
-
-    .close-box{margin-top:17px;background:rgba(255,255,255,.96);border:1px solid rgba(15,17,21,.065);border-radius:var(--radius);padding:18px 19px;display:flex;align-items:center;justify-content:space-between;gap:14px;box-shadow:var(--shadow-soft)}
-    .close-box h3{margin:0 0 5px;font-size:14px;font-weight:900}.close-box p{margin:0;color:var(--muted);font-size:11px;line-height:1.4}.close-btn{border:0;background:var(--dark);color:#fff;padding:13px 18px;border-radius:14px;font-weight:850;font-size:11px;white-space:nowrap;box-shadow:0 7px 16px rgba(15,17,21,.13)}
-    .sync{font-size:9px;color:#777;margin-top:8px;font-weight:700}.sync.ok{color:var(--accent)}.sync.bad{color:#c83737}
-
-    .modal{position:fixed;inset:0;background:rgba(5,7,10,.52);z-index:50;display:grid;place-items:end center;padding:16px;backdrop-filter:blur(7px)}
-    .modal-card{width:min(100%,510px);background:#fff;border:1px solid rgba(255,255,255,.55);border-radius:28px;padding:21px;box-shadow:0 30px 90px rgba(0,0,0,.25);animation:sheetIn .22s ease-out}
-    @keyframes sheetIn{from{transform:translateY(16px);opacity:.2}to{transform:translateY(0);opacity:1}}
-    .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:17px}.modal-head h2{font-size:18px;margin:0;font-weight:950;letter-spacing:-.45px}.x{border:0;background:var(--soft);width:35px;height:35px;border-radius:11px;font-weight:900;color:#555b63}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .service-label{font-size:11px;font-weight:850;margin:0 0 10px;color:#343943}
-    .service-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:15px}
-    .service-option{border:1px solid var(--line);background:#fafbfc;border-radius:17px;padding:15px 13px;text-align:left;min-height:86px;transition:.15s ease;display:flex;flex-direction:column;justify-content:space-between;color:var(--ink)}
-    .service-option strong{font-size:13px;line-height:1.15}.service-option span{font-size:18px;font-weight:950;letter-spacing:-.55px;margin-top:8px}.service-option.selected{background:var(--dark);border-color:var(--dark);color:#fff;transform:translateY(-1px);box-shadow:0 9px 22px rgba(15,17,21,.15)}.service-option:active{transform:scale(.985)}
-    .file-note{font-size:9px;color:#888;margin-top:6px;line-height:1.4}.modal-actions{display:flex;gap:9px;margin-top:18px}.modal-actions button{flex:1}
-    .secondary{border:1px solid var(--line);background:#fff;border-radius:13px;padding:12px;font-weight:850;font-size:11px}.save{border:0;background:var(--dark);color:#fff;border-radius:13px;padding:12px;font-weight:850;font-size:11px;box-shadow:0 7px 16px rgba(15,17,21,.12)}
-    .save:disabled,.primary:disabled,.collect:disabled,.close-btn:disabled{opacity:.52;cursor:not-allowed}.close-summary{background:#f7f8fa;border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:7px}.close-summary div{display:flex;justify-content:space-between;gap:12px;font-size:11px;padding:6px 0}.close-summary strong{font-size:12px;font-weight:900}
-
-    @media(max-width:760px){
-      .login-screen{padding:18px}.login-card{padding:27px 22px;border-radius:26px}
-      .topbar{padding:11px 10px}.mini-mark{width:38px;height:38px;border-radius:12px}.brand-title{font-size:13px}.brand-sub{font-size:9px}.logout-text{display:none}.ghost{padding:9px 10px}
-      .main{padding:13px 7px 28px}.summary{padding:16px;border-radius:19px;margin-bottom:9px}.summary .value{font-size:25px;letter-spacing:-1px}.summary .summary-payee{font-size:11px}.summary .day{font-size:9px;padding:6px 8px}
-      .workspace{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.money-panel{border-radius:17px}.panel-head{padding:12px 9px}.panel-tag{font-size:8px;letter-spacing:.07em}.panel-tag:before{width:6px;height:6px;box-shadow:0 0 0 3px var(--accent-soft)}
-      .panel-total{font-size:20px;margin:7px 0 7px;letter-spacing:-.7px}.adjustment{font-size:7px;padding:5px 0;gap:4px}.adjustment strong{font-size:8px}.adjustment-total{padding:7px 0 9px}.adjustment-total span{font-size:7px}.adjustment-total strong{font-size:13px}.collect{padding:10px 5px;border-radius:11px;font-size:9px}.collect.secondary-action{margin-top:6px}
-      .panel-body{padding:7px;background:#fbfcfd}.empty{padding:22px 5px;font-size:8px;border-radius:11px}.receipt{border-radius:11px;padding:8px;margin-bottom:6px}.receipt strong,.receipt .amount{font-size:9px}.receipt-meta{font-size:7px;display:block;line-height:1.3}.receipt-meta .proof{display:inline-block;margin-top:4px}.proof{font-size:7px;padding:2px 5px}
-      .settlement{top:73px;padding:11px 5px}.settle-icon{width:34px;height:34px;border-radius:10px;font-size:10px;margin-bottom:8px}.settlement h3{font-size:10px}.mini-total{font-size:7px}.mini-total strong{font-size:13px}.uber-button{font-size:7px;padding:8px 3px}.uber-list{max-height:230px;margin-top:7px}.uber-receipt{padding:7px 0}.uber-receipt strong{font-size:8px}.uber-receipt small,.uber-receipt .proof{font-size:6px}.divider{margin:9px 0}
-      .expense-title{font-size:7px}.expense-item{font-size:8px;padding:7px 0}.expense-item strong{font-size:8px}.expense-item small{font-size:6px}.expense-amount{font-size:8px}
-      .close-box{border-radius:17px;padding:14px;align-items:flex-start;flex-direction:column;margin-top:9px}.close-box h3{font-size:13px}.close-box p{font-size:10px}.close-btn{width:100%;font-size:10px}.modal{padding:8px}.modal-card{border-radius:22px;padding:18px}.row{grid-template-columns:1fr}
-      .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
-    }
-  </style>
-  <link rel="stylesheet" href="./styles.css?v=20260824-27" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b9ed9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Barbería RA">
+  <title>Barbería República Argentina</title>
+  <link rel="manifest" href="./manifest.json?v=1">
+  <link rel="apple-touch-icon" href="./icon-192.png?v=1">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=1">
+  <link rel="stylesheet" href="./styles.css?v=1">
 </head>
 <body>
-<section id="splashScreen" class="splash-screen" aria-live="polite" aria-label="Cargando Explora">
-  <div class="splash-content">
-    <img src="./assets/explora-logo.png" alt="Explora" class="splash-logo" />
-    <div class="splash-progress" role="progressbar" aria-label="Cargando" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4">
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle class="splash-progress-track" cx="60" cy="60" r="48" pathLength="100" />
-        <circle id="splashProgressArc" class="splash-progress-arc" cx="60" cy="60" r="48" pathLength="100" />
-        <circle id="splashProgressDot" class="splash-progress-dot" cx="60" cy="12" r="5" />
-      </svg>
+  <section id="splashScreen" class="splash-screen" aria-label="Cargando Barbería República Argentina">
+    <div class="splash-content">
+      <img src="./assets/barberia-logo.png?v=1" alt="Barbería República Argentina">
+      <div class="splash-ring" aria-hidden="true"><span></span></div>
+      <p>Cargando</p>
     </div>
-    <p>Cargando</p>
-  </div>
-</section>
+  </section>
 
-<section id="loginScreen" class="login-screen hidden" aria-label="Ingresar a EXPLORA">
-  <form id="loginForm" class="login-card" autocomplete="off">
-    <div class="explora-login-brand">
-      <img src="./assets/explora-logo-login.png" alt="EXPLORA" class="explora-login-brand-image" decoding="async">
-      <p>VIAJES Y SERVICIOS</p>
-    </div>
-    <div class="explora-login-field">
-      <label for="user">Usuario</label>
-      <input id="user" name="explora_usuario_manual" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="marcelo" required>
-    </div>
-    <div class="explora-login-field">
-      <label for="pass">Clave de acceso</label>
-      <div class="explora-password-wrap">
-        <input id="pass" name="explora_clave_manual" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="••••••••" required>
-        <button id="loginPasswordToggle" class="explora-password-toggle" type="button" aria-label="Mostrar u ocultar clave de acceso">Ver</button>
+  <section id="loginScreen" class="login-screen hidden" aria-label="Iniciar sesión">
+    <form id="loginForm" class="login-card" autocomplete="off">
+      <div class="login-brand">
+        <img src="./assets/barberia-logo.png?v=1" alt="Barbería República Argentina">
       </div>
-    </div>
-    <button id="loginBtn" class="explora-login-submit" type="submit">Ingresar</button>
-    <div id="loginStatus" class="status explora-login-msg" aria-live="polite"></div>
-  </form>
-</section>
-
-<section id="app" class="app hidden">
-  <header class="topbar">
-    <div class="brandline"><div class="brand-logo-shell"><img src="./assets/explora-logo.png" alt="Explora" class="explora-logo topbar-logo"></div><span id="operatorName" class="operator-greeting">Hola de nuevo!</span></div>
-    <button id="logoutBtn" class="ghost logout-text">Salir</button>
-  </header>
-  <main class="main">
-    <section class="summary">
-      <div class="summary-metric summary-billed">
-        <small>Total facturado</small>
-        <div class="value" id="summaryBilledAmount">$ 0</div>
-        <div class="summary-when">Efectivo, digital y Uber.</div>
+      <div class="login-copy">
+        <span>CONTROL DE COBROS</span>
+        <h1>Ingresar</h1>
+        <p>Usá tu usuario de barbero o el correo del administrador.</p>
       </div>
-      <div class="summary-metric summary-refund">
-        <small>Total a reintegrar por Explora</small>
-        <div class="value" id="summaryReimbursementAmount">$ 0</div>
-        <div class="summary-when">50% de los gastos cargados.</div>
-        <button id="compensateDebtBtn" class="summary-compensate" type="button">Compensar diferencia con este dinero</button>
-      </div>
-      <div id="syncStatus" class="sync" aria-live="polite" hidden>Conectando…</div>
-    </section>
-    <section class="workspace">
-      <article class="money-panel">
-        <div class="panel-head">
-          <div class="panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"/></svg></span><span>Chofer</span></div>
-          <div class="panel-direction is-balanced" id="cashWalletStatus">Billetera equilibrada</div>
-          <div class="panel-total" id="cashTotal" data-money-format="signed">$ 0</div>
-          <div class="adjustment"><span>Efectivo cobrado</span><strong id="cashBaseTotal">$ 0</strong></div>
-          <div class="adjustment"><span>Uber cobrado</span><strong id="uberCashTotal">$ 0</strong></div>
-          <div class="adjustment"><span>+ Caja chica 5%</span><strong id="cashBoxTotal">$ 0</strong></div>
-          <div class="adjustment debt-adjustment"><span>+ Deuda agregada</span><span class="adjustment-value"><strong id="adminDebtTotal">$ 0</strong><button id="addDebtBtn" class="debt-add hidden" type="button" aria-label="Cargar deuda" title="Cargar deuda">+</button></span></div>
-          <div id="advanceDebtRow" class="adjustment advance-debt-adjustment hidden"><span>+ Adelanto pendiente</span><strong id="advanceDebtTotal">$ 0</strong></div>
-          <div id="cashDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>− Reintegro aplicado</span><strong id="cashDebtCompensationTotal">$ 0</strong></div>
-          <div class="adjustment"><span>+ Ajuste de Explora</span><strong id="exploraAdjustmentTotal">$ 0</strong></div>
-          <div class="panel-action-stack">
-            <button class="collect panel-action tone-cash" data-mode="cash"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar efectivo</span></button>
-            <button id="addUberBtn" class="collect panel-secondary-action tone-uber" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar Uber</span><b id="uberPendingBadge" class="operation-pending-badge hidden" aria-label="Semanas de Uber pendientes">0</b></button>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div class="records-heading"><span>Comprobantes</span><b id="cashCount">0</b></div>
-          <div id="cashList" class="proof-list"><div class="empty">Los cobros en efectivo y Uber aparecerán acá.</div></div>
-        </div>
-      </article>
-      <article class="money-panel">
-        <div class="panel-head">
-          <div class="panel-tag"><span class="panel-tag-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 20V8l6-4 6 4v12M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></span><span>Explora</span></div>
-          <div class="panel-direction is-balanced" id="digitalWalletStatus">Billetera equilibrada</div>
-          <div class="panel-total" id="digitalTotal" data-money-format="signed">$ 0</div>
-          <div class="adjustment"><span>Digital cobrado</span><strong id="digitalBaseTotal">$ 0</strong></div>
-          <div id="advanceRepaymentRow" class="adjustment advance-repayment-adjustment hidden"><span>− Aplicado al adelanto</span><strong id="advanceRepaymentTotal">$ 0</strong></div>
-          <div id="digitalDebtCompensationRow" class="adjustment debt-compensation-adjustment hidden"><span>+ Reintegro utilizado</span><strong id="digitalDebtCompensationTotal">$ 0</strong></div>
-          <div class="adjustment"><span>+ Ajuste del chofer</span><strong id="driverAdjustmentTotal">$ 0</strong></div>
-          <div class="panel-action-stack">
-            <button class="collect panel-action tone-digital" data-mode="digital"><span class="collect-icon" aria-hidden="true">+</span><span>Cobrar digital</span></button>
-            <button id="addExpenseBtn" class="collect panel-secondary-action tone-expense" type="button"><span class="collect-icon" aria-hidden="true">+</span><span>Cargar gastos</span></button>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div class="records-heading"><span>Comprobantes</span><b id="digitalCount">0</b></div>
-          <div id="digitalList" class="proof-list"><div class="empty">Los cobros digitales y los gastos aparecerán acá.</div></div>
-        </div>
-      </article>
-    </section>
-    <section class="close-box action-request-box">
-      <div><h3>Pedir un cierre</h3><p>Podés pedir un cierre para liquidar las cuentas.</p></div>
-      <button id="closeDayBtn" class="close-btn">Pedir cierre</button>
-    </section>
-    <section id="advanceBox" class="close-box action-request-box advance-box">
-      <div><span class="advance-kicker">Beneficio Explora</span><h3>Pedir un adelanto en efectivo</h3><p>Hasta $400.000, sin plazo fijo para devolver.</p></div>
-      <button id="requestAdvanceBtn" class="close-btn advance-btn" type="button">Pedir adelanto</button>
-    </section>
-  </main>
-</section>
-
-<div id="chargeModal" class="modal hidden">
-  <div class="modal-card">
-    <div class="modal-head"><h2 id="chargeTitle">Nuevo cobro</h2><button class="x" data-close="chargeModal">×</button></div>
-    <form id="chargeForm">
-      <input type="hidden" id="chargeMode">
       <div class="field">
-        <label for="chargeAmount">Importe del cobro</label>
-        <div class="money-entry"><span aria-hidden="true">$</span><input id="chargeAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
+        <label for="loginUser">Usuario o correo</label>
+        <input id="loginUser" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="tu usuario" required>
       </div>
-      <div class="field"><label>Detalle / cliente</label><input id="detail" placeholder="Opcional"></div>
-      <div id="proofField" class="field hidden"><label>Comprobante digital</label><input id="proof" type="file" accept="image/*,.pdf"><div class="file-note">El comprobante se guardará en Firebase Storage.</div></div>
-      <div id="chargeStatus" class="status"></div>
-      <div class="modal-actions"><button type="button" class="secondary" data-close="chargeModal">Cancelar</button><button id="saveChargeBtn" type="submit" class="save">Registrar cobro</button></div>
-    </form>
-  </div>
-</div>
-
-<div id="debtModal" class="modal hidden">
-  <div class="modal-card">
-    <div class="modal-head"><h2>Cargar deuda</h2><button class="x" data-close="debtModal">×</button></div>
-    <form id="debtForm">
-      <div class="debt-modal-note">Esta deuda se sumará a Efectivo y modificará el saldo por el importe completo.</div>
-      <div class="field"><label>Importe de la deuda</label><input id="debtAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
-      <div class="field"><label>Detalle / motivo</label><input id="debtDetail" placeholder="Ej. Diferencia de caja" required></div>
-      <div class="field"><label>Comprobante <span class="optional-label">opcional</span></label><input id="debtProof" type="file" accept="image/*,.pdf"></div>
-      <div id="debtStatus" class="status"></div>
-      <div class="modal-actions"><button type="button" class="secondary" data-close="debtModal">Cancelar</button><button id="saveDebtBtn" type="submit" class="save">Registrar deuda</button></div>
-    </form>
-  </div>
-</div>
-
-<div id="expenseModal" class="modal hidden" data-tone="expense">
-  <div class="modal-card">
-    <div class="modal-head"><h2>Cargar gasto</h2><button class="x" data-close="expenseModal">×</button></div>
-    <form id="expenseForm">
-      <div class="field"><label>Importe total del gasto</label><input id="expenseAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
-      <div class="field"><label>Detalle / motivo</label><input id="expenseDetail" placeholder="Ej. Productos de limpieza" required></div>
-      <div class="field"><label>Comprobante</label><input id="expenseProof" type="file" accept="image/*,.pdf" required><div class="file-note">Digital reconocerá automáticamente el 50% del gasto.</div></div>
-      <div id="expenseStatus" class="status"></div>
-      <div class="modal-actions"><button type="button" class="secondary" data-close="expenseModal">Cancelar</button><button id="saveExpenseBtn" type="submit" class="save">Registrar gasto</button></div>
-    </form>
-  </div>
-</div>
-
-<div id="uberModal" class="modal hidden" data-tone="uber">
-  <div class="modal-card">
-    <div class="modal-head"><h2>Cargar Uber</h2><button class="x" data-close="uberModal">×</button></div>
-    <form id="uberForm">
-      <div id="uberPendingNotice" class="uber-pending-notice" aria-live="polite"></div>
       <div class="field">
-        <label for="uberWeekSelect">Semana cerrada a cargar</label>
-        <select id="uberWeekSelect" required></select>
-        <div class="file-note">Las semanas van de lunes a lunes. Solo aparecen las ya cerradas que todavía no tienen comprobante.</div>
+        <label for="loginPassword">Clave de acceso</label>
+        <div class="password-field">
+          <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required>
+          <button id="togglePassword" type="button" aria-label="Mostrar u ocultar clave">Ver</button>
+        </div>
       </div>
-      <div id="uberWeekSummary" class="uber-week-summary">
-        <div><span>Inicio</span><strong id="uberWeekStartLabel">—</strong></div>
-        <div><span>Cierre</span><strong id="uberWeekEndLabel">—</strong></div>
-        <div><span>Estado</span><strong id="uberWeekStateLabel">Pendiente</strong></div>
-      </div>
-      <div class="field"><label for="uberAmount">Monto total facturado en Uber</label><div class="money-entry"><span aria-hidden="true">$</span><input id="uberAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div></div>
-      <div class="field"><label for="uberProof">Comprobante de la semana seleccionada</label><input id="uberProof" type="file" accept="image/*,.pdf" required><div class="file-note">El monto se suma al efectivo del chofer, se divide 50% para cada parte y genera 5% de caja chica.</div></div>
-      <div id="uberStatus" class="status"></div>
-      <div class="modal-actions"><button type="button" class="secondary" data-close="uberModal">Cancelar</button><button id="saveUberBtn" type="submit" class="save">Registrar Uber</button></div>
+      <button id="loginButton" class="button primary full" type="submit">Ingresar</button>
+      <div id="loginStatus" class="status" aria-live="polite"></div>
     </form>
-  </div>
-</div>
+  </section>
 
-<div id="debtCompensationModal" class="modal hidden" data-tone="expense">
-  <div class="modal-card">
-    <div class="modal-head"><h2>Compensar diferencia</h2><button class="x" data-close="debtCompensationModal">×</button></div>
-    <p class="compensation-question">¿Querés utilizar el dinero que Explora debe reintegrarte para achicar el saldo que el chofer debe compensar?</p>
-    <div class="compensation-breakdown">
-      <div><span>Reintegro disponible</span><strong id="compensationReimbursementAvailable">$ 0</strong></div>
-      <div><span>Saldo pendiente del chofer</span><strong id="compensationDebtAvailable">$ 0</strong></div>
-      <div class="compensation-maximum"><span>Máximo que podés utilizar</span><strong id="compensationMaximum">$ 0</strong></div>
-    </div>
-    <div id="compensationOutcome" class="compensation-outcome"></div>
-    <div id="debtCompensationStatus" class="status"></div>
-    <div class="modal-actions"><button type="button" class="secondary" data-close="debtCompensationModal">Cancelar</button><button id="confirmDebtCompensation" type="button" class="save">OK, compensar</button></div>
-  </div>
-</div>
-
-<div id="advanceModal" class="modal hidden" data-tone="advance">
-  <div class="modal-card">
-    <div class="modal-head"><h2>Adelanto en efectivo</h2><button class="x" data-close="advanceModal">×</button></div>
-    <div class="advance-intro">
-      <strong>En Explora premiamos a los buenos choferes.</strong>
-      <p>Por eso queremos darte un adelanto en efectivo para que lo uses en lo que quieras.</p>
-    </div>
-    <div class="advance-conditions">
-      <div><span>Tope</span><strong>$400.000</strong></div>
-      <div><span>Interés</span><strong>40%</strong></div>
-      <div><span>Plazo</span><strong>Sin vencimiento</strong></div>
-    </div>
-    <p class="advance-explanation">El 50% que te corresponde de cada cobro digital se aplicará automáticamente para disminuir el saldo del adelanto.</p>
-    <p class="advance-requirement">Para solicitarlo, la diferencia actual entre Chofer y Explora debe ser menor a $50.000. La verificación se realiza al confirmar.</p>
-    <form id="advanceForm">
-      <div class="field">
-        <label for="advanceAmount">Monto que querés recibir</label>
-        <div class="money-entry"><span aria-hidden="true">$</span><input id="advanceAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
-        <div class="file-note">Ingresá manualmente un importe de hasta $400.000.</div>
+  <section id="appScreen" class="app-screen hidden">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <img src="./icon-192.png?v=1" alt="">
+        <div>
+          <strong>Barbería República Argentina</strong>
+          <span id="operatorGreeting">Hola</span>
+        </div>
       </div>
-      <div class="advance-quote" aria-live="polite">
-        <div><span>Vas a recibir</span><strong id="advancePrincipalPreview">$ 0</strong></div>
-        <div><span>Interés 40%</span><strong id="advanceInterestPreview">$ 0</strong></div>
-        <div class="advance-quote-total"><span>Vas a devolver</span><strong id="advanceTotalPreview">$ 0</strong></div>
-      </div>
-      <div id="advanceStatus" class="status"></div>
-      <div class="modal-actions"><button type="button" class="secondary" data-close="advanceModal">Cancelar</button><button id="confirmAdvanceBtn" type="submit" class="save">Confirmar adelanto</button></div>
-    </form>
-  </div>
-</div>
+      <button id="logoutButton" class="button ghost" type="button">Salir</button>
+    </header>
 
-<div id="closeModal" class="modal hidden">
-  <div class="modal-card">
-    <div class="modal-head"><h2 id="closeModalTitle">Pedir cierre</h2><button class="x" data-close="closeModal">×</button></div>
-
-    <div id="closeDriverView">
-      <div id="closeBalanceMessage" class="close-balance-message">Calculando liquidación…</div>
-      <div class="close-choice-grid">
-        <button id="choosePayExplora" type="button" class="close-choice pay">
-          <span class="close-choice-icon">↑</span>
-          <strong>Pagar a Explora</strong>
-          <small>El chofer adjunta el comprobante.</small>
-        </button>
-        <button id="chooseCollectExplora" type="button" class="close-choice collect-choice">
-          <span class="close-choice-icon">↓</span>
-          <strong>Cobrar a Explora</strong>
-          <small>El administrador adjunta el comprobante.</small>
-        </button>
-      </div>
-
-      <form id="driverCloseForm" class="close-payment-form hidden">
-        <div id="driverCloseSelected" class="selected-close-summary"></div>
-        <div id="driverCloseAmountField" class="field hidden">
-          <label for="driverCloseAmount">Importe que va a pagar</label>
-          <div class="amount-with-action">
-            <input id="driverCloseAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off">
-            <button id="driverUseFullAmount" type="button">Usar total</button>
+    <main class="main-shell">
+      <section id="adminDashboard" class="admin-dashboard hidden">
+        <div class="section-heading">
+          <div>
+            <span class="kicker">ADMINISTRACIÓN</span>
+            <h1>Barberos activos</h1>
+            <p>Nombre y diferencia actual de cada barbero, actualizados en tiempo real.</p>
           </div>
-          <div id="driverCloseLimit" class="file-note"></div>
+          <span class="live-pill"><i></i> En tiempo real</span>
         </div>
-        <div id="driverCloseProofField" class="field hidden">
-          <label for="driverCloseProof">Comprobante del pago</label>
-          <input id="driverCloseProof" type="file" accept="image/*,.pdf">
-          <div class="file-note">El comprobante aparecerá en Digital como “Ajuste del chofer”.</div>
-        </div>
-        <div id="adminProofNotice" class="admin-proof-notice hidden">El cierre quedará pendiente hasta que el administrador pague y suba su comprobante.</div>
-        <div id="closeStatus" class="status"></div>
-        <button id="confirmClose" type="submit" class="save close-submit">Continuar</button>
-      </form>
-    </div>
 
-    <div id="closeAdminView" class="hidden">
-      <p class="admin-close-intro">Pagos que Explora debe realizar. Elegí un cierre para pagar el total o un importe parcial.</p>
-      <div id="adminClosureList"><div class="admin-empty">Cargando cierres…</div></div>
-      <form id="adminPaymentForm" class="admin-payment-form hidden">
-        <input id="adminClosureId" type="hidden">
-        <div id="adminPaymentSummary" class="selected-close-summary"></div>
+        <div id="adminBarberList" class="admin-barber-list" aria-live="polite">
+          <div class="empty-state">Cargando barberos activos…</div>
+        </div>
+
+        <div class="admin-actions">
+          <button id="adminBarbersButton" class="admin-action primary-action" type="button">
+            <span class="action-icon">＋</span>
+            <span><strong>Crear / editar barbero</strong><small>Accesos, nombre, clave y estado.</small></span>
+          </button>
+          <button id="adminClosuresButton" class="admin-action" type="button">
+            <span class="action-icon">✓</span>
+            <span><strong>Gestionar cierres</strong><small>Revisar y completar pedidos pendientes.</small></span>
+            <b id="pendingClosuresBadge" class="badge hidden">0</b>
+          </button>
+          <button id="adminHistoryButton" class="admin-action" type="button">
+            <span class="action-icon">↗</span>
+            <span><strong>Historial</strong><small>Cobros, publicidad y cierres por barbero.</small></span>
+          </button>
+          <button id="adminLogoutButton" class="admin-action danger-action" type="button">
+            <span class="action-icon">×</span>
+            <span><strong>Salir</strong><small>Cerrar sesión de administrador.</small></span>
+          </button>
+        </div>
+      </section>
+
+      <section id="barberDashboard" class="barber-dashboard hidden">
+        <div class="summary-grid">
+          <article class="summary-card total-card">
+            <span>Total facturado</span>
+            <strong id="totalBilled">$ 0</strong>
+          </article>
+          <article class="summary-card advertising-card">
+            <span>Caja para publicidad</span>
+            <strong id="advertisingFund">$ 0</strong>
+            <small>5% efectivo + 5% digital</small>
+          </article>
+          <article class="summary-card method-card">
+            <div><span>Efectivo</span><strong id="cashTotal">$ 0</strong></div>
+            <div><span>Digital</span><strong id="digitalTotal">$ 0</strong></div>
+          </article>
+        </div>
+
+        <article id="settlementCard" class="finance-card balanced">
+          <div class="finance-head">
+            <div class="barber-chip">
+              <span class="avatar-dot" aria-hidden="true"></span>
+              <span id="currentBarberName">Barbero</span>
+            </div>
+            <span id="syncStatus" class="sync-status">Sincronizando…</span>
+          </div>
+          <div class="settlement-copy">
+            <span id="settlementDirection">Cuentas equilibradas</span>
+            <strong id="settlementAmount">$ 0</strong>
+            <p id="settlementHint">No hay diferencia pendiente entre el barbero y la barbería.</p>
+          </div>
+          <div class="charge-actions">
+            <button class="charge-button cash" type="button" data-charge-mode="cash">
+              <span>＋</span><strong>Cobrar efectivo</strong><small>El dinero queda en manos del barbero.</small>
+            </button>
+            <button class="charge-button digital" type="button" data-charge-mode="digital">
+              <span>＋</span><strong>Cobrar digital</strong><small>El dinero ingresa a la barbería.</small>
+            </button>
+          </div>
+          <div class="receipt-section">
+            <div class="receipt-heading">
+              <span>Comprobantes del período</span>
+              <b id="receiptCount">0</b>
+            </div>
+            <div id="receiptList" class="receipt-list">
+              <div class="empty-state compact">Los cobros aparecerán acá.</div>
+            </div>
+            <button id="receiptToggle" class="text-button hidden" type="button">Ver más comprobantes</button>
+          </div>
+        </article>
+
+        <article class="close-request-card">
+          <div>
+            <span class="kicker">CIERRE DE PERÍODO</span>
+            <h2>Pedir un cierre</h2>
+            <p>Guarda el resumen actual y vuelve los cobros y el saldo a cero.</p>
+          </div>
+          <button id="requestClosureButton" class="button dark" type="button">Pedir cierre</button>
+        </article>
+      </section>
+    </main>
+  </section>
+
+  <div id="chargeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="chargeModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><span id="chargeModeKicker" class="kicker">NUEVO COBRO</span><h2 id="chargeModalTitle">Cobrar efectivo</h2></div>
+        <button class="close-modal" type="button" data-close-modal="chargeModal" aria-label="Cerrar">×</button>
+      </div>
+      <form id="chargeForm">
+        <input id="chargeMode" type="hidden">
+        <input id="selectedService" type="hidden">
+        <p class="field-label">Seleccioná el servicio</p>
+        <div id="serviceGrid" class="service-grid"></div>
         <div class="field">
-          <label for="adminPaymentAmount">Importe que paga Explora</label>
-          <div class="amount-with-action">
-            <input id="adminPaymentAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required>
-            <button id="adminUseFullAmount" type="button">Usar total</button>
-          </div>
-          <div id="adminPaymentLimit" class="file-note"></div>
+          <label for="chargeAmount">Importe</label>
+          <div class="money-field"><span>$</span><input id="chargeAmount" type="text" inputmode="numeric" autocomplete="off" placeholder="0" required></div>
+          <small>Podés ajustar el importe si el servicio tuvo otro valor.</small>
         </div>
         <div class="field">
-          <label for="adminCloseProof">Comprobante de Explora</label>
-          <input id="adminCloseProof" type="file" accept="image/*,.pdf" required>
-          <div class="file-note">Se sumará a Efectivo como “Ajuste de Explora”.</div>
+          <label for="chargeDetail">Detalle / cliente <em>opcional</em></label>
+          <input id="chargeDetail" type="text" maxlength="180" placeholder="Ej. Corte de Juan">
         </div>
-        <div id="adminPaymentStatus" class="status"></div>
-        <div class="modal-actions"><button id="cancelAdminPayment" type="button" class="secondary">Volver</button><button id="confirmAdminPayment" type="submit" class="save">Registrar pago</button></div>
+        <div id="digitalProofField" class="field hidden">
+          <label for="chargeProof">Comprobante digital</label>
+          <input id="chargeProof" type="file" accept="image/*,.pdf">
+          <small>Imagen o PDF de hasta 10 MB.</small>
+        </div>
+        <div id="chargeStatus" class="status" aria-live="polite"></div>
+        <div class="modal-actions">
+          <button class="button secondary" type="button" data-close-modal="chargeModal">Cancelar</button>
+          <button id="reviewChargeButton" class="button primary" type="submit">Revisar cobro</button>
+        </div>
       </form>
     </div>
   </div>
-</div>
 
-<script type="module" src="./app.js?v=20260824-28"></script>
+  <div id="previewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+    <div class="modal-card preview-card">
+      <div class="preview-icon">✓</div>
+      <span class="kicker">CONFIRMAR OPERACIÓN</span>
+      <h2 id="previewTitle">Revisá cómo quedará el saldo</h2>
+      <div class="preview-breakdown">
+        <div><span>Cobro</span><strong id="previewChargeAmount">$ 0</strong></div>
+        <div><span>Caja para publicidad</span><strong id="previewAdvertisingAmount">$ 0</strong></div>
+        <div><span>Impacto en la diferencia</span><strong id="previewImpactAmount">$ 0</strong></div>
+      </div>
+      <div class="balance-transition">
+        <div><small>ACTUALMENTE</small><span id="previewBeforeLabel">Equilibrado</span><strong id="previewBeforeAmount">$ 0</strong></div>
+        <i>↓</i>
+        <div class="after"><small>DESPUÉS DE CONFIRMAR</small><span id="previewAfterLabel">Equilibrado</span><strong id="previewAfterAmount">$ 0</strong></div>
+      </div>
+      <p class="notice">Se crearán el comprobante del corte y dos comprobantes de publicidad: efectivo 5% y digital 5%.</p>
+      <div id="previewStatus" class="status" aria-live="polite"></div>
+      <div class="modal-actions">
+        <button id="backToChargeButton" class="button secondary" type="button">Volver</button>
+        <button id="confirmChargeButton" class="button primary" type="button">Confirmar cobro</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="closureModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="closureModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><span class="kicker">CIERRE DE PERÍODO</span><h2 id="closureModalTitle">Pedir cierre</h2></div>
+        <button class="close-modal" type="button" data-close-modal="closureModal" aria-label="Cerrar">×</button>
+      </div>
+      <form id="closureForm">
+        <div id="closureSummary" class="closure-summary"></div>
+        <div id="barberPaymentProofField" class="field hidden">
+          <label for="barberClosureProof">Comprobante del pago <em>opcional</em></label>
+          <input id="barberClosureProof" type="file" accept="image/*,.pdf">
+          <small>Si ya pagaste a la barbería, adjuntalo ahora.</small>
+        </div>
+        <div id="barberBankFields" class="hidden">
+          <div class="field"><label for="barberAlias">Alias para recibir</label><input id="barberAlias" type="text" autocapitalize="none" maxlength="80" placeholder="Tu alias"></div>
+          <div class="field"><label for="barberCuit">CUIT del titular</label><input id="barberCuit" type="text" inputmode="numeric" maxlength="15" placeholder="20-12345678-9"></div>
+        </div>
+        <div class="reset-notice"><strong>Al confirmar, el período se reinicia inmediatamente.</strong><span>Los nuevos cobros no se mezclarán con este cierre.</span></div>
+        <div id="closureStatus" class="status" aria-live="polite"></div>
+        <div class="modal-actions">
+          <button class="button secondary" type="button" data-close-modal="closureModal">Cancelar</button>
+          <button id="confirmClosureButton" class="button primary" type="submit">Confirmar cierre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="barberManagerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="barberManagerTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><span class="kicker">ADMINISTRACIÓN</span><h2 id="barberManagerTitle">Crear / editar barbero</h2></div>
+        <button class="close-modal" type="button" data-close-modal="barberManagerModal" aria-label="Cerrar">×</button>
+      </div>
+      <div class="segmented-control">
+        <button class="selected" type="button" data-manager-mode="create">Crear</button>
+        <button type="button" data-manager-mode="edit">Editar</button>
+      </div>
+      <form id="barberManagerForm">
+        <input id="barberManagerMode" type="hidden" value="create">
+        <div id="createBarberFields">
+          <div class="field"><label for="newBarberName">Nombre del barbero</label><input id="newBarberName" type="text" maxlength="100"></div>
+          <div class="field"><label for="newBarberUsername">Usuario</label><input id="newBarberUsername" type="text" autocapitalize="none" spellcheck="false" maxlength="32" placeholder="ej. matias"></div>
+          <div class="field"><label for="newBarberPassword">Clave inicial</label><input id="newBarberPassword" type="password" minlength="6" maxlength="72"></div>
+        </div>
+        <div id="editBarberFields" class="hidden">
+          <div class="field"><label for="editBarberSelect">Barbero</label><select id="editBarberSelect"></select></div>
+          <div class="field"><label for="editBarberName">Nombre</label><input id="editBarberName" type="text" maxlength="100"></div>
+          <label class="switch-row" for="editBarberActive"><span><strong>Barbero activo</strong><small>Solo los activos aparecen en el tablero.</small></span><input id="editBarberActive" type="checkbox" checked></label>
+          <div class="field"><label for="editBarberPassword">Nueva clave <em>opcional</em></label><input id="editBarberPassword" type="password" minlength="6" maxlength="72" placeholder="Dejar vacío para mantenerla"></div>
+        </div>
+        <div id="barberManagerStatus" class="status" aria-live="polite"></div>
+        <div class="modal-actions">
+          <button class="button secondary" type="button" data-close-modal="barberManagerModal">Cancelar</button>
+          <button id="saveBarberButton" class="button primary" type="submit">Crear barbero</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="adminClosuresModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminClosuresTitle">
+    <div class="modal-card wide-card">
+      <div class="modal-head">
+        <div><span class="kicker">ADMINISTRACIÓN</span><h2 id="adminClosuresTitle">Gestionar cierres</h2></div>
+        <button class="close-modal" type="button" data-close-modal="adminClosuresModal" aria-label="Cerrar">×</button>
+      </div>
+      <div id="adminClosureList" class="admin-closure-list"><div class="empty-state compact">Cargando cierres…</div></div>
+      <form id="resolveClosureForm" class="resolve-closure-form hidden">
+        <input id="resolveClosureId" type="hidden">
+        <div id="resolveClosureSummary" class="closure-summary"></div>
+        <div id="adminClosureProofField" class="field hidden">
+          <label for="adminClosureProof">Comprobante del pago de la barbería</label>
+          <input id="adminClosureProof" type="file" accept="image/*,.pdf">
+        </div>
+        <div id="resolveClosureStatus" class="status" aria-live="polite"></div>
+        <div class="modal-actions">
+          <button id="cancelResolveClosure" class="button secondary" type="button">Volver</button>
+          <button id="completeClosureButton" class="button primary" type="submit">Completar cierre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="historyModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="modal-card wide-card">
+      <div class="modal-head">
+        <div><span class="kicker">ADMINISTRACIÓN</span><h2 id="historyTitle">Historial</h2></div>
+        <button class="close-modal" type="button" data-close-modal="historyModal" aria-label="Cerrar">×</button>
+      </div>
+      <div class="field"><label for="historyBarberSelect">Barbero</label><select id="historyBarberSelect"></select></div>
+      <div id="historyList" class="history-list"><div class="empty-state compact">Seleccioná un barbero.</div></div>
+    </div>
+  </div>
+
+  <div id="successToast" class="toast hidden" role="status" aria-live="polite">
+    <span>✓</span><div><strong id="toastTitle">Operación exitosa</strong><small id="toastMessage">Los datos se guardaron correctamente.</small></div>
+  </div>
+
+  <script type="module" src="./app.js?v=1"></script>
 </body>
 </html>

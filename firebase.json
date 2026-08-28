@@ -6,14 +6,13 @@
     "public": ".",
     "ignore": [
       "firebase.json",
+      ".firebaserc",
       "**/.*",
       "**/node_modules/**",
       "functions/**",
       "tests/**",
-      "tools/**",
       "*.md",
-      "*.zip",
-      "*.json.map"
+      "*.zip"
     ],
     "rewrites": [
       {
@@ -25,10 +24,11 @@
   "functions": [
     {
       "source": "functions",
-      "codebase": "default"
+      "codebase": "barberia"
     }
   ],
   "storage": {
     "rules": "storage.rules"
   }
 }
+

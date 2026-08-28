@@ -1,0 +1,15 @@
+BARBERÍA REPÚBLICA ARGENTINA · VERSIÓN 1
+
+- Firebase separado: barberia-c25a1.
+- Login con usuario o correo y sesión persistente.
+- Logo principal e iconos PWA de Barbería República Argentina.
+- Roles Admin y Barbero.
+- Admin: lista de barberos activos con saldo individual en tiempo real.
+- Cobros: Clásico, Sombreado, Corte + barba y Solo barba.
+- Métodos: efectivo en manos del barbero; digital en cuenta de la barbería.
+- Reparto: publicidad 10% (comprobante efectivo 5% + comprobante digital 5%) + 45% barbero + 45% barbería.
+- Saldo: 55% efectivo menos 45% digital.
+- Confirmación previa con saldo anterior y posterior.
+- Cierres con reinicio inmediato a cero e historial conservado.
+- Préstamos, adelantos, Uber, gastos y toda referencia a Explora eliminados.
+- Datos listos para la integración posterior con un grupo nuevo de Telegram.

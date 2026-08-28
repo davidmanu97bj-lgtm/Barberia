@@ -1,26 +1,27 @@
 {
   "id": "./",
-  "name": "Explora — Control operativo",
-  "short_name": "Explora",
-  "description": "Control operativo de Explora",
+  "name": "Barbería República Argentina",
+  "short_name": "Barbería RA",
+  "description": "Cobros y cierres de Barbería República Argentina",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#050505",
-  "theme_color": "#050505",
+  "background_color": "#0b9ed9",
+  "theme_color": "#0b9ed9",
   "icons": [
     {
-      "src": "./icon-192.png?v=20260824-2",
+      "src": "./icon-192.png?v=1",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "./icon-512.png?v=20260824-2",
+      "src": "./icon-512.png?v=1",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
+

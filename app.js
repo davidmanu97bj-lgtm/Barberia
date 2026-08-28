@@ -1,2799 +1,1041 @@
-import * as firebaseSettings from "./firebase-config.js?v=20260824-15";
-
-const { firebaseConfig, BUSINESS_ID, USER_EMAIL_DOMAIN } = firebaseSettings;
-const LOGIN_ALIASES = firebaseSettings.LOGIN_ALIASES || {};
+import {
+  firebaseConfig,
+  BUSINESS_ID,
+  USER_EMAIL_DOMAIN,
+  FUNCTIONS_REGION,
+  LOGIN_ALIASES
+} from "./firebase-config.js?v=1";
+import {
+  SERVICES,
+  numberFromMoney,
+  formatMoney,
+  modelForPeriod,
+  impactForCharge,
+  normalizedBalance,
+  timestampMs,
+  safeText
+} from "./barberia-core.mjs?v=1";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
-  setPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  inMemoryPersistence
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
-  initializeFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc,
-  onSnapshot, serverTimestamp, query, where, limit, writeBatch, runTransaction
+  initializeFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+  limit,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-import {
-  getStorage, ref, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
-const storage = getStorage(app);
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = initializeFirestore(firebaseApp, { experimentalAutoDetectLongPolling: true });
+const storage = getStorage(firebaseApp);
+const functions = getFunctions(firebaseApp, FUNCTIONS_REGION);
+const adminCreateBarber = httpsCallable(functions, "adminCreateBarber");
+const adminUpdateBarber = httpsCallable(functions, "adminUpdateBarber");
 const authReady = setPersistence(auth, browserLocalPersistence)
   .catch(() => setPersistence(auth, browserSessionPersistence))
-  .catch(() => setPersistence(auth, inMemoryPersistence))
-  .catch(err => console.warn("No se pudo guardar la persistencia de sesión:", err));
-const AUTH_READY_TIMEOUT_MS = 2500;
+  .catch(() => setPersistence(auth, inMemoryPersistence));
 
 const $ = id => document.getElementById(id);
-const SPLASH_MIN_VISIBLE_MS = 900;
-let splashStartedAt = Date.now();
-let splashProgress = 4;
-let splashTimer = null;
-let splashTransition = 0;
-let unsubscribePayments = null;
-let unsubscribeExpenses = null;
-let unsubscribeUber = null;
-let unsubscribeClosures = null;
-let unsubscribeDebts = null;
-let unsubscribeDebtPayments = null;
-let unsubscribeAdvances = null;
-let payments = [];
-let expenses = [];
-let uberClosures = [];
-let closures = [];
-let debts = [];
-let debtPayments = [];
-let advances = [];
-let advancesLoaded = false;
+const PROFILE_COLLECTIONS = ["barberos", "usuarios", "users", "perfiles", "administradores", "admins"];
+const ADMIN_ROLES = new Set(["admin", "administrador", "owner", "propietario", "superadmin"]);
+const MAX_VISIBLE_RECEIPTS = 8;
+
 let currentProfile = null;
-// Históricos de Santander pueden usar aliases anteriores a driverUid.
-// Se cargan una vez y se fusionan con el listener canónico en tiempo real.
-const legacyOwnedCache = new Map();
-const canonicalOwnedCache = new Map();
-const OWNERSHIP_FIELDS = [
-  "driverUid", "choferUid", "uid", "ownerUid", "driverId", "choferId",
-  "driver_id", "chofer_id", "userUid", "userId", "createdByUid", "ownerId",
-  "conductorUid", "conductorId", "assignedDriverUid", "enteredOnBehalfOf", "simulationDriverUid"
-];
-let selectedCloseDirection = "";
+let currentCharges = [];
+let currentAdvertisingReceipts = [];
+let currentClosures = [];
+let adminBarbers = [];
+let adminCharges = [];
+let adminAdvertisingReceipts = [];
+let adminClosures = [];
+let currentUnsubscribers = [];
+let adminUnsubscribers = [];
+let pendingCharge = null;
 let selectedAdminClosureId = "";
-const RECENT_RECEIPTS_LIMIT = 6;
-// Primera semana administrada por este selector. Desde aquí, toda semana
-// cerrada sin comprobante permanece pendiente hasta que el chofer la cargue.
-const UBER_TRACKING_START_DATE = "2026-08-24";
-const ADVANCE_MAX_AMOUNT = 400000;
-const ADVANCE_INTEREST_RATE = 0.40;
-const ADVANCE_DIFFERENCE_LIMIT = 50000;
-const EXPLORA_ADMIN_UIDS = new Set(["2LziyTTdFcZzSOhK3hLbAKs2U4s2"]);
-const ROOT_COLLECTIONS = Object.freeze({
-  payments: "billing_records",
-  expenses: "gastos",
-  uber: "uber_weekly_closures",
-  closures: "cierres_semanales",
-  debts: "deudas_choferes",
-  debtPayments: "deuda_pagos",
-  advances: "prestamos_operativos"
-});
+let managerMode = "create";
+let receiptsExpanded = false;
+let toastTimer = null;
+let chargeSubmitting = false;
+let closureSubmitting = false;
+const adminProfileSources = new Map();
+const dismissedPendingClosures = new Set();
 
-function profileRole(profile = {}, user = auth.currentUser) {
-  if (user?.uid && EXPLORA_ADMIN_UIDS.has(user.uid)) return "admin";
-  const raw = String(profile.role || profile.rol || profile.tipoUsuario || profile.tipo || "chofer").trim().toLowerCase();
-  return ["admin", "administrador", "owner", "superadmin"].includes(raw) ? "admin" : "barber";
+function roleValue(profile = {}) {
+  return String(profile.role || profile.rol || profile.tipoUsuario || profile.tipo || "barber").trim().toLowerCase();
 }
 
-function moneyNumber(value) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  const text = String(value ?? "").replace(/\s/g, "");
-  if (!text) return 0;
-  const cleaned = text.replace(/[^0-9,.-]/g, "");
-  if (!cleaned || cleaned === "-" || cleaned === "," || cleaned === ".") return 0;
-  const lastComma = cleaned.lastIndexOf(",");
-  const lastDot = cleaned.lastIndexOf(".");
-  let normalized = cleaned;
-  if (lastComma >= 0 && lastDot >= 0) {
-    normalized = lastComma > lastDot ? cleaned.replace(/\./g, "").replace(/,/g, ".") : cleaned.replace(/,/g, "");
-  } else if (lastDot >= 0) {
-    const tail = cleaned.slice(lastDot + 1);
-    normalized = tail.length === 3 ? cleaned.replace(/\./g, "") : cleaned;
-  } else if (lastComma >= 0) {
-    const tail = cleaned.slice(lastComma + 1);
-    normalized = tail.length === 3 ? cleaned.replace(/,/g, "") : cleaned.replace(/,/g, ".");
-  }
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
+function profileIsAdmin(profile = currentProfile) {
+  return Boolean(profile?.admin === true || profile?.isAdmin === true || ADMIN_ROLES.has(roleValue(profile)));
 }
 
-function recordAmount(item = {}) {
-  for (const value of [item.amount, item.monto, item.valor, item.finalPrice, item.totalAmount, item.total, item.importe,
-    item.price, item.precio, item.precioFinal, item.montoFinal, item.montoCobrado, item.importeTotal,
-    item.finalAmount, item.billingAmount, item.chargedAmount, item.paidAmount, item.fare, item.tarifa,
-    item.value, item.totalCobrado, item.facturacion, item.billingTotal]) {
-    if (value === null || value === undefined || value === "") continue;
-    const parsed = moneyNumber(value);
-    if (parsed >= 0) return parsed;
-  }
-  return 0;
+function profileIsActive(profile = {}) {
+  const status = String(profile.status || profile.estado || "").toLowerCase();
+  return profile.active !== false && profile.activo !== false && !/inactiv|disabled|eliminad|deleted/.test(status);
 }
 
-function recordTimestampMs(item = {}) {
-  const candidates = [item.createdAt, item.completedAt, item.updatedAt, item.expenseDate, item.receiptUploadedAt];
-  for (const value of candidates) {
-    if (!value) continue;
-    if (typeof value.toMillis === "function") return value.toMillis();
-    if (typeof value.toDate === "function") return value.toDate().getTime();
-    if (value instanceof Date) return value.getTime();
-  }
-  for (const value of [item.createdAtMs, item.completedAtMs, item.updatedAtMs, item.timestampMs]) {
-    const parsed = Number(value || 0);
-    if (parsed > 0) return parsed;
-  }
-  for (const value of [item.fechaISO, item.date, item.fecha]) {
-    const parsed = Date.parse(String(value || ""));
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return 0;
+function profileName(profile = {}) {
+  return String(profile.displayName || profile.nombreCompleto || profile.nombre || profile.username || profile.usuario || "Barbero").trim() || "Barbero";
 }
 
-function recordDayKey(item = {}) {
-  if (item.dayKey) return String(item.dayKey);
-  const ms = recordTimestampMs(item);
-  return ms ? localDayKey(new Date(ms)) : "";
+function profileUid(profile = {}) {
+  return String(profile.uid || profile.authUid || profile.barberUid || profile.barberoUid || profile.id || "");
 }
 
-function recordProofUrl(item = {}) {
-  return String(item.proofUrl || item.receiptUrl || item.downloadURL || item.comprobanteUrl || item.notificationPhotoUrl || "");
+function cleanUsername(value) {
+  return String(value || "").trim().normalize("NFKC").toLowerCase().replace(/\s+/g, "");
 }
 
-function recordProofPath(item = {}) {
-  return String(item.proofPath || item.receiptPath || item.storagePath || item.fullPath || item.comprobantePath || "");
+function randomId(prefix) {
+  const token = globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID().replace(/-/g, "")
+    : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  return `${prefix}_${token}`;
 }
 
-function normalizePaymentRecord(id, item = {}) {
-  const rawMethod = String(item.method || item.paymentMethod || item.metodoPago || item.financialCategory || "").toLowerCase();
-  const method = /cash|efectivo/.test(rawMethod) ? "cash" : "digital";
-  const originalType = String(item.type || item.operationType || "");
-  const sourceModule = String(item.sourceModule || item.category || item.module || "").toLowerCase();
-  let adjustmentDirection = String(item.adjustmentDirection || item.settlementDirection || item.paymentDirection || "").toLowerCase();
-  if (["driver_pays_explora", "chofer_a_explora", "chofer_a_david"].includes(adjustmentDirection)) adjustmentDirection = "driver_to_explora";
-  if (["explora_pays_driver", "explora_a_chofer", "david_a_chofer"].includes(adjustmentDirection)) adjustmentDirection = "explora_to_driver";
-  const isLegacyBillingSettlement = item.affectsBillingSettlement === true ||
-    originalType.toLowerCase() === "admin_billing_settlement_payment" ||
-    (String(item.operationType || item.movementType || "").toLowerCase() === "driver_payment" && /factur|billing/.test(sourceModule));
-  if (isLegacyBillingSettlement && !adjustmentDirection) adjustmentDirection = "driver_to_explora";
-  let type = originalType;
-  // No convertir las compensaciones de gastos: también son internas, pero tienen
-  // una lógica propia distinta de un pago de cierre.
-  if (adjustmentDirection || isLegacyBillingSettlement) type = "settlement_adjustment";
-  return {
-    ...item,
-    id,
-    amount: recordAmount(item),
-    method,
-    type,
-    adjustmentDirection,
-    service: item.service || item.serviceDescription || item.categoryLabel || (method === "cash" ? "Cobro en efectivo" : "Cobro digital"),
-    detail: item.detail || item.notes || item.detalle || item.descripcion || "Servicio registrado",
-    proofUrl: recordProofUrl(item),
-    proofPath: recordProofPath(item),
-    dayKey: recordDayKey(item),
-    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || "",
-    operatorName: item.operatorName || item.driverName || item.choferNombre || item.nombreChofer || ""
-  };
+function formatDate(ms) {
+  if (!Number(ms || 0)) return "Sin fecha";
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(Number(ms)));
 }
 
-function normalizeExpenseRecord(id, item = {}) {
-  return {
-    ...item,
-    id,
-    amount: recordAmount(item),
-    detail: item.detail || item.notes || item.detalle || item.descripcion || item.expenseType || item.tipo || "Gasto",
-    proofUrl: recordProofUrl(item),
-    proofPath: recordProofPath(item),
-    dayKey: recordDayKey(item),
-    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || item.ownerUid || "",
-    operatorName: item.operatorName || item.driverName || item.choferNombre || ""
-  };
-}
-
-function normalizeUberRecord(id, item = {}) {
-  const dayKey = recordDayKey(item);
-  const weekCloseDate = item.weekCloseDate || (item.weekDisplayEndMs ? localDayKey(new Date(Number(item.weekDisplayEndMs))) : dayKey);
-  return {
-    ...item,
-    id,
-    amount: recordAmount({ amount: item.grossAmount ?? item.totalAmount ?? item.amount ?? item.monto }),
-    weekKey: item.weekKey || item.weekId || id,
-    weekLabel: item.weekLabel || item.weekId || id,
-    weekStartDate: item.weekStartDate || (item.weekStartMs ? localDayKey(new Date(Number(item.weekStartMs))) : ""),
-    weekCloseDate,
-    proofUrl: recordProofUrl(item),
-    proofPath: recordProofPath(item),
-    dayKey,
-    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || "",
-    operatorName: item.operatorName || item.driverName || item.choferNombre || ""
-  };
-}
-
-function normalizeDebtRecord(id, item = {}) {
-  const remaining = Number(item.remainingAmount ?? item.saldoPendiente ?? item.amount ?? item.totalAmount ?? 0);
-  const status = String(item.status || item.debtStatus || item.estado || "active").toLowerCase();
-  return {
-    ...item,
-    id,
-    amount: /paid|pagad|closed|cerrad|cancel/.test(status) ? 0 : Math.max(0, Number.isFinite(remaining) ? remaining : 0),
-    detail: item.detail || item.reason || item.notes || item.descripcion || "Deuda",
-    proofUrl: recordProofUrl(item),
-    proofPath: recordProofPath(item),
-    dayKey: recordDayKey(item),
-    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || ""
-  };
-}
-
-function normalizeDebtPaymentRecord(id, item = {}) {
-  const rawMethod = String(item.paymentMethod || item.method || item.paymentChannel || "").toLowerCase();
-  const usesExpenses = item.expenseOffset === true || item.usedExpenseBalance === true ||
-    rawMethod === "expense_offset" || /expense.*offset|gasto.*deuda|deuda.*gasto/.test(rawMethod) ||
-    String(item.type || item.operationType || "").toLowerCase() === "debt_expense_offset";
-  return {
-    ...item,
-    id,
-    amount: recordAmount(item),
-    expenseOffset: usesExpenses,
-    dayKey: recordDayKey(item),
-    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || item.ownerUid || ""
-  };
-}
-
-function normalizeClosureRecord(id, item = {}) {
-  let direction = String(item.direction || item.paymentDirection || "");
-  if (["driver_to_explora", "chofer_a_david", "chofer_a_explora"].includes(direction)) direction = "driver_pays_explora";
-  if (["explora_to_driver", "david_a_chofer", "explora_a_chofer"].includes(direction)) direction = "explora_pays_driver";
-  if (!direction) {
-    if (Number(item.amountDueFromDriver || item.amountFromDriver || 0) > 0) direction = "driver_pays_explora";
-    else if (Number(item.amountDueToDriver || item.amountToDriver || 0) > 0) direction = "explora_pays_driver";
-  }
-  const settlementAmount = Number(item.settlementAmount ?? item.requestedAmount ?? item.amountDueFromDriver ?? item.amountFromDriver ?? item.amountDueToDriver ?? item.amountToDriver ?? 0) || 0;
-  const paidAmountTotal = Number(item.paidAmountTotal ?? item.amountPaid ?? item.billingSettlementPaymentTotal ?? 0) || 0;
-  return {
-    ...item,
-    id,
-    direction,
-    settlementAmount,
-    requestedAmount: Number(item.requestedAmount ?? settlementAmount) || settlementAmount,
-    paidAmountTotal,
-    remainingAmount: Number(item.remainingAmount ?? Math.max(0, settlementAmount - paidAmountTotal)) || 0,
-    operatorUid: item.operatorUid || item.driverUid || item.choferUid || item.uid || "",
-    operatorName: item.operatorName || item.driverName || item.choferNombre || item.nombreChofer || "",
-    proofUrl: recordProofUrl(item),
-    proofPath: recordProofPath(item),
-    dayKey: recordDayKey(item),
-    requestedAt: item.requestedAt || item.createdAt || null
-  };
-}
-
-function normalizeAdvanceRecord(id, item = {}) {
-  return {
-    ...item,
-    id,
-    type: item.type || item.loanType || "",
-    remainingAmount: Number(item.remainingAmount ?? item.balance ?? item.saldoPendiente ?? item.totalDebt ?? 0) || 0,
-    totalDebt: Number(item.totalDebt ?? item.totalAmount ?? item.originalAmount ?? item.amount ?? 0) || 0
-  };
-}
-
-function currentWeeklyPeriodId(reference = new Date()) {
-  const date = new Date(reference);
-  date.setHours(12, 0, 0, 0);
-  const daysSinceSaturday = (date.getDay() - 6 + 7) % 7;
-  date.setDate(date.getDate() - daysSinceSaturday);
-  return localDayKey(date);
-}
-
-function currentDriverUid() {
-  return auth.currentUser?.uid || "";
-}
-
-function currentDriverName() {
-  return currentProfile?.displayName || currentProfile?.nombre || currentProfile?.nombreCompleto || currentProfile?.username || auth.currentUser?.displayName || "Chofer";
-}
-
-function ownedQuery(collectionName, uid = currentDriverUid()) {
-  return query(collection(db, collectionName), where("driverUid", "==", uid));
-}
-
-function cacheKey(collectionName, uid) {
-  return `${collectionName}::${uid}`;
-}
-
-function mergeOwnedRows(collectionName, uid, canonicalRows = []) {
-  const key = cacheKey(collectionName, uid);
-  const map = new Map();
-  for (const row of legacyOwnedCache.get(key) || []) map.set(row.id, row);
-  for (const row of canonicalRows || []) map.set(row.id, row);
-  return Array.from(map.values());
-}
-
-async function loadOwnedHistory(collectionName, uid) {
-  const targetUid = String(uid || "").trim();
-  if (!targetUid) return [];
-  const key = cacheKey(collectionName, targetUid);
-  const map = new Map();
-  const tasks = OWNERSHIP_FIELDS.map(async field => {
-    try {
-      const snap = await getDocs(query(collection(db, collectionName), where(field, "==", targetUid), limit(900)));
-      snap.forEach(d => map.set(d.id, { id:d.id, ...d.data() }));
-    } catch (err) {
-      // Algunos aliases pueden no estar permitidos por reglas/índices; seguimos con los demás.
-      console.warn("EXPLORA_HISTORY_QUERY", collectionName, field, err?.code || err?.message || err);
-    }
-  });
-  await Promise.allSettled(tasks);
-  const rows = Array.from(map.values());
-  legacyOwnedCache.set(key, rows);
-  return rows;
-}
-
-function setCanonicalRows(collectionName, uid, rows) {
-  canonicalOwnedCache.set(cacheKey(collectionName, uid), rows || []);
-}
-
-function canonicalRows(collectionName, uid) {
-  return canonicalOwnedCache.get(cacheKey(collectionName, uid)) || [];
-}
-
-function setSplashProgress(value) {
-  const progress = Math.max(0, Math.min(100, Number(value) || 0));
-  splashProgress = progress;
-
-  const arc = $("splashProgressArc");
-  const dot = $("splashProgressDot");
-  const progressBox = document.querySelector(".splash-progress");
-  if (arc) arc.style.strokeDashoffset = String(100 - progress);
-  if (progressBox) progressBox.setAttribute("aria-valuenow", String(Math.round(progress)));
-
-  if (dot) {
-    const angle = (-90 + (360 * progress / 100)) * Math.PI / 180;
-    dot.setAttribute("cx", String(60 + 48 * Math.cos(angle)));
-    dot.setAttribute("cy", String(60 + 48 * Math.sin(angle)));
-  }
-}
-
-function startSplash() {
-  splashTransition += 1;
-  splashStartedAt = Date.now();
-  splashProgress = 4;
-  $("splashScreen")?.classList.remove("hidden", "is-leaving");
-  $("loginScreen")?.classList.add("hidden");
-  $("app")?.classList.add("hidden");
-  setSplashProgress(splashProgress);
-
-  if (splashTimer) window.clearInterval(splashTimer);
-  splashTimer = window.setInterval(() => {
-    const remaining = 91 - splashProgress;
-    setSplashProgress(Math.min(91, splashProgress + Math.max(1.1, remaining * .075)));
-  }, 90);
-}
-
-async function finishSplash(targetId) {
-  const transitionId = ++splashTransition;
-  if (splashTimer) {
-    window.clearInterval(splashTimer);
-    splashTimer = null;
-  }
-
-  const elapsed = Date.now() - splashStartedAt;
-  if (elapsed < SPLASH_MIN_VISIBLE_MS) {
-    await new Promise(resolve => window.setTimeout(resolve, SPLASH_MIN_VISIBLE_MS - elapsed));
-  }
-  if (transitionId !== splashTransition) return;
-
-  setSplashProgress(100);
-  await new Promise(resolve => window.setTimeout(resolve, 190));
-  if (transitionId !== splashTransition) return;
-
-  const splash = $("splashScreen");
-  splash?.classList.add("is-leaving");
-  await new Promise(resolve => window.setTimeout(resolve, 220));
-  if (transitionId !== splashTransition) return;
-
-  splash?.classList.add("hidden");
-  splash?.classList.remove("is-leaving");
-  $("loginScreen")?.classList.toggle("hidden", targetId !== "loginScreen");
-  $("app")?.classList.toggle("hidden", targetId !== "app");
-}
-
-startSplash();
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js")
-      .catch(err => console.warn("No se pudo registrar el acceso directo:", err));
-  });
-}
-
-const money = value => new Intl.NumberFormat("es-AR", {
-  style: "currency", currency: "ARS", maximumFractionDigits: 0
-}).format(value || 0);
-const signedMoney = value => {
-  const numericValue = Number(value || 0);
-  if (Math.abs(numericValue) < 0.5) return money(0);
-  return `${numericValue > 0 ? "+" : "−"} ${money(Math.abs(numericValue))}`;
-};
-const moneyInputFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
-const moneyAnimationFrames = new WeakMap();
-
-function moneyForElement(element, value) {
-  return element?.dataset.moneyFormat === "signed" ? signedMoney(value) : money(value);
-}
-
-function canAnimateMoney() {
-  try {
-    const reducesMotion = typeof window.matchMedia === "function"
-      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    return !reducesMotion
-      && typeof window.requestAnimationFrame === "function"
-      && typeof window.cancelAnimationFrame === "function";
-  } catch {
-    return false;
-  }
-}
-
-function setAnimatedMoney(elementOrId, targetValue) {
-  const element = typeof elementOrId === "string" ? $(elementOrId) : elementOrId;
-  if (!element) return;
-
-  const target = Number(targetValue || 0);
-  const storedCurrent = Number(element.dataset.moneyCurrent);
-  const hasPreviousValue = element.dataset.moneyCurrent !== undefined && Number.isFinite(storedCurrent);
-  const previous = hasPreviousValue ? storedCurrent : target;
-  const activeFrame = moneyAnimationFrames.get(element);
-
-  if (activeFrame !== undefined) {
-    window.cancelAnimationFrame(activeFrame);
-    moneyAnimationFrames.delete(element);
-  }
-
-  // El valor correcto se muestra primero. La animación es una mejora visual y
-  // nunca debe impedir el inicio de sesión ni dejar una cifra desactualizada.
-  element.textContent = moneyForElement(element, target);
-  element.dataset.moneyCurrent = String(target);
-  element.setAttribute("aria-label", moneyForElement(element, target));
-
-  if (!hasPreviousValue || Math.abs(target - previous) < 0.5 || !canAnimateMoney()) {
-    element.classList.remove("money-rolling");
-    return;
-  }
-
-  try {
-    element.classList.remove("money-rolling");
-    void element.offsetWidth;
-    element.classList.add("money-rolling");
-    element.addEventListener("animationend", () => {
-      element.classList.remove("money-rolling");
-    }, { once: true });
-
-    let startedAt;
-    const duration = 760;
-
-    const tick = now => {
-      if (startedAt === undefined) startedAt = now;
-      const progress = Math.min(1, (now - startedAt) / duration);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = previous + (target - previous) * eased;
-
-      element.textContent = moneyForElement(element, Math.round(current));
-      element.dataset.moneyCurrent = String(current);
-
-      if (progress < 1) {
-        moneyAnimationFrames.set(element, window.requestAnimationFrame(tick));
-        return;
-      }
-
-      element.textContent = moneyForElement(element, target);
-      element.dataset.moneyCurrent = String(target);
-      moneyAnimationFrames.delete(element);
-    };
-
-    moneyAnimationFrames.set(element, window.requestAnimationFrame(tick));
-  } catch (err) {
-    console.warn("Animación de importes desactivada:", err);
-    element.classList.remove("money-rolling");
-    element.textContent = money(target);
-    element.dataset.moneyCurrent = String(target);
-    moneyAnimationFrames.delete(element);
-  }
-}
-
-function moneyInputDigits(value) {
-  return String(value ?? "").replace(/\D/g, "");
-}
-
-function parseMoneyInput(value) {
-  const digits = moneyInputDigits(value);
-  return digits ? Number(digits) : 0;
-}
-
-function formattedMoneyInput(value) {
-  const amount = typeof value === "number" ? Math.round(value) : parseMoneyInput(value);
-  return amount > 0 ? moneyInputFormatter.format(amount) : "";
-}
-
-function setMoneyInput(inputOrId, value) {
-  const input = typeof inputOrId === "string" ? $(inputOrId) : inputOrId;
-  if (input) input.value = formattedMoneyInput(value);
-}
-
-document.querySelectorAll("[data-money-input]").forEach(input => {
-  input.addEventListener("input", () => {
-    const digits = moneyInputDigits(input.value);
-    input.value = digits ? moneyInputFormatter.format(Number(digits)) : "";
-  });
-});
-
-function localDayKey(d = new Date()) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
-}
-function safeUsername(value) {
-  return value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"").replace(/[^a-z0-9._-]/g,"");
-}
-
-async function loginEmailCandidates(usernameOrEmail) {
-  const value = usernameOrEmail.trim().toLowerCase();
-  if (value.includes("@")) return [value];
-
-  const username = safeUsername(value);
-  const candidates = [
-    LOGIN_ALIASES[value],
-    username ? `${username}@${USER_EMAIL_DOMAIN}` : ""
-  ].filter(Boolean);
-
-  if (username) {
-    try {
-      const aliasSnap = await getDoc(doc(db, "login_aliases", username));
-      if (aliasSnap.exists()) {
-        const data = aliasSnap.data() || {};
-        const aliasEmail = String(data.authEmail || data.email || data.correo || data.firebaseEmail || "").trim().toLowerCase();
-        if (aliasEmail.includes("@")) candidates.push(aliasEmail);
-      }
-    } catch (err) {
-      console.warn("No se pudo consultar login_aliases; se intenta el acceso histórico.", err?.code || err);
-    }
-  }
-
-  return [...new Set(candidates)];
-}
-
-function isCredentialError(err) {
-  return ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"]
-    .includes(String(err?.code || ""));
-}
-
-async function waitForAuthReady() {
-  await Promise.race([
-    authReady,
-    new Promise(resolve => setTimeout(resolve, AUTH_READY_TIMEOUT_MS))
-  ]);
-}
-
-async function signInFromLogin(usernameOrEmail, password) {
-  const candidates = await loginEmailCandidates(usernameOrEmail);
-  let lastError = Object.assign(new Error("Faltan credenciales"), { code: "auth/invalid-credential" });
-
-  for (const email of candidates) {
-    try {
-      return await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      lastError = err;
-      if (!isCredentialError(err)) throw err;
-    }
-  }
-
-  throw lastError;
-}
-
-function loginErrorMessage(err) {
-  const code = String(err?.code || "");
-  if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"].includes(code)) {
-    return "El usuario o la contraseña no son correctos.";
-  }
-  if (code === "auth/too-many-requests") {
-    return "Hubo varios intentos. Esperá un momento y volvé a probar.";
-  }
-  if (code === "auth/network-request-failed") {
-    return "No hay conexión con Firebase. Revisá internet e intentá nuevamente.";
-  }
-  if (code === "auth/unauthorized-domain") {
-    return "Este dominio todavía no está autorizado en Firebase.";
-  }
-  if (code === "auth/operation-not-allowed") {
-    return "Activá el acceso con correo y contraseña en Firebase Authentication.";
-  }
-  return "No se pudo iniciar sesión. Intentá nuevamente.";
-}
-
-function fallbackProfile(user) {
-  const username = user.email?.split("@")[0] || "explora";
-  return { username, displayName: user.displayName || username, role: EXPLORA_ADMIN_UIDS.has(user.uid) ? "admin" : "barber", active: true, uid:user.uid };
-}
-function isSettlementAdjustment(item) {
-  return item.type === "settlement_adjustment";
-}
-function isReimbursementCompensation(item) {
-  // El tipo anterior se conserva para interpretar correctamente cualquier
-  // comprobante que ya se haya generado antes de esta corrección.
-  return item.type === "reimbursement_compensation" || item.type === "debt_compensation";
-}
-function isAdminDebt(item) {
-  return item.type === "admin_debt";
-}
-function isExpenseReceipt(item) {
-  return item.type === "expense_receipt";
-}
-function isUberReceipt(item) {
-  return item.type === "uber_receipt";
-}
-function isCashAdvance(item) {
-  return item.type === "cash_advance";
-}
-function movementIsDeleted(item = {}) {
-  const status = String(item.status || item.estado || item.state || item.deletionStatus || "").toLowerCase();
-  return item.deleted === true || item.isDeleted === true || item.eliminado === true || /deleted|eliminado|borrado|anulado/.test(status);
-}
-function cashboxIsExcluded(item = {}) {
-  return item.excludeFromCashbox === true || item.cashboxExcluded === true || item.cajaChicaEliminada === true || item.ignoreCashbox === true || item.noCashbox === true;
-}
-function revenueTotalFor(method) {
-  return openBillingPayments()
-    .filter(p => !movementIsDeleted(p) && p.method === method && !isSettlementAdjustment(p) && !isReimbursementCompensation(p))
-    .reduce((a,p)=>a+Number(p.amount||0),0);
-}
-function adjustmentTotal(direction) {
-  return openBillingPayments()
-    .filter(p => !movementIsDeleted(p) && isSettlementAdjustment(p) && p.adjustmentDirection === direction)
-    .reduce((total, item) => {
-      const amount = Number(item.amount || 0);
-      const paidToAdvance = direction === "driver_to_explora"
-        ? Number(item.advanceRepaymentAmount || 0)
-        : 0;
-      return total + Math.max(0, amount - paidToAdvance);
-    }, 0);
-}
-function expensesTotal() {
-  return openExpenses().reduce((a,e)=>a+Number(e.amount||0),0);
-}
-function debtsTotal() {
-  return debts.reduce((a,item)=>a+Number(item.amount||0),0);
-}
-function advanceRemaining(item) {
-  return Math.max(0, Number(item.remainingAmount ?? item.totalDebt ?? 0) || 0);
-}
-function advancesOutstandingTotal() {
-  return advances.reduce((total, item) => total + advanceRemaining(item), 0);
-}
-function advanceRepaymentAppliedTotal() {
-  return payments
-    .filter(item => item.method === "digital" && !isSettlementAdjustment(item))
-    .reduce((total, item) => total + Number(item.advanceRepaymentAmount || 0), 0);
-}
-function planAdvanceRepayment(availableAmount, sourceAdvances = advances) {
-  let available = Math.max(0, Number(availableAmount || 0));
-  const allocations = [];
-  const activeAdvances = [...sourceAdvances]
-    .filter(item => advanceRemaining(item) > 0.5)
-    .sort((a, b) => {
-      const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-      const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-      return aMs - bMs;
-    });
-
-  for (const advance of activeAdvances) {
-    if (available <= 0.5) break;
-    const before = advanceRemaining(advance);
-    const applied = Math.min(before, available);
-    const after = Math.max(0, before - applied);
-    allocations.push({
-      id: advance.id,
-      applied,
-      remainingAmount: after,
-      repaidAmount: Math.max(0, Number(advance.totalDebt || 0) - after),
-      status: after <= 0.5 ? "paid" : "active"
-    });
-    available -= applied;
-  }
-
-  return {
-    allocations,
-    totalApplied: allocations.reduce((total, item) => total + item.applied, 0)
-  };
-}
-function reimbursementCompensationTotal() {
-  const cutoff = lastExpensesClosureMs();
-
-  // Compatibilidad completa con Santander Main:
-  // 1) los ajustes históricos de deuda con Gastos viven en `deuda_pagos`;
-  // 2) las compensaciones creadas por esta interfaz viven en `billing_records`.
-  // Ambos reducen el reintegro bruto del 50% de gastos del período abierto.
-  const legacyDebtOffsets = debtPayments
-    .filter(item => {
-      const linkedPeriodStart = Number(item.expensePeriodStartMs || item.gastosPeriodStartMs || 0);
-      return linkedPeriodStart > 0 ? linkedPeriodStart === cutoff : recordTimestampMs(item) > cutoff;
-    })
-    .filter(item => item.expenseOffset === true)
-    .reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0)), 0);
-
-  const newCompensations = payments
-    .filter(item => recordTimestampMs(item) > cutoff)
-    .filter(isReimbursementCompensation)
-    .reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0)), 0);
-
-  return legacyDebtOffsets + newCompensations;
-}
-function uberTodayItems() {
-  const today = localDayKey();
-  return uberClosures.filter(item => item.dayKey === today);
-}
-function uberTodayTotal() {
-  return uberTodayItems().reduce((a,item)=>a+Number(item.amount||0),0);
-}
-function isoWeekKey(dateString) {
-  const [y,m,d] = String(dateString).split("-").map(Number);
-  if (!y || !m || !d) return "";
-  const date = new Date(Date.UTC(y, m - 1, d));
-  const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-  return `${date.getUTCFullYear()}-W${String(week).padStart(2,"0")}`;
-}
-function parseLocalDateKey(dateString) {
-  const [year, month, day] = String(dateString || "").split("-").map(Number);
-  if (!year || !month || !day) return null;
-  return new Date(year, month - 1, day, 12, 0, 0, 0);
-}
-function addLocalDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-function startOfUberWeek(referenceDate = new Date()) {
-  const date = new Date(referenceDate);
-  date.setHours(12, 0, 0, 0);
-  const daysSinceMonday = (date.getDay() + 6) % 7;
-  date.setDate(date.getDate() - daysSinceMonday);
-  return date;
-}
-function formatUberWeekDate(dateString) {
-  const date = parseLocalDateKey(dateString);
-  if (!date) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" })
-    .format(date)
-    .replace(/\./g, "");
-}
-function buildUberWeek(startDate) {
-  const start = new Date(startDate);
-  const close = addLocalDays(start, 7);
-  const weekStartDate = localDayKey(start);
-  const weekCloseDate = localDayKey(close);
-  return {
-    weekStartDate,
-    weekCloseDate,
-    weekKey: isoWeekKey(weekCloseDate),
-    label: `${formatUberWeekDate(weekStartDate)} – ${formatUberWeekDate(weekCloseDate)}`
-  };
-}
-function currentUberWeek(referenceDate = new Date()) {
-  return buildUberWeek(startOfUberWeek(referenceDate));
-}
-function uberWeekLabelForItem(item) {
-  if (item.weekLabel) return item.weekLabel;
-  const close = parseLocalDateKey(item.weekCloseDate);
-  if (!close) return item.weekKey || "Semana sin fecha";
-  const start = item.weekStartDate || localDayKey(addLocalDays(close, -7));
-  return `${formatUberWeekDate(start)} – ${formatUberWeekDate(item.weekCloseDate)}`;
-}
-function isUberWeekLoaded(week) {
-  return uberClosures.some(item =>
-    item.weekStartDate === week.weekStartDate
-    || item.weekCloseDate === week.weekCloseDate
-    || item.weekKey === week.weekKey
-    || item.id === week.weekKey
-  );
-}
-function pendingUberWeeks(referenceDate = new Date()) {
-  const firstWeek = parseLocalDateKey(UBER_TRACKING_START_DATE);
-  const today = parseLocalDateKey(localDayKey(referenceDate));
-  if (!firstWeek || !today) return [];
-
-  const pending = [];
-  let cursor = firstWeek;
-  let safety = 0;
-  while (cursor.getTime() < today.getTime() && safety < 520) {
-    const week = buildUberWeek(cursor);
-    const closeDate = parseLocalDateKey(week.weekCloseDate);
-    // El comprobante se habilita al día siguiente del cierre. Ejemplo:
-    // la semana 24–31 de agosto empieza a solicitarse el 1 de septiembre.
-    if (!closeDate || closeDate.getTime() >= today.getTime()) break;
-    if (!isUberWeekLoaded(week)) pending.push(week);
-    cursor = addLocalDays(cursor, 7);
-    safety += 1;
-  }
-  return pending;
-}
-function selectedPendingUberWeek() {
-  const selectedStart = $("uberWeekSelect")?.value || "";
-  return pendingUberWeeks().find(week => week.weekStartDate === selectedStart) || null;
-}
-function updateUberWeekSummary() {
-  const week = selectedPendingUberWeek();
-  const startLabel = $("uberWeekStartLabel");
-  const endLabel = $("uberWeekEndLabel");
-  const stateLabel = $("uberWeekStateLabel");
-  if (!startLabel || !endLabel || !stateLabel) return;
-
-  startLabel.textContent = week ? formatUberWeekDate(week.weekStartDate) : "—";
-  endLabel.textContent = week ? formatUberWeekDate(week.weekCloseDate) : "—";
-  stateLabel.textContent = week ? "Falta cargar" : "Al día";
-}
-function renderUberWeekSelector() {
-  const select = $("uberWeekSelect");
-  const notice = $("uberPendingNotice");
-  const amountInput = $("uberAmount");
-  const proofInput = $("uberProof");
-  const saveButton = $("saveUberBtn");
-  if (!select || !notice || !amountInput || !proofInput || !saveButton) return;
-
-  const pending = pendingUberWeeks();
-  const previousValue = select.value;
-  const hasPending = pending.length > 0;
-
-  notice.classList.toggle("is-clear", !hasPending);
-  if (hasPending) {
-    notice.innerHTML = `<strong>${pending.length} ${pending.length === 1 ? "semana pendiente" : "semanas pendientes"}</strong><span>${pending.length === 1 ? "Seleccioná la semana cerrada y cargá su comprobante." : "Los comprobantes atrasados se acumulan. Cargá uno por cada semana."}</span>`;
-    select.innerHTML = pending
-      .map(week => `<option value="${week.weekStartDate}">${week.label} · Falta cargar</option>`)
-      .join("");
-    select.value = pending.some(week => week.weekStartDate === previousValue)
-      ? previousValue
-      : pending[0].weekStartDate;
-  } else {
-    const activeWeek = currentUberWeek();
-    notice.innerHTML = `<strong>Comprobantes al día</strong><span>La semana ${activeWeek.label} todavía está en curso.</span>`;
-    select.innerHTML = `<option value="">No hay semanas cerradas pendientes</option>`;
-  }
-
-  select.disabled = !hasPending;
-  amountInput.disabled = !hasPending;
-  proofInput.disabled = !hasPending;
-  saveButton.disabled = !hasPending;
-  updateUberWeekSummary();
-}
-function renderUberPendingBadge() {
-  const button = $("addUberBtn");
-  const badge = $("uberPendingBadge");
-  if (!button || !badge) return;
-  const count = pendingUberWeeks().length;
-  badge.textContent = String(count);
-  badge.classList.toggle("hidden", count === 0);
-  button.classList.toggle("has-pending-alert", count > 0);
-  button.title = count
-    ? `${count} ${count === 1 ? "semana de Uber pendiente" : "semanas de Uber pendientes"}`
-    : "No hay semanas de Uber pendientes";
-}
-function formatDate(dateString) {
-  const [y,m,d] = String(dateString || "").split("-").map(Number);
-  if (!y || !m || !d) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-AR", {day:"2-digit", month:"2-digit", year:"2-digit"}).format(new Date(y,m-1,d));
-}
-function escapeHtml(s="") {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  }[c]));
-}
-
-function closureCutoffMs(item = {}) {
-  const direct = Number(item.cutoffAtMs || item.requestedAtMs || item.createdAtMs || 0);
-  if (direct > 0) return direct;
-  return recordTimestampMs({
-    createdAt: item.cutoffAt || item.requestedAt || item.createdAt || item.completedAt || item.closedAt,
-    createdAtMs: item.cutoffAtMs || item.requestedAtMs || item.createdAtMs || item.completedAtMs || item.closedAtMs
-  });
-}
-
-function closureInvalidatesCutoff(item = {}) {
-  const text = [item.status, item.estado, item.closureStatus, item.paymentStatus, item.receiptStatus,
-    item.rejectionReason, item.rollbackStatus, item.closureMode, item.periodType]
-    .map(v => String(v || "").toLowerCase()).join(" | ");
-  return item.rejected === true || item.rollbackRestored === true || item.invalidatesCutoff === true ||
-    item.cutoffActive === false || /reject|rechaz|cancel|anulad|no aceptado|rejected_on_demand/.test(text);
-}
-
-function closureKind(item = {}) {
-  const raw = String(item.closureKind || item.closureType || item.payTab || item.closeKind || item.kind ||
-    item.cierreTipo || item.type || item.category || item.homeModule || item.homeTab || item.moduleKey || "").toLowerCase();
-  if (/gasto|expense/.test(raw)) return "gastos";
-  if (/caja|chica|cashbox/.test(raw)) return "caja_chica";
-  if (/factur|billing|cobro|explora|digital|transfer|qr|card|tarjeta|chofer|driver|efectivo|cash/.test(raw)) return "facturacion";
-  return "";
-}
-
-function closureUsesCutoff(item = {}) {
-  const mode = String(item.closureMode || item.periodType || "").toLowerCase();
-  // Misma regla que Santander Main: solo un cierre on_demand válido corta el período abierto.
-  return mode === "on_demand" && !closureInvalidatesCutoff(item);
-}
-
-function lastBillingClosureMs() {
-  return closures
-    .filter(closureUsesCutoff)
-    .filter(item => closureKind(item) === "facturacion")
-    .map(closureCutoffMs)
-    .filter(Boolean)
-    .sort((a,b) => b-a)[0] || 0;
-}
-
-function lastExpensesClosureMs() {
-  return closures
-    .filter(closureUsesCutoff)
-    .filter(item => closureKind(item) === "gastos")
-    .map(closureCutoffMs)
-    .filter(Boolean)
-    .sort((a,b) => b-a)[0] || 0;
-}
-
-function billingClosureClosesCashbox(item = {}) {
-  const affects = Array.isArray(item.affectsTabs) ? item.affectsTabs.map(v => String(v || "").toLowerCase()) : [];
-  return item.autoClosesCashbox === true || item.cashboxClosedWithBilling === true || item.cashboxAutoClosed === true ||
-    affects.some(v => /caja|cashbox/.test(v));
-}
-
-function lastCashboxResetMs() {
-  // Un cierre de Facturación NO reinicia la caja chica ni la facturación.
-  // Solo un cierre explícito del módulo Caja chica puede cortar ese módulo.
-  return closures
-    .filter(closureUsesCutoff)
-    .filter(item => closureKind(item) === "caja_chica")
-    .map(closureCutoffMs).filter(Boolean).sort((a,b)=>b-a)[0] || 0;
-}
-
-function billingMigrationBaselineMs() {
-  // Conservamos exactamente el período abierto que ya existía en Santander Main.
-  // Solo los cierres históricos `on_demand` anteriores a la migración fijan la base.
-  // Los cierres nuevos usan `settlement_only`, por lo que NUNCA vuelven a reiniciar
-  // la facturación: únicamente registran pagos/ajustes hasta llevar el saldo a cero.
-  return lastBillingClosureMs();
-}
-
-function openBillingPayments() {
-  const baseline = billingMigrationBaselineMs();
-  return payments
-    .filter(item => !movementIsDeleted(item))
-    .filter(item => recordTimestampMs(item) > baseline);
-}
-
-function openCashboxAmount() {
-  // Caja chica = 5% de (Efectivo + Uber) dentro del período abierto heredado
-  // de Santander. Desde la migración en adelante no vuelve a reiniciarse.
-  const baseline = billingMigrationBaselineMs();
-  const regularCash = payments
-    .filter(item => !movementIsDeleted(item) && !cashboxIsExcluded(item))
-    .filter(item => recordTimestampMs(item) > baseline)
-    .filter(item => item.method === "cash" && !isSettlementAdjustment(item) && !isReimbursementCompensation(item))
-    .reduce((sum,item) => sum + Number(item.amount || 0), 0);
-  const uberCash = uberClosures
-    .filter(item => !movementIsDeleted(item))
-    .filter(item => recordTimestampMs(item) > baseline)
-    .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
-    .reduce((sum,item) => sum + Number(item.amount || 0), 0);
-  return (regularCash + uberCash) * 0.05;
-}
-
-function openExpenses() {
-  const cutoff = lastExpensesClosureMs();
-  return expenses.filter(item => recordTimestampMs(item) > cutoff);
-}
-
-// Billeteras espejo compensadas — regla operativa vigente:
-// - Facturación compartida = efectivo + Uber + digital.
-// - El chofer conserva físicamente 100% de efectivo y Uber, pero debe reintegrar 50% de ambos a Explora.
-// - Caja chica = 5% de (efectivo + Uber) y también se suma a lo que debe liquidar el chofer.
-// - Gastos, deudas y adelantos se mantienen como módulos separados.
-
-// - Explora → Chofer: 50% de Digital que no se haya aplicado a un adelanto.
-// - El saldo positivo identifica quién debe compensar; el negativo, quién recibe.
-// - Ambas billeteras muestran siempre el mismo saldo con signos opuestos.
-function settlementModel() {
-  const cashRevenue = revenueTotalFor("cash");
-  const digitalRevenue = revenueTotalFor("digital");
-  const driverPaid = adjustmentTotal("driver_to_explora");
-  const exploraPaid = adjustmentTotal("explora_to_driver");
-  const billingBaseline = billingMigrationBaselineMs();
-  const uberRevenue = uberClosures
-    .filter(item => !movementIsDeleted(item))
-    .filter(item => recordTimestampMs(item) > billingBaseline)
-    .filter(item => !/reject|rechaz/.test(String(item.reviewStatus || item.status || "").toLowerCase()))
-    .reduce((sum,item) => sum + Number(item.amount || 0), 0);
-  const cash = cashRevenue;
-  const digital = digitalRevenue;
-  const expense = expensesTotal();
-  const cashShare = cashRevenue * 0.50;
-  const uberShare = uberRevenue * 0.50;
-  const digitalShare = digitalRevenue * 0.50;
-  const cashBox = openCashboxAmount();
-  const expenseHalf = expense * 0.50;
-  const reimbursementApplied = Math.min(reimbursementCompensationTotal(), expenseHalf);
-  const expenseReimbursement = Math.max(0, expenseHalf - reimbursementApplied);
-
-  // Fórmula autoritativa vigente:
-  // 50% efectivo + 50% Uber + 5% de (efectivo + Uber) - 50% digital,
-  // corregida únicamente por pagos de liquidación ya registrados.
-  const baseBalance = cashShare + uberShare + cashBox - digitalShare;
-  const balance = baseBalance - driverPaid + exploraPaid;
-  const normalizedBalance = Math.abs(balance) > 0.5 ? balance : 0;
-  const compensationAvailable = Math.min(expenseReimbursement, Math.max(0, normalizedBalance));
-
-  return {
-    cash, uber:uberRevenue, digital, expense,
-    adminDebt:debtsTotal(), advanceDebt:advancesOutstandingTotal(), advanceRepaidToday:advanceRepaymentAppliedTotal(),
-    driverHeld:cashRevenue + uberRevenue,
-    cashShare, uberShare, digitalShare, digitalShareGross:digitalShare,
-    cashBox, expenseHalf, expenseReimbursement, reimbursementApplied, compensationAvailable,
-    cashRevenue, digitalRevenue, driverPaid, exploraPaid, baseBalance,
-    cashAdjusted:cashShare + uberShare + cashBox + exploraPaid,
-    digitalAdjusted:digitalShare + driverPaid,
-    cashDebt:cashShare + uberShare + cashBox,
-    digitalDebt:digitalShare,
-    balance:normalizedBalance, amount:Math.abs(normalizedBalance),
-    driverWallet:normalizedBalance, exploraWallet:-normalizedBalance,
-    from:normalizedBalance > 0.5 ? "cash" : normalizedBalance < -0.5 ? "digital" : "balanced",
-    to:normalizedBalance > 0.5 ? "digital" : normalizedBalance < -0.5 ? "cash" : "balanced",
-    grand:cashRevenue + uberRevenue + digitalRevenue,
-    billingShareEach:(cashRevenue + uberRevenue + digitalRevenue) * 0.50,
-    billingCutoffMs:billingBaseline
-  };
-}
-
-function renderWalletStatus(elementId, settlementBalance) {
+function statusMessage(elementId, message = "", type = "") {
   const element = $(elementId);
   if (!element) return;
+  element.textContent = message;
+  element.className = `status${type ? ` ${type}` : ""}`;
+}
 
-  const isDriver = elementId === "cashWalletStatus";
-  element.classList.remove("is-paying", "is-receiving", "is-balanced", "is-hidden-direction");
+function showModal(id) {
+  $(id)?.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
 
-  // La dirección se decide UNA sola vez con el saldo autoritativo del cierre.
-  // balance > 0  => el chofer debe liquidar a Explora.
-  // balance < 0  => Explora debe liquidar al chofer.
-  // Nunca se interpreta el signo de cada billetera espejo por separado.
-  if (Math.abs(settlementBalance) <= 0.5) {
-    if (isDriver) {
-      element.textContent = "Cuentas equilibradas";
-      element.classList.add("is-balanced");
-    } else {
-      element.textContent = "";
-      element.classList.add("is-hidden-direction");
+function hideModal(id) {
+  $(id)?.classList.add("hidden");
+  if (!document.querySelector(".modal:not(.hidden)")) document.body.style.overflow = "";
+}
+
+function showToast(title, message) {
+  clearTimeout(toastTimer);
+  $("toastTitle").textContent = title;
+  $("toastMessage").textContent = message;
+  $("successToast").classList.remove("hidden");
+  toastTimer = setTimeout(() => $("successToast")?.classList.add("hidden"), 2700);
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function settlementPresentation(balance, name = "El barbero", adminPerspective = false) {
+  const value = normalizedBalance(balance);
+  if (value > 0) {
+    return {
+      className: "barber-owes",
+      label: adminPerspective ? `${name} debe a la barbería` : "Debés pagar a la barbería",
+      hint: adminPerspective
+        ? "El barbero conserva más efectivo del que le corresponde después del reparto."
+        : "Tenés en efectivo más de lo que te corresponde. La diferencia debe ingresar a la cuenta de la barbería."
+    };
+  }
+  if (value < 0) {
+    return {
+      className: "business-owes",
+      label: adminPerspective ? `La barbería debe a ${name}` : "La barbería debe pagarte",
+      hint: adminPerspective
+        ? "La barbería recibió más dinero digital del que le corresponde después del reparto."
+        : "La barbería cobró en digital más de lo que le corresponde y debe entregarte la diferencia."
+    };
+  }
+  return {
+    className: "balanced",
+    label: "Cuentas equilibradas",
+    hint: "No hay diferencia pendiente entre el barbero y la barbería."
+  };
+}
+
+function loginCandidates(value) {
+  const normalized = cleanUsername(value);
+  if (!normalized) return [];
+  if (normalized.includes("@")) return [normalized];
+  return [...new Set([
+    LOGIN_ALIASES?.[normalized],
+    `${normalized}@${USER_EMAIL_DOMAIN}`
+  ].filter(Boolean))];
+}
+
+async function signInFromForm(username, password) {
+  await authReady;
+  let lastError;
+  for (const email of loginCandidates(username)) {
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      lastError = error;
+      if (!/invalid-credential|user-not-found|wrong-password|invalid-email/.test(String(error?.code || ""))) throw error;
     }
-    return;
+  }
+  throw lastError || new Error("No se pudo iniciar sesión.");
+}
+
+function loginError(error) {
+  const code = String(error?.code || "");
+  if (/invalid-credential|user-not-found|wrong-password/.test(code)) return "Usuario o clave incorrectos.";
+  if (/too-many-requests/.test(code)) return "Demasiados intentos. Esperá unos minutos y volvé a probar.";
+  if (/network-request-failed|unavailable/.test(code)) return "No hay conexión estable. Revisá internet e intentá otra vez.";
+  return error?.message || "No se pudo iniciar sesión.";
+}
+
+async function loadProfile(user) {
+  for (const collectionName of PROFILE_COLLECTIONS) {
+    try {
+      const snapshot = await getDoc(doc(db, collectionName, user.uid));
+      if (!snapshot.exists()) continue;
+      const data = snapshot.data() || {};
+      return {
+        ...data,
+        id: snapshot.id,
+        uid: data.uid || data.authUid || user.uid,
+        displayName: profileName({ ...data, displayName: data.displayName || user.displayName }),
+        role: collectionName === "administradores" || collectionName === "admins" ? "admin" : roleValue(data),
+        active: profileIsActive(data)
+      };
+    } catch (_) {}
   }
 
-  const driverMustPay = settlementBalance > 0.5;
-  const thisSideMustPay = (driverMustPay && isDriver) || (!driverMustPay && !isDriver);
-
-  if (!thisSideMustPay) {
-    element.textContent = "";
-    element.classList.add("is-hidden-direction");
-    return;
+  for (const collectionName of ["barberos", "usuarios", "users", "perfiles"]) {
+    try {
+      const byUid = await getDocs(query(collection(db, collectionName), where("uid", "==", user.uid), limit(1)));
+      if (!byUid.empty) {
+        const data = byUid.docs[0].data() || {};
+        return { ...data, id: byUid.docs[0].id, uid: user.uid, displayName: profileName(data), role: roleValue(data), active: profileIsActive(data) };
+      }
+    } catch (_) {}
   }
 
-  element.textContent = driverMustPay
-    ? "Chofer debe liquidar a Explora"
-    : "Explora debe liquidar al chofer";
-  element.classList.add("is-paying");
+  const token = await user.getIdTokenResult().catch(() => ({ claims: {} }));
+  const claimRole = String(token.claims?.role || token.claims?.rol || "barber").toLowerCase();
+  return {
+    id: user.uid,
+    uid: user.uid,
+    displayName: user.displayName || user.email?.split("@")[0] || "Barbero",
+    username: user.email?.split("@")[0] || "",
+    role: claimRole,
+    active: true
+  };
 }
 
-function renderBilledTotal(model) {
-  setAnimatedMoney("summaryBilledAmount", model.grand);
-  const reimbursementAmount = $("summaryReimbursementAmount");
-  if (reimbursementAmount) reimbursementAmount.textContent = money(model.expenseReimbursement);
-  const button = $("compensateDebtBtn");
-  if (!button) return;
-  // El botón siempre abre el detalle. Si no hay saldo aplicable, el modal
-  // explica el motivo en lugar de parecer que la aplicación no responde.
-  button.disabled = false;
-  button.title = model.expenseReimbursement <= 0.5
-    ? "No hay reintegros disponibles."
-    : model.balance <= 0.5
-      ? "El chofer no tiene una diferencia pendiente a favor de Explora."
-      : "Utilizar el reintegro para reducir la diferencia Chofer–Explora.";
+function normalizeCharge(id, data = {}) {
+  return {
+    ...data,
+    id,
+    amount: Number(data.amount || data.monto || 0),
+    method: /cash|efectivo/.test(String(data.method || data.metodo || "").toLowerCase()) ? "cash" : "digital",
+    service: data.service || data.servicio || "Corte",
+    detail: data.detail || data.detalle || "",
+    proofUrl: data.proofUrl || data.comprobanteUrl || "",
+    barberUid: data.barberUid || data.barberoUid || data.uid || "",
+    barberName: data.barberName || data.barberoNombre || data.nombreBarbero || "Barbero"
+  };
 }
 
-function openDebtCompensationModal() {
-  const modal = $("debtCompensationModal");
-  if (!modal) return;
-  const model = settlementModel();
-
-  $("compensationReimbursementAvailable").textContent = money(model.expenseReimbursement);
-  $("compensationDebtAvailable").textContent = money(Math.max(0, model.balance));
-  $("compensationMaximum").textContent = money(model.compensationAvailable);
-  if (model.compensationAvailable > 0.5) {
-    $("compensationOutcome").textContent = `Se utilizarán ${money(model.compensationAvailable)}. El nuevo saldo que el chofer deberá compensar será de ${money(model.balance - model.compensationAvailable)} y el reintegro pendiente quedará en ${money(model.expenseReimbursement - model.compensationAvailable)}.`;
-  } else if (model.expenseReimbursement <= 0.5) {
-    $("compensationOutcome").textContent = "Todavía no hay dinero pendiente de reintegro para utilizar en una compensación.";
-  } else {
-    $("compensationOutcome").textContent = "El chofer no tiene una diferencia pendiente a favor de Explora para compensar con este reintegro.";
-  }
-  $("debtCompensationStatus").textContent = "";
-  $("debtCompensationStatus").className = "status";
-  $("confirmDebtCompensation").disabled = model.compensationAvailable <= 0.5;
-  $("confirmDebtCompensation").textContent = model.compensationAvailable > 0.5 ? "OK, compensar" : "Sin saldo para compensar";
-  modal.classList.remove("hidden");
+function normalizeAdvertisingReceipt(id, data = {}) {
+  return {
+    ...data,
+    id,
+    amount: Number(data.amount || 0),
+    barberUid: data.barberUid || data.barberoUid || data.uid || "",
+    barberName: data.barberName || data.barberoNombre || "Barbero",
+    method: /cash|efectivo/.test(String(data.method || "").toLowerCase()) ? "cash" : "digital"
+  };
 }
 
-function advanceQuote(principalValue) {
-  const principal = Math.max(0, Number(principalValue || 0));
-  const interest = Math.round(principal * ADVANCE_INTEREST_RATE);
-  return { principal, interest, total: principal + interest };
+function normalizeClosure(id, data = {}) {
+  return {
+    ...data,
+    id,
+    settlementAmount: Number(data.settlementAmount || 0),
+    cashTotal: Number(data.cashTotal || 0),
+    digitalTotal: Number(data.digitalTotal || 0),
+    advertisingFund: Number(data.advertisingFund || 0),
+    totalBilled: Number(data.totalBilled || 0),
+    barberUid: data.barberUid || data.barberoUid || data.uid || "",
+    barberName: data.barberName || data.barberoNombre || "Barbero",
+    status: String(data.status || "pending").toLowerCase()
+  };
 }
 
-function renderAdvanceQuote() {
-  const input = $("advanceAmount");
-  if (!input) return;
-  const quote = advanceQuote(parseMoneyInput(input.value));
-  const principal = $("advancePrincipalPreview");
-  const interest = $("advanceInterestPreview");
-  const total = $("advanceTotalPreview");
-  if (principal) principal.textContent = money(quote.principal);
-  if (interest) interest.textContent = money(quote.interest);
-  if (total) total.textContent = money(quote.total);
+function unsubscribeAll(list) {
+  list.splice(0).forEach(unsubscribe => {
+    try { unsubscribe?.(); } catch (_) {}
+  });
 }
 
-function openAdvanceModal() {
-  if (isAdminProfile()) return;
-  const form = $("advanceForm");
-  const modal = $("advanceModal");
-  if (!form || !modal) return;
-  form.reset();
-  $("advanceStatus").textContent = "";
-  $("advanceStatus").className = "status";
-  $("confirmAdvanceBtn").disabled = false;
-  $("confirmAdvanceBtn").textContent = "Confirmar adelanto";
-  renderAdvanceQuote();
-  modal.classList.remove("hidden");
+function listenOwned(collectionName, uid, normalizer, assign) {
+  return onSnapshot(query(collection(db, collectionName), where("barberUid", "==", uid)), snapshot => {
+    assign(snapshot.docs.map(item => normalizer(item.id, item.data())).sort((a, b) => timestampMs(b) - timestampMs(a)));
+    renderBarberDashboard();
+    $("syncStatus").textContent = "En tiempo real";
+    $("syncStatus").className = "sync-status ok";
+  }, error => {
+    console.error(`No se pudo sincronizar ${collectionName}`, error);
+    $("syncStatus").textContent = "Error de conexión";
+    $("syncStatus").className = "sync-status error";
+  });
 }
 
+function subscribeBarber(user) {
+  unsubscribeAll(currentUnsubscribers);
+  currentCharges = [];
+  currentAdvertisingReceipts = [];
+  currentClosures = [];
+  currentUnsubscribers.push(listenOwned("cobros", user.uid, normalizeCharge, rows => { currentCharges = rows; }));
+  currentUnsubscribers.push(listenOwned("caja_publicidad", user.uid, normalizeAdvertisingReceipt, rows => { currentAdvertisingReceipts = rows; }));
+  currentUnsubscribers.push(listenOwned("cierres", user.uid, normalizeClosure, rows => { currentClosures = rows; }));
+}
 
-function syncMoneyPanelRows() {
-  const panels = Array.from(document.querySelectorAll('.workspace > .money-panel .panel-head'));
-  if (panels.length < 2) return;
-
-  // Remove placeholders from previous render before recounting visible data rows.
-  panels.forEach(panel => panel.querySelectorAll('.adjustment.is-symmetry-placeholder').forEach(el => el.remove()));
-
-  const visibleRows = panels.map(panel =>
-    Array.from(panel.querySelectorAll(':scope > .adjustment')).filter(row => !row.classList.contains('hidden'))
-  );
-  const target = Math.max(...visibleRows.map(rows => rows.length));
-
-  panels.forEach((panel, index) => {
-    const missing = target - visibleRows[index].length;
-    const actions = panel.querySelector('.panel-action-stack');
-    if (!actions || missing <= 0) return;
-    for (let i = 0; i < missing; i += 1) {
-      const spacer = document.createElement('div');
-      spacer.className = 'adjustment is-symmetry-placeholder';
-      spacer.setAttribute('aria-hidden', 'true');
-      spacer.innerHTML = '<span>&nbsp;</span><strong>&nbsp;</strong>';
-      panel.insertBefore(spacer, actions);
+function mergeAdminBarbers() {
+  const merged = new Map();
+  for (const rows of adminProfileSources.values()) {
+    for (const row of rows) {
+      const uid = profileUid(row);
+      if (!uid) continue;
+      const previous = merged.get(uid) || {};
+      merged.set(uid, { ...previous, ...row, id: uid, uid });
     }
-  });
+  }
+  adminBarbers = [...merged.values()]
+    .filter(item => !profileIsAdmin(item))
+    .sort((a, b) => profileName(a).localeCompare(profileName(b), "es", { sensitivity: "base" }));
 }
 
-function render() {
-  const model = settlementModel();
-  const cashItems = [
-    ...payments.filter(p => p.method === "cash"),
-    ...debts.map(item => ({ ...item, method: "cash", type: "admin_debt", service: "Deuda" })),
-    ...advances.map(item => ({
-      ...item,
-      method: "cash",
-      type: "cash_advance",
-      amount: Number(item.principalAmount || 0),
-      service: "Adelanto en efectivo",
-      detail: `Deuda con 40%: ${money(item.totalDebt)} · Saldo pendiente: ${money(advanceRemaining(item))}`
-    })),
-    ...uberClosures.map(item => ({
-      ...item,
-      method: "cash",
-      type: "uber_receipt",
-      service: "Uber",
-      detail: `Semana ${uberWeekLabelForItem(item)}`
-    }))
-  ].sort((a, b) => {
-    const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-    const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-    return bMs - aMs;
-  });
-  const digitalItems = [
-    ...payments.filter(p => p.method === "digital"),
-    ...expenses.map(item => ({
-      ...item,
-      method: "digital",
-      type: "expense_receipt",
-      service: "Gasto",
-      detail: `${item.detail || "Gasto"} · 50% reconocido: ${money(Number(item.amount || 0) * 0.5)}`
-    }))
-  ].sort((a, b) => {
-    const aMs = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-    const bMs = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-    return bMs - aMs;
-  });
-  const visibleCashItems = cashItems.slice(0, RECENT_RECEIPTS_LIMIT);
-  const visibleDigitalItems = digitalItems.slice(0, RECENT_RECEIPTS_LIMIT);
-
-  setAnimatedMoney("cashTotal", model.driverWallet);
-  renderWalletStatus("cashWalletStatus", model.balance);
-  $("cashBaseTotal").textContent = money(model.cashRevenue);
-  $("uberCashTotal").textContent = money(model.uber);
-  $("cashBoxTotal").textContent = money(model.cashBox);
-  $("exploraAdjustmentTotal").textContent = money(model.exploraPaid);
-  $("adminDebtTotal").textContent = money(model.adminDebt);
-  const advanceDebtTotal = $("advanceDebtTotal");
-  const advanceDebtRow = $("advanceDebtRow");
-  if (advanceDebtTotal) advanceDebtTotal.textContent = money(model.advanceDebt);
-  if (advanceDebtRow) advanceDebtRow.classList.toggle("hidden", model.advanceDebt <= 0.5);
-  const cashCompensationTotal = $("cashDebtCompensationTotal");
-  const cashCompensationRow = $("cashDebtCompensationRow");
-  if (cashCompensationTotal) cashCompensationTotal.textContent = money(model.reimbursementApplied);
-  if (cashCompensationRow) cashCompensationRow.classList.toggle("hidden", model.reimbursementApplied <= 0.5);
-
-  setAnimatedMoney("digitalTotal", model.exploraWallet);
-  renderWalletStatus("digitalWalletStatus", model.balance);
-  $("digitalBaseTotal").textContent = money(model.digitalRevenue);
-  $("driverAdjustmentTotal").textContent = money(model.driverPaid);
-  const advanceRepaymentTotal = $("advanceRepaymentTotal");
-  const advanceRepaymentRow = $("advanceRepaymentRow");
-  if (advanceRepaymentTotal) advanceRepaymentTotal.textContent = money(model.advanceRepaidToday);
-  if (advanceRepaymentRow) advanceRepaymentRow.classList.toggle("hidden", model.advanceRepaidToday <= 0.5);
-  const digitalCompensationTotal = $("digitalDebtCompensationTotal");
-  const digitalCompensationRow = $("digitalDebtCompensationRow");
-  if (digitalCompensationTotal) digitalCompensationTotal.textContent = money(model.reimbursementApplied);
-  if (digitalCompensationRow) digitalCompensationRow.classList.toggle("hidden", model.reimbursementApplied <= 0.5);
-
-  $("cashCount").textContent = visibleCashItems.length;
-  $("digitalCount").textContent = visibleDigitalItems.length;
-
-  renderBilledTotal(model);
-  renderUberPendingBadge();
-  renderList("cashList", visibleCashItems, false);
-  renderList("digitalList", visibleDigitalItems, true);
-  syncMoneyPanelRows();
+function renderAllAdminViews() {
+  mergeAdminBarbers();
+  renderAdminDashboard();
+  renderBarberOptions();
+  renderAdminClosures();
+  renderAdminHistory();
+  maybeOpenPendingClosure();
 }
 
-function renderList(containerId, items, isDigital) {
-  const box = $(containerId);
-  if (!items.length) {
-    box.innerHTML = `<div class="empty">${isDigital
-      ? "Los cobros digitales y los gastos aparecerán acá."
-      : "Los cobros en efectivo y Uber aparecerán acá."}</div>`;
+function subscribeAdmin() {
+  unsubscribeAll(adminUnsubscribers);
+  adminProfileSources.clear();
+
+  for (const collectionName of ["barberos", "usuarios"]) {
+    const stop = onSnapshot(collection(db, collectionName), snapshot => {
+      adminProfileSources.set(collectionName, snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+      renderAllAdminViews();
+    }, error => console.warn(`No se pudo leer ${collectionName}`, error));
+    adminUnsubscribers.push(stop);
+  }
+
+  const listen = (collectionName, normalizer, assign) => {
+    const stop = onSnapshot(collection(db, collectionName), snapshot => {
+      assign(snapshot.docs.map(item => normalizer(item.id, item.data())).sort((a, b) => timestampMs(b) - timestampMs(a)));
+      renderAllAdminViews();
+    }, error => console.error(`No se pudo leer ${collectionName}`, error));
+    adminUnsubscribers.push(stop);
+  };
+  listen("cobros", normalizeCharge, rows => { adminCharges = rows; });
+  listen("caja_publicidad", normalizeAdvertisingReceipt, rows => { adminAdvertisingReceipts = rows; });
+  listen("cierres", normalizeClosure, rows => { adminClosures = rows; });
+}
+
+function advertisingReceiptsForOpenPeriod(receipts, closures) {
+  const cutoff = modelForPeriod([], closures).cutoffAtMs;
+  return receipts
+    .filter(item => item.deleted !== true && timestampMs(item) > cutoff)
+    .sort((a, b) => timestampMs(b) - timestampMs(a));
+}
+
+function renderBarberDashboard() {
+  if (!currentProfile || profileIsAdmin()) return;
+  const model = modelForPeriod(currentCharges, currentClosures);
+  const openAdvertising = advertisingReceiptsForOpenPeriod(currentAdvertisingReceipts, currentClosures);
+  const presentation = settlementPresentation(model.balance, profileName(currentProfile));
+
+  $("currentBarberName").textContent = profileName(currentProfile);
+  $("totalBilled").textContent = formatMoney(model.total);
+  $("advertisingFund").textContent = formatMoney(model.advertisingFund);
+  $("cashTotal").textContent = formatMoney(model.cash);
+  $("digitalTotal").textContent = formatMoney(model.digital);
+  $("settlementDirection").textContent = presentation.label;
+  $("settlementAmount").textContent = formatMoney(model.amount);
+  $("settlementHint").textContent = presentation.hint;
+  $("settlementCard").classList.remove("barber-owes", "business-owes", "balanced");
+  $("settlementCard").classList.add(presentation.className);
+
+  const receipts = [
+    ...model.charges.map(item => ({ ...item, receiptType: "charge" })),
+    ...openAdvertising.map(item => ({ ...item, receiptType: "advertising" }))
+  ].sort((a, b) => timestampMs(b) - timestampMs(a));
+  $("receiptCount").textContent = String(receipts.length);
+  const visible = receiptsExpanded ? receipts : receipts.slice(0, MAX_VISIBLE_RECEIPTS);
+  $("receiptToggle").classList.toggle("hidden", receipts.length <= MAX_VISIBLE_RECEIPTS);
+  $("receiptToggle").textContent = receiptsExpanded ? "Ver menos comprobantes" : "Ver más comprobantes";
+
+  if (!visible.length) {
+    $("receiptList").innerHTML = `<div class="empty-state compact">Los cobros aparecerán acá.</div>`;
     return;
   }
-  box.innerHTML = items.map(item => {
-    const time = item.createdAt?.toDate
-      ? item.createdAt.toDate().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
-      : "Ahora";
-    const uberReceipt = isUberReceipt(item);
-    const debtCompensation = isReimbursementCompensation(item);
-    const cashAdvance = isCashAdvance(item);
-    const showsProof = isDigital || isSettlementAdjustment(item) || isAdminDebt(item) || uberReceipt || cashAdvance;
-    const proof = showsProof
-      ? (debtCompensation || cashAdvance
-          ? `<span class="proof internal-proof">Comprobante interno</span>`
-          : item.proofUrl
-          ? `<a class="proof" target="_blank" rel="noopener" href="${item.proofUrl}">Ver foto</a>`
-          : `<span class="proof">Sin archivo</span>`)
-      : "";
-    const expenseReceipt = isExpenseReceipt(item);
-    const icon = expenseReceipt
-      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`
-      : uberReceipt
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h14M7 16l1-5h8l1 5M8 11l1.2-3h5.6l1.2 3M6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>`
-      : debtCompensation
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-9M5 20h14"/></svg>`
-      : cashAdvance
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M7 7.5h7.2a3 3 0 0 1 0 6H9.8a3 3 0 0 0 0 6H17"/></svg>`
-      : isDigital
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
-        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
-    const amountPrefix = debtCompensation ? "−" : "+";
-    const footerLabel = uberReceipt
-      ? `Semana ${escapeHtml(uberWeekLabelForItem(item))}`
-      : cashAdvance
-        ? `${advanceRemaining(item) <= 0.5 ? "Adelanto pagado" : "Sin vencimiento"}`
-      : `Hoy · ${time}`;
-    return `<article class="receipt ${isDigital ? "receipt-digital" : "receipt-cash"} ${isSettlementAdjustment(item) ? "receipt-adjustment" : ""} ${isAdminDebt(item) ? "receipt-debt" : ""} ${expenseReceipt ? "receipt-expense" : ""} ${uberReceipt ? "receipt-uber" : ""} ${debtCompensation ? "receipt-debt-compensation" : ""} ${cashAdvance ? "receipt-advance" : ""}">
-      <div class="receipt-main">
-        <span class="receipt-icon">${icon}</span>
-        <div class="receipt-copy">
-          <strong>${escapeHtml(item.service || "Cobro")}</strong>
-          <small>${escapeHtml(item.detail || "Servicio registrado")}</small>
-        </div>
-        <div class="amount">${amountPrefix}${money(item.amount)}</div>
+
+  $("receiptList").innerHTML = visible.map(item => {
+    const advertising = item.receiptType === "advertising";
+    const methodLabel = item.method === "cash" ? "Efectivo" : "Digital";
+    const contributionLabel = item.advertisingMethod === "cash" || item.contributionFrom === "cash" ? "Comprobante efectivo · 5%" : item.advertisingMethod === "digital" || item.contributionFrom === "digital" ? "Comprobante digital · 5%" : "Aporte de publicidad";
+    return `<article class="receipt ${advertising ? "advertising" : item.method}">
+      <div class="receipt-top">
+        <strong>${safeText(advertising ? "Caja para publicidad" : item.service)}</strong>
+        <b>${formatMoney(item.amount)}</b>
       </div>
-      <div class="receipt-footer">
-        <span>${footerLabel}</span>${proof}
+      <p>${safeText(advertising ? `${contributionLabel} · ${methodLabel}` : (item.detail || `${methodLabel} · Corte registrado`))}</p>
+      <div class="receipt-foot">
+        <span>${safeText(formatDate(timestampMs(item)))}</span>
+        ${item.proofUrl ? `<a href="${safeText(item.proofUrl)}" target="_blank" rel="noopener">Ver archivo</a>` : ""}
       </div>
     </article>`;
   }).join("");
 }
 
-async function loadProfile(user) {
-  const directRefs = [doc(db, "usuarios", user.uid), doc(db, "choferes", user.uid)];
-  for (const profileRef of directRefs) {
-    try {
-      const snap = await getDoc(profileRef);
-      if (snap.exists()) {
-        const data = snap.data() || {};
-        return {
-          ...data,
-          username: data.username || data.usuario || user.email?.split("@")[0] || "explora",
-          displayName: data.displayName || data.nombre || data.nombreCompleto || user.displayName || user.email?.split("@")[0] || "Explora",
-          role: profileRole(data, user),
-          active: !(data.active === false || data.activo === false || String(data.estado || "").toLowerCase() === "inactivo")
-        };
-      }
-    } catch (_) {}
+function recordsForBarber(rows, barber) {
+  const uid = profileUid(barber);
+  return rows.filter(item => String(item.barberUid || "") === uid);
+}
+
+function modelForAdminBarber(barber) {
+  return modelForPeriod(recordsForBarber(adminCharges, barber), recordsForBarber(adminClosures, barber));
+}
+
+function renderAdminDashboard() {
+  if (!currentProfile || !profileIsAdmin()) return;
+  const active = adminBarbers.filter(profileIsActive);
+  if (!active.length) {
+    $("adminBarberList").innerHTML = `<div class="empty-state">No hay barberos activos.</div>`;
+  } else {
+    $("adminBarberList").innerHTML = active.map(barber => {
+      const model = modelForAdminBarber(barber);
+      const presentation = settlementPresentation(model.balance, profileName(barber), true);
+      return `<article class="admin-barber-row ${presentation.className}">
+        <strong class="admin-barber-name">${safeText(profileName(barber))}</strong>
+        <div class="admin-barber-balance"><span>${safeText(presentation.label)}</span><strong>${formatMoney(model.amount)}</strong></div>
+      </article>`;
+    }).join("");
   }
 
-  try {
-    const byUid = await getDocs(query(collection(db, "choferes"), where("uid", "==", user.uid), limit(1)));
-    if (!byUid.empty) {
-      const data = byUid.docs[0].data() || {};
-      return {
-        ...data,
-        username: data.username || data.usuario || user.email?.split("@")[0] || "explora",
-        displayName: data.displayName || data.nombre || data.nombreCompleto || user.displayName || user.email?.split("@")[0] || "Explora",
-        role: profileRole(data, user),
-        active: !(data.active === false || data.activo === false || String(data.estado || "").toLowerCase() === "inactivo")
-      };
-    }
-  } catch (_) {}
+  const pendingCount = adminClosures.filter(item => item.status === "pending").length;
+  $("pendingClosuresBadge").textContent = String(pendingCount);
+  $("pendingClosuresBadge").classList.toggle("hidden", pendingCount === 0);
+}
 
-  if (user.email) {
-    try {
-      const byEmail = await getDocs(query(collection(db, "choferes"), where("email", "==", user.email.toLowerCase()), limit(1)));
-      if (!byEmail.empty) {
-        const data = byEmail.docs[0].data() || {};
-        return {
-          ...data,
-          username: data.username || data.usuario || user.email.split("@")[0],
-          displayName: data.displayName || data.nombre || data.nombreCompleto || user.displayName || user.email.split("@")[0],
-          role: profileRole(data, user),
-          active: !(data.active === false || data.activo === false || String(data.estado || "").toLowerCase() === "inactivo")
-        };
-      }
-    } catch (_) {}
+function renderBarberOptions() {
+  const options = adminBarbers.map(barber => `<option value="${safeText(profileUid(barber))}">${safeText(profileName(barber))}${profileIsActive(barber) ? "" : " · inactivo"}</option>`).join("");
+  for (const id of ["editBarberSelect", "historyBarberSelect"]) {
+    const select = $(id);
+    if (!select) continue;
+    const previous = select.value;
+    select.innerHTML = options || `<option value="">No hay barberos</option>`;
+    if (previous && [...select.options].some(option => option.value === previous)) select.value = previous;
   }
-
-  return fallbackProfile(user);
+  syncEditBarberForm();
 }
 
-function subscribeToday(user) {
-  if (unsubscribePayments) unsubscribePayments();
-  if (unsubscribeExpenses) unsubscribeExpenses();
-  if (unsubscribeUber) unsubscribeUber();
-  if (unsubscribeDebts) unsubscribeDebts();
-  if (unsubscribeDebtPayments) unsubscribeDebtPayments();
-  if (unsubscribeAdvances) unsubscribeAdvances();
-  advancesLoaded = false;
-
-  const uid = user.uid;
-  const setup = ({ collectionName, normalizer, assign, onError, afterRender }) => {
-    // Primero recupera todos los aliases históricos de Santander.
-    loadOwnedHistory(collectionName, uid).then(rows => {
-      const merged = mergeOwnedRows(collectionName, uid, canonicalRows(collectionName, uid));
-      assign(merged.map(row => normalizer(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a)));
-      render();
-      afterRender?.();
-    }).catch(err => console.warn("EXPLORA_HISTORY_LOAD", collectionName, err));
-
-    // Luego mantiene en vivo el camino canónico driverUid para todos los movimientos nuevos.
-    return onSnapshot(ownedQuery(collectionName, uid), snap => {
-      const canon = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      setCanonicalRows(collectionName, uid, canon);
-      const merged = mergeOwnedRows(collectionName, uid, canon);
-      assign(merged.map(row => normalizer(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a)));
-      render();
-      afterRender?.();
-      $("syncStatus").textContent = "En tiempo real";
-      $("syncStatus").className = "sync ok";
-    }, err => {
-      console.error(`Firestore ${collectionName} snapshot error:`, err);
-      onError?.(err);
-    });
-  };
-
-  $("syncStatus").textContent = "Sincronizando período…";
-  $("syncStatus").className = "sync";
-
-  unsubscribePayments = setup({
-    collectionName:ROOT_COLLECTIONS.payments,
-    normalizer:normalizePaymentRecord,
-    assign:rows => { payments = rows; },
-    onError:() => { $("syncStatus").textContent = "Error de datos"; $("syncStatus").className = "sync bad"; }
-  });
-  unsubscribeExpenses = setup({
-    collectionName:ROOT_COLLECTIONS.expenses,
-    normalizer:normalizeExpenseRecord,
-    assign:rows => { expenses = rows; },
-    onError:() => { $("syncStatus").textContent = "Error de gastos"; $("syncStatus").className = "sync bad"; }
-  });
-  unsubscribeUber = setup({
-    collectionName:ROOT_COLLECTIONS.uber,
-    normalizer:normalizeUberRecord,
-    assign:rows => { uberClosures = rows.filter(item => item.noData !== true); },
-    afterRender:() => { if (!$("uberModal")?.classList.contains("hidden")) renderUberWeekSelector(); },
-    onError:() => { $("syncStatus").textContent = "Error de Uber"; $("syncStatus").className = "sync bad"; }
-  });
-  unsubscribeDebts = setup({
-    collectionName:ROOT_COLLECTIONS.debts,
-    normalizer:normalizeDebtRecord,
-    assign:rows => { debts = rows.filter(item => item.amount > 0); },
-    onError:() => { $("syncStatus").textContent = "Error de deudas"; $("syncStatus").className = "sync bad"; }
-  });
-  unsubscribeDebtPayments = setup({
-    collectionName:ROOT_COLLECTIONS.debtPayments,
-    normalizer:normalizeDebtPaymentRecord,
-    assign:rows => { debtPayments = rows; },
-    onError:() => { console.warn("No se pudieron sincronizar los pagos de deuda históricos."); }
-  });
-  unsubscribeAdvances = setup({
-    collectionName:ROOT_COLLECTIONS.advances,
-    normalizer:normalizeAdvanceRecord,
-    assign:rows => {
-      advances = rows.filter(item => item.type === "cash_advance" || item.loanType === "cash_advance");
-      advancesLoaded = true;
-    },
-    onError:() => { advances = []; advancesLoaded = true; render(); $("syncStatus").textContent = "Error de adelantos"; $("syncStatus").className = "sync bad"; }
-  });
-}
-
-function isAdminProfile() {
-  return EXPLORA_ADMIN_UIDS.has(auth.currentUser?.uid || "") || currentProfile?.role === "admin";
-}
-
-function applyRoleUI() {
-  $("closeDayBtn").textContent = isAdminProfile() ? "Gestionar cierres" : "Pedir cierre";
-  $("addDebtBtn").classList.toggle("hidden", !isAdminProfile());
-  $("advanceBox")?.classList.toggle("hidden", isAdminProfile());
-}
-
-function closureRemaining(item) {
-  const original = Number(item.settlementAmount || item.requestedAmount || 0);
-  const paid = Number(item.paidAmountTotal || 0);
-  return Math.max(0, Number(item.remainingAmount ?? (original - paid)) || 0);
+function pendingClosures() {
+  return adminClosures.filter(item => item.status === "pending").sort((a, b) => timestampMs(a) - timestampMs(b));
 }
 
 function renderAdminClosures() {
-  if (!isAdminProfile()) return;
-  const box = $("adminClosureList");
-  const pending = closures.filter(item =>
-    item.direction === "explora_pays_driver" && closureRemaining(item) > 0 && item.status !== "completed"
-  );
-  const driverPayments = closures.filter(item => item.direction === "driver_pays_explora").slice(0, 6);
+  const list = $("adminClosureList");
+  if (!list) return;
+  const pending = pendingClosures();
+  if (!pending.length) {
+    list.innerHTML = `<div class="empty-state compact">No hay cierres pendientes.</div>`;
+    return;
+  }
+  list.innerHTML = pending.map(item => {
+    const direction = item.direction === "barber_pays_business"
+      ? `${item.barberName} paga a la barbería`
+      : item.direction === "business_pays_barber"
+        ? `La barbería paga a ${item.barberName}`
+        : "Sin diferencia pendiente";
+    return `<article class="closure-row">
+      <div class="closure-row-head"><strong>${safeText(item.barberName)}</strong><b>${formatMoney(item.settlementAmount)}</b></div>
+      <p>${safeText(direction)} · Efectivo ${formatMoney(item.cashTotal)} · Digital ${formatMoney(item.digitalTotal)} · Publicidad ${formatMoney(item.advertisingFund)}</p>
+      <div class="closure-row-foot"><span>${safeText(formatDate(item.requestedAtMs || timestampMs(item)))}</span><button type="button" data-resolve-closure="${safeText(item.id)}">Resolver</button></div>
+    </article>`;
+  }).join("");
+  list.querySelectorAll("[data-resolve-closure]").forEach(button => button.addEventListener("click", () => openResolveClosure(button.dataset.resolveClosure)));
+}
 
-  const pendingHtml = pending.length ? pending.map(item => `
-    <article class="admin-closure-card pending">
-      <div class="admin-closure-top">
-        <div><small>Cobrar a Explora</small><strong>${escapeHtml(item.operatorName || "Chofer")}</strong></div>
-        <b>${money(closureRemaining(item))}</b>
-      </div>
-      <p>Explora debe pagar este saldo al chofer. Puede abonarlo completo o parcialmente.</p>
-      <button type="button" class="admin-proof-button" data-admin-closure="${escapeHtml(item.id)}">Pagar y subir comprobante</button>
-    </article>`).join("") : `<div class="admin-empty">No hay pagos pendientes de Explora.</div>`;
+function historyRowsForBarber(barber) {
+  if (!barber) return [];
+  const rows = [];
+  recordsForBarber(adminCharges, barber).forEach(item => rows.push({
+    kind: item.method === "cash" ? "Cobro efectivo" : "Cobro digital",
+    title: item.service,
+    detail: item.detail || "Corte registrado",
+    amount: item.amount,
+    proofUrl: item.proofUrl,
+    createdAtMs: timestampMs(item),
+    className: item.method
+  }));
+  recordsForBarber(adminAdvertisingReceipts, barber).forEach(item => rows.push({
+    kind: "Caja para publicidad",
+    title: item.advertisingMethod === "cash" || item.contributionFrom === "cash" ? "Comprobante efectivo · 5%" : "Comprobante digital · 5%",
+    detail: "Fondo reservado a favor de la barbería",
+    amount: item.amount,
+    createdAtMs: timestampMs(item),
+    className: "advertising"
+  }));
+  recordsForBarber(adminClosures, barber).forEach(item => rows.push({
+    kind: "Cierre",
+    title: item.status === "pending" ? "Cierre pendiente" : "Cierre completado",
+    detail: `Efectivo ${formatMoney(item.cashTotal)} · Digital ${formatMoney(item.digitalTotal)}`,
+    amount: item.settlementAmount,
+    proofUrl: item.adminProofUrl || item.barberProofUrl || "",
+    createdAtMs: item.requestedAtMs || timestampMs(item),
+    className: "closure"
+  }));
+  return rows.sort((a, b) => b.createdAtMs - a.createdAtMs).slice(0, 120);
+}
 
-  const receivedHtml = driverPayments.length ? `
-    <div class="admin-history-title">Pagos recibidos de choferes</div>
-    ${driverPayments.map(item => `
-      <article class="admin-closure-card received">
-        <div class="admin-closure-top">
-          <div><small>Ajuste del chofer</small><strong>${escapeHtml(item.operatorName || "Chofer")}</strong></div>
-          <b>${money(item.paidAmountTotal || item.settlementAmount || 0)}</b>
-        </div>
-        ${item.proofUrl ? `<a class="proof admin-proof-link" target="_blank" rel="noopener" href="${item.proofUrl}">Ver comprobante</a>` : ""}
-      </article>`).join("")}` : "";
+function renderAdminHistory() {
+  const select = $("historyBarberSelect");
+  const list = $("historyList");
+  if (!select || !list) return;
+  const barber = adminBarbers.find(item => profileUid(item) === select.value);
+  if (!barber) {
+    list.innerHTML = `<div class="empty-state compact">Seleccioná un barbero.</div>`;
+    return;
+  }
+  const rows = historyRowsForBarber(barber);
+  if (!rows.length) {
+    list.innerHTML = `<div class="empty-state compact">Todavía no hay movimientos para ${safeText(profileName(barber))}.</div>`;
+    return;
+  }
+  list.innerHTML = rows.map(item => `<article class="history-row ${safeText(item.className)}">
+    <div class="history-row-head"><strong>${safeText(item.kind)}</strong><b>${formatMoney(item.amount)}</b></div>
+    <p><b>${safeText(item.title)}</b><br>${safeText(item.detail || "")}</p>
+    <div class="history-row-foot"><span>${safeText(formatDate(item.createdAtMs))}</span>${item.proofUrl ? `<a href="${safeText(item.proofUrl)}" target="_blank" rel="noopener">Ver archivo</a>` : ""}</div>
+  </article>`).join("");
+}
 
-  box.innerHTML = pendingHtml + receivedHtml;
-  box.querySelectorAll("[data-admin-closure]").forEach(button => {
-    button.addEventListener("click", () => openAdminPayment(button.dataset.adminClosure));
+function applyRoleUI() {
+  const admin = profileIsAdmin();
+  $("adminDashboard").classList.toggle("hidden", !admin);
+  $("barberDashboard").classList.toggle("hidden", admin);
+  $("logoutButton").classList.toggle("hidden", admin);
+  $("operatorGreeting").textContent = `Hola ${profileName(currentProfile)}`;
+}
+
+function resetState() {
+  unsubscribeAll(currentUnsubscribers);
+  unsubscribeAll(adminUnsubscribers);
+  currentProfile = null;
+  currentCharges = [];
+  currentAdvertisingReceipts = [];
+  currentClosures = [];
+  adminBarbers = [];
+  adminCharges = [];
+  adminAdvertisingReceipts = [];
+  adminClosures = [];
+  adminProfileSources.clear();
+}
+
+function showAuthenticatedApp() {
+  $("loginScreen").classList.add("hidden");
+  $("appScreen").classList.remove("hidden");
+  applyRoleUI();
+  if (profileIsAdmin()) subscribeAdmin();
+  else subscribeBarber(auth.currentUser);
+}
+
+async function uploadProof(file, storagePath) {
+  if (!file) return { url: "", path: "" };
+  const safeName = String(file.name || "comprobante").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
+  const path = `${storagePath}/${Date.now()}_${safeName}`;
+  const fileRef = ref(storage, path);
+  await uploadBytes(fileRef, file, { contentType: file.type || "application/octet-stream" });
+  return { url: await getDownloadURL(fileRef), path };
+}
+
+function renderServiceOptions() {
+  $("serviceGrid").innerHTML = SERVICES.map(service => `<button class="service-option" type="button" data-service-id="${service.id}"><strong>${safeText(service.name)}</strong><span>${formatMoney(service.price)}</span></button>`).join("");
+  $("serviceGrid").querySelectorAll("[data-service-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      const service = SERVICES.find(item => item.id === button.dataset.serviceId);
+      if (!service) return;
+      $("selectedService").value = service.id;
+      setMoneyInput($("chargeAmount"), service.price);
+      $("serviceGrid").querySelectorAll(".service-option").forEach(item => item.classList.toggle("selected", item === button));
+    });
   });
 }
 
-function subscribeClosures(user) {
-  if (unsubscribeClosures) unsubscribeClosures();
-  const baseRef = collection(db, ROOT_COLLECTIONS.closures);
-
-  if (isAdminProfile()) {
-    unsubscribeClosures = onSnapshot(baseRef, snap => {
-      closures = snap.docs.map(d => normalizeClosureRecord(d.id, d.data())).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a));
-      render();
-      renderAdminClosures();
-    }, err => {
-      console.error("Firestore cierres_semanales snapshot error:", err);
-      $("adminClosureList").innerHTML = `<div class="admin-empty error">No se pudieron cargar los cierres.</div>`;
-    });
-    return;
-  }
-
-  const uid = user.uid;
-  loadOwnedHistory(ROOT_COLLECTIONS.closures, uid).then(rows => {
-    const merged = mergeOwnedRows(ROOT_COLLECTIONS.closures, uid, canonicalRows(ROOT_COLLECTIONS.closures, uid));
-    closures = merged.map(row => normalizeClosureRecord(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a));
-    render();
-  }).catch(err => console.warn("EXPLORA_HISTORY_LOAD cierres", err));
-
-  unsubscribeClosures = onSnapshot(ownedQuery(ROOT_COLLECTIONS.closures, uid), snap => {
-    const canon = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    setCanonicalRows(ROOT_COLLECTIONS.closures, uid, canon);
-    const merged = mergeOwnedRows(ROOT_COLLECTIONS.closures, uid, canon);
-    closures = merged.map(row => normalizeClosureRecord(row.id, row)).sort((a,b)=>recordTimestampMs(b)-recordTimestampMs(a));
-    render();
-  }, err => console.error("Firestore cierres_semanales snapshot error:", err));
+function setMoneyInput(input, value) {
+  input.value = Number(value || 0) > 0 ? new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 }).format(Number(value)) : "";
 }
 
-$("loginPasswordToggle")?.addEventListener("click", () => {
-  const input = $("pass");
-  const button = $("loginPasswordToggle");
-  if (!input || !button) return;
-  const showing = input.type === "text";
-  input.type = showing ? "password" : "text";
-  button.textContent = showing ? "Ver" : "Ocultar";
-});
+function selectedServiceDefinition() {
+  return SERVICES.find(item => item.id === $("selectedService").value) || null;
+}
 
-$("loginForm")?.addEventListener("submit", async e => {
-  e.preventDefault();
-  $("loginStatus").textContent = "";
-  $("loginStatus").className = "status";
-  $("loginBtn").disabled = true;
-  $("loginBtn").textContent = "Ingresando…";
+function openChargeModal(mode) {
+  $("chargeForm").reset();
+  $("selectedService").value = "";
+  $("chargeMode").value = mode;
+  $("chargeModal").dataset.mode = mode;
+  $("chargeModalTitle").textContent = mode === "cash" ? "Cobrar efectivo" : "Cobrar digital";
+  $("chargeModeKicker").textContent = mode === "cash" ? "EFECTIVO · EN MANOS DEL BARBERO" : "DIGITAL · CUENTA DE LA BARBERÍA";
+  $("digitalProofField").classList.toggle("hidden", mode !== "digital");
+  $("chargeProof").required = mode === "digital";
+  $("serviceGrid").querySelectorAll(".service-option").forEach(item => item.classList.remove("selected"));
+  statusMessage("chargeStatus");
+  showModal("chargeModal");
+}
+
+function openChargePreview() {
+  const service = selectedServiceDefinition();
+  const amount = numberFromMoney($("chargeAmount").value);
+  const mode = $("chargeMode").value;
+  const proof = $("chargeProof").files?.[0] || null;
+  if (!service) return statusMessage("chargeStatus", "Seleccioná un servicio.", "error");
+  if (!(amount > 0)) return statusMessage("chargeStatus", "Ingresá un importe válido.", "error");
+  if (mode === "digital" && !proof) return statusMessage("chargeStatus", "El cobro digital necesita comprobante.", "error");
+
+  const model = modelForPeriod(currentCharges, currentClosures);
+  const impact = impactForCharge(mode, amount);
+  const afterBalance = normalizedBalance(model.balance + impact);
+  const beforePresentation = settlementPresentation(model.balance, profileName(currentProfile));
+  const afterPresentation = settlementPresentation(afterBalance, profileName(currentProfile));
+  const operationId = randomId("cobro");
+  pendingCharge = {
+    operationId,
+    mode,
+    amount,
+    service,
+    detail: $("chargeDetail").value.trim(),
+    proof,
+    beforeBalance: model.balance,
+    afterBalance,
+    impact
+  };
+
+  $("previewChargeAmount").textContent = formatMoney(amount);
+  $("previewAdvertisingAmount").textContent = `${formatMoney(amount * 0.10)} · 2 × ${formatMoney(amount * 0.05)}`;
+  $("previewImpactAmount").textContent = `${impact >= 0 ? "+" : "−"}${formatMoney(Math.abs(impact))}`;
+  $("previewBeforeLabel").textContent = beforePresentation.label;
+  $("previewBeforeAmount").textContent = formatMoney(Math.abs(model.balance));
+  $("previewAfterLabel").textContent = afterPresentation.label;
+  $("previewAfterAmount").textContent = formatMoney(Math.abs(afterBalance));
+  statusMessage("previewStatus");
+  hideModal("chargeModal");
+  showModal("previewModal");
+}
+
+async function savePendingCharge() {
+  if (!pendingCharge || chargeSubmitting) return;
+  chargeSubmitting = true;
+  $("confirmChargeButton").disabled = true;
+  $("confirmChargeButton").textContent = "Guardando…";
+  statusMessage("previewStatus", "Registrando cobro y comprobantes…");
+  const item = pendingCharge;
   try {
-    const usernameOrEmail = $("user").value.trim();
-    const password = $("pass").value;
-    if (!usernameOrEmail || !password) {
-      throw Object.assign(new Error("Faltan credenciales"), { code: "auth/invalid-credential" });
+    const uid = auth.currentUser.uid;
+    const proof = await uploadProof(item.proof, `cobros/${uid}/${item.operationId}`);
+    const createdAtMs = Date.now();
+    const chargeRef = doc(db, "cobros", item.operationId);
+    const advertisingCashRef = doc(db, "caja_publicidad", `${item.operationId}_efectivo`);
+    const advertisingDigitalRef = doc(db, "caja_publicidad", `${item.operationId}_digital`);
+    const base = {
+      businessId: BUSINESS_ID,
+      barberUid: uid,
+      barberoUid: uid,
+      barberName: profileName(currentProfile),
+      barberoNombre: profileName(currentProfile),
+      method: item.mode,
+      paymentMethod: item.mode,
+      operationId: item.operationId,
+      createdAt: serverTimestamp(),
+      createdAtMs,
+      status: "active"
+    };
+    const batch = writeBatch(db);
+    batch.set(chargeRef, {
+      ...base,
+      amount: item.amount,
+      monto: item.amount,
+      service: item.service.name,
+      serviceId: item.service.id,
+      detail: item.detail,
+      proofUrl: proof.url,
+      proofPath: proof.path,
+      barberShareAmount: item.amount * 0.45,
+      businessShareAmount: item.amount * 0.45,
+      advertisingAmount: item.amount * 0.10,
+      advertisingContributionEach: item.amount * 0.05,
+      balanceBefore: item.beforeBalance,
+      balanceImpact: item.impact,
+      balanceAfter: item.afterBalance,
+      cashHeldByBarber: item.mode === "cash",
+      digitalHeldByBusiness: item.mode === "digital",
+      telegramReady: true,
+      telegramEventType: "barber_charge_created",
+      telegramPayloadVersion: 1
+    });
+    for (const [reference, advertisingMethod, label] of [
+      [advertisingCashRef, "cash", "Caja para publicidad · Efectivo 5%"],
+      [advertisingDigitalRef, "digital", "Caja para publicidad · Digital 5%"]
+    ]) {
+      batch.set(reference, {
+        ...base,
+        sourceChargeId: item.operationId,
+        sourcePaymentMethod: item.mode,
+        amount: item.amount * 0.05,
+        grossChargeAmount: item.amount,
+        rate: 0.05,
+        contributionFrom: advertisingMethod,
+        advertisingMethod,
+        label,
+        beneficiary: "barberia",
+        destination: "barberia_account",
+        internalReceipt: true
+      });
     }
-    startSplash();
-    await waitForAuthReady();
-    await signInFromLogin(usernameOrEmail, password);
-  } catch (err) {
-    console.error(err);
-    await finishSplash("loginScreen");
-    $("loginStatus").textContent = loginErrorMessage(err);
-    $("loginStatus").className = "status error";
+    await batch.commit();
+    pendingCharge = null;
+    hideModal("previewModal");
+    showToast("Cobro registrado", "Se crearon el cobro y los dos comprobantes de publicidad.");
+    scrollToTop();
+  } catch (error) {
+    console.error(error);
+    statusMessage("previewStatus", error?.message || "No se pudo registrar el cobro.", "error");
   } finally {
-    $("loginBtn").disabled = false;
-    $("loginBtn").textContent = "Ingresar";
+    chargeSubmitting = false;
+    $("confirmChargeButton").disabled = false;
+    $("confirmChargeButton").textContent = "Confirmar cobro";
+  }
+}
+
+function closureSummaryHtml(model, barberName = profileName(currentProfile)) {
+  const presentation = settlementPresentation(model.balance, barberName);
+  return `<div class="closure-direction"><span>${safeText(presentation.label)}</span><strong>${formatMoney(model.amount)}</strong></div>
+    <div class="closure-figures">
+      <div><span>Total facturado</span><strong>${formatMoney(model.total)}</strong></div>
+      <div><span>Publicidad 10%</span><strong>${formatMoney(model.advertisingFund)}</strong></div>
+      <div><span>Efectivo</span><strong>${formatMoney(model.cash)}</strong></div>
+      <div><span>Digital</span><strong>${formatMoney(model.digital)}</strong></div>
+      <div><span>Barbero 45%</span><strong>${formatMoney(model.barberShare)}</strong></div>
+      <div><span>Barbería 45%</span><strong>${formatMoney(model.businessShare)}</strong></div>
+    </div>`;
+}
+
+function openClosureModal() {
+  const model = modelForPeriod(currentCharges, currentClosures);
+  if (!(model.total > 0)) {
+    showToast("Sin cobros para cerrar", "El período ya está en cero.");
+    return;
+  }
+  $("closureForm").reset();
+  $("closureSummary").innerHTML = closureSummaryHtml(model);
+  $("barberPaymentProofField").classList.toggle("hidden", model.direction !== "barber_pays_business");
+  $("barberBankFields").classList.toggle("hidden", model.direction !== "business_pays_barber");
+  $("barberAlias").required = model.direction === "business_pays_barber";
+  $("barberCuit").required = model.direction === "business_pays_barber";
+  statusMessage("closureStatus");
+  showModal("closureModal");
+}
+
+async function createClosure() {
+  if (closureSubmitting) return;
+  const model = modelForPeriod(currentCharges, currentClosures);
+  if (!(model.total > 0)) return statusMessage("closureStatus", "El período ya fue cerrado.", "error");
+  if (model.direction === "business_pays_barber" && (!$("barberAlias").value.trim() || !$("barberCuit").value.trim())) {
+    return statusMessage("closureStatus", "Completá alias y CUIT para recibir el pago.", "error");
+  }
+  closureSubmitting = true;
+  $("confirmClosureButton").disabled = true;
+  $("confirmClosureButton").textContent = "Cerrando…";
+  statusMessage("closureStatus", "Guardando el cierre y reiniciando el período…");
+  try {
+    const uid = auth.currentUser.uid;
+    const closureId = randomId("cierre");
+    const requestedAtMs = Date.now();
+    const proofFile = $("barberClosureProof").files?.[0] || null;
+    const proof = await uploadProof(proofFile, `cierres/${uid}/${closureId}/barbero`);
+    const payload = {
+      businessId: BUSINESS_ID,
+      barberUid: uid,
+      barberoUid: uid,
+      barberName: profileName(currentProfile),
+      barberoNombre: profileName(currentProfile),
+      status: "pending",
+      direction: model.direction,
+      settlementAmount: model.amount,
+      balanceSnapshot: model.balance,
+      cashTotal: model.cash,
+      digitalTotal: model.digital,
+      totalBilled: model.total,
+      advertisingFund: model.advertisingFund,
+      advertisingCashReceipt: model.total * 0.05,
+      advertisingDigitalReceipt: model.total * 0.05,
+      barberShare: model.barberShare,
+      businessShare: model.businessShare,
+      periodStartAtMs: model.cutoffAtMs,
+      cutoffAtMs: requestedAtMs,
+      cutoffActive: true,
+      requestedAt: serverTimestamp(),
+      requestedAtMs,
+      barberProofUrl: proof.url,
+      barberProofPath: proof.path,
+      paymentAlias: $("barberAlias").value.trim(),
+      paymentCuit: $("barberCuit").value.trim(),
+      resetAppliedImmediately: true,
+      telegramReady: true,
+      telegramEventType: "barber_closure_requested",
+      telegramPayloadVersion: 1
+    };
+    await setDoc(doc(db, "cierres", closureId), payload);
+    currentClosures = [normalizeClosure(closureId, payload), ...currentClosures];
+    renderBarberDashboard();
+    hideModal("closureModal");
+    showToast("Cierre solicitado", "El período volvió a cero y el pedido quedó pendiente para el administrador.");
+    scrollToTop();
+  } catch (error) {
+    console.error(error);
+    statusMessage("closureStatus", error?.message || "No se pudo pedir el cierre.", "error");
+  } finally {
+    closureSubmitting = false;
+    $("confirmClosureButton").disabled = false;
+    $("confirmClosureButton").textContent = "Confirmar cierre";
+  }
+}
+
+function setManagerMode(mode) {
+  managerMode = mode === "edit" ? "edit" : "create";
+  $("barberManagerMode").value = managerMode;
+  $("createBarberFields").classList.toggle("hidden", managerMode !== "create");
+  $("editBarberFields").classList.toggle("hidden", managerMode !== "edit");
+  document.querySelectorAll("[data-manager-mode]").forEach(button => button.classList.toggle("selected", button.dataset.managerMode === managerMode));
+  $("saveBarberButton").textContent = managerMode === "create" ? "Crear barbero" : "Guardar cambios";
+  statusMessage("barberManagerStatus");
+  syncEditBarberForm();
+}
+
+function syncEditBarberForm() {
+  const barber = adminBarbers.find(item => profileUid(item) === $("editBarberSelect")?.value);
+  if (!barber) return;
+  $("editBarberName").value = profileName(barber);
+  $("editBarberActive").checked = profileIsActive(barber);
+  $("editBarberPassword").value = "";
+}
+
+function callableError(error) {
+  const message = String(error?.message || "").replace(/^FirebaseError:\s*/i, "");
+  if (/permission-denied/.test(String(error?.code || ""))) return "Tu usuario no tiene permiso de administrador en Firebase.";
+  return message || "No se pudo completar la operación.";
+}
+
+async function saveBarberManager() {
+  $("saveBarberButton").disabled = true;
+  $("saveBarberButton").textContent = "Guardando…";
+  statusMessage("barberManagerStatus", "Actualizando acceso…");
+  try {
+    if (managerMode === "create") {
+      const name = $("newBarberName").value.trim();
+      const username = cleanUsername($("newBarberUsername").value);
+      const password = $("newBarberPassword").value;
+      if (!name || !username || password.length < 6) throw new Error("Completá nombre, usuario y una clave de al menos 6 caracteres.");
+      await adminCreateBarber({ name, username, password });
+      $("barberManagerForm").reset();
+      showToast("Barbero creado", `${name} ya puede ingresar con su usuario.`);
+    } else {
+      const barberUid = $("editBarberSelect").value;
+      const name = $("editBarberName").value.trim();
+      const password = $("editBarberPassword").value;
+      if (!barberUid || !name) throw new Error("Seleccioná un barbero y completá el nombre.");
+      await adminUpdateBarber({ barberUid, name, password, active: $("editBarberActive").checked });
+      showToast("Barbero actualizado", "Los cambios quedaron guardados.");
+    }
+    hideModal("barberManagerModal");
+  } catch (error) {
+    console.error(error);
+    statusMessage("barberManagerStatus", callableError(error), "error");
+  } finally {
+    $("saveBarberButton").disabled = false;
+    $("saveBarberButton").textContent = managerMode === "create" ? "Crear barbero" : "Guardar cambios";
+  }
+}
+
+function openResolveClosure(id) {
+  const item = adminClosures.find(closure => closure.id === id);
+  if (!item) return;
+  selectedAdminClosureId = id;
+  $("resolveClosureId").value = id;
+  $("resolveClosureSummary").innerHTML = closureSummaryHtml({
+    balance: item.balanceSnapshot,
+    amount: item.settlementAmount,
+    cash: item.cashTotal,
+    digital: item.digitalTotal,
+    total: item.totalBilled,
+    advertisingFund: item.advertisingFund,
+    barberShare: item.barberShare,
+    businessShare: item.businessShare
+  }, item.barberName);
+  $("adminClosureProofField").classList.toggle("hidden", item.direction !== "business_pays_barber");
+  $("adminClosureProof").required = item.direction === "business_pays_barber";
+  $("completeClosureButton").textContent = item.direction === "barber_pays_business" ? "Confirmar dinero recibido" : item.direction === "business_pays_barber" ? "Registrar pago" : "Completar cierre";
+  $("adminClosureList").classList.add("hidden");
+  $("resolveClosureForm").classList.remove("hidden");
+  statusMessage("resolveClosureStatus");
+}
+
+function closeResolveClosure() {
+  selectedAdminClosureId = "";
+  $("resolveClosureForm").reset();
+  $("resolveClosureForm").classList.add("hidden");
+  $("adminClosureList").classList.remove("hidden");
+}
+
+async function completeAdminClosure() {
+  const item = adminClosures.find(closure => closure.id === selectedAdminClosureId);
+  if (!item) return;
+  const proofFile = $("adminClosureProof").files?.[0] || null;
+  if (item.direction === "business_pays_barber" && !proofFile) {
+    return statusMessage("resolveClosureStatus", "Adjuntá el comprobante del pago.", "error");
+  }
+  $("completeClosureButton").disabled = true;
+  $("completeClosureButton").textContent = "Guardando…";
+  try {
+    const proof = await uploadProof(proofFile, `cierres/${item.barberUid}/${item.id}/administrador`);
+    await updateDoc(doc(db, "cierres", item.id), {
+      status: "completed",
+      completedAt: serverTimestamp(),
+      completedAtMs: Date.now(),
+      completedByUid: auth.currentUser.uid,
+      completedByName: profileName(currentProfile),
+      adminProofUrl: proof.url,
+      adminProofPath: proof.path,
+      telegramUpdateReady: true,
+      telegramUpdateEventType: "barber_closure_completed"
+    });
+    closeResolveClosure();
+    showToast("Cierre completado", "El cierre quedó resuelto sin afectar los cobros del nuevo período.");
+  } catch (error) {
+    console.error(error);
+    statusMessage("resolveClosureStatus", error?.message || "No se pudo completar el cierre.", "error");
+  } finally {
+    $("completeClosureButton").disabled = false;
+  }
+}
+
+function maybeOpenPendingClosure() {
+  if (!currentProfile || !profileIsAdmin() || !$("adminClosuresModal").classList.contains("hidden")) return;
+  const candidate = pendingClosures().find(item => !dismissedPendingClosures.has(item.id));
+  if (!candidate) return;
+  dismissedPendingClosures.add(candidate.id);
+  renderAdminClosures();
+  showModal("adminClosuresModal");
+}
+
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  $("loginButton").disabled = true;
+  $("loginButton").textContent = "Ingresando…";
+  statusMessage("loginStatus", "Verificando acceso…");
+  try {
+    await signInFromForm($("loginUser").value, $("loginPassword").value);
+  } catch (error) {
+    statusMessage("loginStatus", loginError(error), "error");
+  } finally {
+    $("loginButton").disabled = false;
+    $("loginButton").textContent = "Ingresar";
   }
 });
 
-$("logoutBtn")?.addEventListener("click", async () => {
-  startSplash();
-  try {
-    await signOut(auth);
-  } catch (err) {
-    console.error(err);
-    await finishSplash("app");
-  }
+$("togglePassword").addEventListener("click", () => {
+  const visible = $("loginPassword").type === "text";
+  $("loginPassword").type = visible ? "password" : "text";
+  $("togglePassword").textContent = visible ? "Ver" : "Ocultar";
 });
+
+async function logout() {
+  await signOut(auth).catch(() => {});
+}
+
+$("logoutButton").addEventListener("click", logout);
+$("adminLogoutButton").addEventListener("click", logout);
+document.querySelectorAll("[data-close-modal]").forEach(button => button.addEventListener("click", () => hideModal(button.dataset.closeModal)));
+document.querySelectorAll("[data-charge-mode]").forEach(button => button.addEventListener("click", () => openChargeModal(button.dataset.chargeMode)));
+$("chargeAmount").addEventListener("input", event => {
+  const digits = String(event.target.value || "").replace(/\D/g, "");
+  event.target.value = digits ? new Intl.NumberFormat("es-AR").format(Number(digits)) : "";
+});
+$("chargeForm").addEventListener("submit", event => { event.preventDefault(); openChargePreview(); });
+$("backToChargeButton").addEventListener("click", () => { hideModal("previewModal"); showModal("chargeModal"); });
+$("confirmChargeButton").addEventListener("click", savePendingCharge);
+$("receiptToggle").addEventListener("click", () => { receiptsExpanded = !receiptsExpanded; renderBarberDashboard(); });
+$("requestClosureButton").addEventListener("click", openClosureModal);
+$("closureForm").addEventListener("submit", event => { event.preventDefault(); createClosure(); });
+$("adminBarbersButton").addEventListener("click", () => { $("barberManagerForm").reset(); setManagerMode("create"); showModal("barberManagerModal"); });
+document.querySelectorAll("[data-manager-mode]").forEach(button => button.addEventListener("click", () => setManagerMode(button.dataset.managerMode)));
+$("editBarberSelect").addEventListener("change", syncEditBarberForm);
+$("barberManagerForm").addEventListener("submit", event => { event.preventDefault(); saveBarberManager(); });
+$("adminClosuresButton").addEventListener("click", () => { closeResolveClosure(); renderAdminClosures(); showModal("adminClosuresModal"); });
+$("cancelResolveClosure").addEventListener("click", closeResolveClosure);
+$("resolveClosureForm").addEventListener("submit", event => { event.preventDefault(); completeAdminClosure(); });
+$("adminHistoryButton").addEventListener("click", () => { renderBarberOptions(); renderAdminHistory(); showModal("historyModal"); });
+$("historyBarberSelect").addEventListener("change", renderAdminHistory);
+
+renderServiceOptions();
 
 onAuthStateChanged(auth, async user => {
   if (!user) {
-    if (unsubscribePayments) unsubscribePayments();
-    if (unsubscribeExpenses) unsubscribeExpenses();
-    if (unsubscribeUber) unsubscribeUber();
-    if (unsubscribeClosures) unsubscribeClosures();
-    if (unsubscribeDebts) unsubscribeDebts();
-    if (unsubscribeDebtPayments) unsubscribeDebtPayments();
-    if (unsubscribeAdvances) unsubscribeAdvances();
-    payments = [];
-    expenses = [];
-    uberClosures = [];
-    closures = [];
-    debts = [];
-    advances = [];
-    advancesLoaded = false;
-    currentProfile = null;
-    await finishSplash("loginScreen");
+    resetState();
+    $("appScreen").classList.add("hidden");
+    $("loginScreen").classList.remove("hidden");
+    $("splashScreen").classList.add("hidden");
     return;
   }
-
-  // Authentication ya fue validada. Mostramos la caja inmediatamente para
-  // que una lectura lenta o una regla pendiente de Firestore no expulse al usuario.
-  currentProfile = fallbackProfile(user);
-  $("operatorName").textContent = `Hola ${currentProfile.displayName || currentProfile.username || user.email?.split("@")[0] || "Chofer"}`;
-  subscribeToday(user);
-  applyRoleUI();
-  subscribeClosures(user);
-  await finishSplash("app");
-
   try {
     currentProfile = await loadProfile(user);
-    if (currentProfile.active === false) {
-      await signOut(auth);
-      $("loginStatus").textContent = "Este usuario está desactivado.";
-      $("loginStatus").className = "status error";
-      return;
-    }
-    $("operatorName").textContent = `Hola ${currentProfile.displayName || currentProfile.username || user.email.split("@")[0]}`;
-    applyRoleUI();
-    subscribeClosures(user);
-  } catch (err) {
-    console.warn("Se inició sesión usando el perfil básico:", err);
-    $("syncStatus").textContent = "Sesión activa · revisando datos";
-    $("syncStatus").className = "sync warn";
-  }
-});
-
-document.querySelectorAll("[data-mode]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const mode = btn.dataset.mode;
-    $("chargeForm").reset();
-    $("chargeMode").value = mode;
-    $("chargeModal").dataset.tone = mode;
-    $("chargeTitle").textContent = mode === "cash" ? "Cobro en efectivo" : "Cobro digital";
-    $("proofField").classList.toggle("hidden", mode !== "digital");
-    $("proof").required = mode === "digital";
-    $("chargeStatus").textContent = "";
-    $("chargeStatus").className = "status";
-    $("chargeModal").classList.remove("hidden");
-  });
-});
-
-document.querySelectorAll("[data-close]").forEach(btn => {
-  btn.addEventListener("click", () => $(btn.dataset.close).classList.add("hidden"));
-});
-
-$("compensateDebtBtn")?.addEventListener("click", openDebtCompensationModal);
-
-$("confirmDebtCompensation")?.addEventListener("click", async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  // Se vuelve a calcular al confirmar para no utilizar un saldo desactualizado.
-  const model = settlementModel();
-  const amount = model.compensationAvailable;
-  if (amount <= 0.5) {
-    $("debtCompensationStatus").textContent = "Ya no hay saldo disponible para compensar.";
-    $("debtCompensationStatus").className = "status error";
-    return;
-  }
-
-  const remainingBalance = Math.max(0, model.balance - amount);
-  const remainingReimbursement = Math.max(0, model.expenseReimbursement - amount);
-  const button = $("confirmDebtCompensation");
-  button.disabled = true;
-  button.textContent = "Compensando…";
-  $("debtCompensationStatus").textContent = "";
-
-  try {
-    // El identificador determinístico evita que dos dispositivos registren
-    // dos veces la misma compensación antes de recibir la actualización.
-    const compensationId = [
-      "balance_comp",
-      localDayKey(),
-      Math.round(model.balance),
-      Math.round(model.expenseHalf),
-      Math.round(model.reimbursementApplied)
-    ].join("_");
-    const compensationRef = doc(db, ROOT_COLLECTIONS.payments, compensationId);
-    await setDoc(compensationRef, {
-      method: "digital",
-      paymentMethod: "internal_compensation",
-      type: "reimbursement_compensation",
-      internalSettlementAdjustment: true,
-      excludeFromBillingSettlement: true,
-      suppressTelegram: true,
-      amount,
-      monto: amount,
-      service: "Reintegro aplicado",
-      detail: `Se utilizaron ${money(amount)} del reintegro de gastos para reducir la diferencia Chofer–Explora. Saldo restante: ${money(remainingBalance)}.`,
-      compensationSource: "expense_reimbursement",
-      reimbursementBefore: model.expenseReimbursement,
-      reimbursementAfter: remainingReimbursement,
-      settlementBefore: model.balance,
-      settlementAfter: remainingBalance,
-      internalReceipt: true,
-      proofUrl: "",
-      proofPath: "",
-      dayKey: localDayKey(),
-      operatorUid: user.uid,
-      operatorName: currentDriverName(),
-      driverUid: user.uid,
-      choferUid: user.uid,
-      uid: user.uid,
-      driverName: currentDriverName(),
-      businessId: BUSINESS_ID,
-      weeklyPeriodId: currentWeeklyPeriodId(),
-      createdAtMs: Date.now(),
-      createdAt: serverTimestamp()
-    });
-
-    $("debtCompensationStatus").textContent = `Se aplicaron ${money(amount)} para reducir la diferencia Chofer–Explora.`;
-    $("debtCompensationStatus").className = "status success";
-    setTimeout(() => $("debtCompensationModal").classList.add("hidden"), 1200);
-  } catch (err) {
-    console.error(err);
-    if (err?.code === "permission-denied") {
-      $("debtCompensationStatus").textContent = "Esta compensación ya fue registrada. Actualizando los saldos…";
-      $("debtCompensationStatus").className = "status success";
-      setTimeout(() => $("debtCompensationModal").classList.add("hidden"), 1200);
-    } else {
-      $("debtCompensationStatus").textContent = "No se pudo compensar la diferencia. Intentá nuevamente.";
-      $("debtCompensationStatus").className = "status error";
-      button.disabled = false;
-      button.textContent = "OK, compensar";
-    }
-  }
-});
-
-$("requestAdvanceBtn")?.addEventListener("click", openAdvanceModal);
-$("advanceAmount")?.addEventListener("input", renderAdvanceQuote);
-
-$("advanceForm")?.addEventListener("submit", async event => {
-  event.preventDefault();
-  const user = auth.currentUser;
-  if (!user || isAdminProfile()) return;
-
-  const principal = parseMoneyInput($("advanceAmount").value);
-  const quote = advanceQuote(principal);
-  if (!principal || principal <= 0) {
-    $("advanceStatus").textContent = "Ingresá el monto que querés recibir.";
-    $("advanceStatus").className = "status error";
-    return;
-  }
-  if (principal > ADVANCE_MAX_AMOUNT) {
-    $("advanceStatus").textContent = `El adelanto máximo es de ${money(ADVANCE_MAX_AMOUNT)}.`;
-    $("advanceStatus").className = "status error";
-    return;
-  }
-
-  // La elegibilidad se valida solamente al confirmar, tal como se informa
-  // en el formulario. El chofer puede completar y revisar antes la cotización.
-  const model = settlementModel();
-  const difference = Math.abs(model.balance);
-  if (difference >= ADVANCE_DIFFERENCE_LIMIT) {
-    $("advanceStatus").textContent = model.balance > 0
-      ? `Actualmente le debés ${money(difference)} a Explora. Reducí esa diferencia por debajo de ${money(ADVANCE_DIFFERENCE_LIMIT)} y volvé a solicitar el adelanto.`
-      : `La diferencia actual entre Chofer y Explora es de ${money(difference)}. Debe ser menor a ${money(ADVANCE_DIFFERENCE_LIMIT)} para solicitar un adelanto.`;
-    $("advanceStatus").className = "status error";
-    return;
-  }
-
-  const button = $("confirmAdvanceBtn");
-  button.disabled = true;
-  button.textContent = "Solicitando…";
-  $("advanceStatus").textContent = "";
-
-  try {
-    const advancesRef = collection(db, ROOT_COLLECTIONS.advances);
-    await addDoc(advancesRef, {
-      type: "cash_advance",
-      loanType: "cash_advance",
-      driverUid: user.uid,
-      choferUid: user.uid,
-      uid: user.uid,
-      driverId: user.uid,
-      driverName: currentDriverName(),
-      amount: quote.principal,
-      originalAmount: quote.principal,
-      principalAmount: quote.principal,
-      interestPercent: 40,
-      interestAmount: quote.interest,
-      totalDebt: quote.total,
-      remainingAmount: quote.total,
-      repaidAmount: 0,
-      status: "active",
-      differenceAtRequest: difference,
-      requestedDayKey: localDayKey(),
-      weeklyPeriodId: currentWeeklyPeriodId(),
-      operatorUid: user.uid,
-      operatorName: currentDriverName(),
-      businessId: BUSINESS_ID,
-      createdAtMs: Date.now(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-
-    $("advanceStatus").textContent = `Adelanto solicitado: recibís ${money(quote.principal)} y devolvés ${money(quote.total)} sin vencimiento.`;
-    $("advanceStatus").className = "status success";
-    setTimeout(() => $("advanceModal").classList.add("hidden"), 1700);
-  } catch (err) {
-    console.error(err);
-    $("advanceStatus").textContent = "No se pudo registrar el adelanto. Intentá nuevamente.";
-    $("advanceStatus").className = "status error";
-    button.disabled = false;
-    button.textContent = "Confirmar adelanto";
-  }
-});
-
-$("chargeForm")?.addEventListener("submit", async e => {
-  e.preventDefault();
-  const user = auth.currentUser;
-  if (!user) return;
-  const mode = $("chargeMode").value;
-  const service = mode === "cash" ? "Cobro en efectivo" : "Cobro digital";
-  const amount = parseMoneyInput($("chargeAmount").value);
-  const file = $("proof").files?.[0];
-
-  if (!amount || amount <= 0) {
-    $("chargeStatus").textContent = "Ingresá un importe válido.";
-    $("chargeStatus").className = "status error";
-    return;
-  }
-
-  if (mode === "digital" && !file) {
-    $("chargeStatus").textContent = "Adjuntá el comprobante del cobro digital.";
-    $("chargeStatus").className = "status error";
-    return;
-  }
-  if (mode === "digital" && !advancesLoaded) {
-    $("chargeStatus").textContent = "Esperá un momento mientras se actualiza el saldo de adelantos.";
-    $("chargeStatus").className = "status error";
-    return;
-  }
-
-  $("saveChargeBtn").disabled = true;
-  $("saveChargeBtn").textContent = "Guardando…";
-  $("chargeStatus").textContent = "";
-
-  try {
-    let proofUrl = "";
-    let proofPath = "";
-    if (mode === "digital" && file) {
-      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      proofPath = `billing_receipts/${user.uid}/${localDayKey()}/${Date.now()}_${cleanName}`;
-      const storageRef = ref(storage, proofPath);
-      await uploadBytes(storageRef, file);
-      proofUrl = await getDownloadURL(storageRef);
-    }
-
-    const paymentsRef = collection(db, ROOT_COLLECTIONS.payments);
-    const paymentRef = doc(paymentsRef);
-    const enteredDetail = $("detail").value.trim();
-    const candidateAdvanceRefs = mode === "digital"
-      ? advances
-          .filter(item => advanceRemaining(item) > 0.5)
-          .map(item => doc(db, ROOT_COLLECTIONS.advances, item.id))
-      : [];
-
-    // La transacción vuelve a leer los adelantos antes de descontarlos. Así,
-    // dos cobros simultáneos no pueden pisarse ni perder una devolución.
-    await runTransaction(db, async transaction => {
-      const freshAdvances = [];
-      for (const advanceRef of candidateAdvanceRefs) {
-        const snap = await transaction.get(advanceRef);
-        if (snap.exists()) freshAdvances.push({ id: snap.id, ...snap.data() });
-      }
-
-      const repaymentPlan = mode === "digital"
-        ? planAdvanceRepayment(Math.floor(amount * 0.50), freshAdvances)
-        : { allocations: [], totalApplied: 0 };
-      const paymentDetail = [
-        enteredDetail,
-        repaymentPlan.totalApplied > 0.5 ? `Aplicado al adelanto: ${money(repaymentPlan.totalApplied)}` : ""
-      ].filter(Boolean).join(" · ");
-
-      transaction.set(paymentRef, {
-        method: mode,
-        paymentMethod: mode === "cash" ? "cash" : "digital",
-        metodoPago: mode === "cash" ? "cash" : "digital",
-        financialCategory: mode === "cash" ? "cash" : "digital",
-        type: mode === "cash" ? "billing" : "payment",
-        amount,
-        monto: amount,
-        valor: amount,
-        finalPrice: amount,
-        service,
-        serviceDescription: service,
-        detail: paymentDetail,
-        notes: paymentDetail,
-        advanceRepaymentAmount: repaymentPlan.totalApplied,
-        advanceAllocations: repaymentPlan.allocations.map(item => ({
-          advanceId: item.id,
-          amount: item.applied
-        })),
-        proofUrl,
-        proofPath,
-        receiptUrl: proofUrl,
-        receiptPath: proofPath,
-        receiptRequired: mode === "digital",
-        dayKey: localDayKey(),
-        weeklyPeriodId: currentWeeklyPeriodId(),
-        operatorUid: user.uid,
-        operatorName: currentDriverName(),
-        driverUid: user.uid,
-        choferUid: user.uid,
-        uid: user.uid,
-        ownerUid: user.uid,
-        driverId: user.uid,
-        driverName: currentDriverName(),
-        status: "completed",
-        source: "barberia-main-migrated",
-        createdAtMs: Date.now(),
-        businessId: BUSINESS_ID,
-        createdAt: serverTimestamp()
-      });
-      repaymentPlan.allocations.forEach(item => {
-        const advanceRef = doc(db, ROOT_COLLECTIONS.advances, item.id);
-        transaction.update(advanceRef, {
-          remainingAmount: item.remainingAmount,
-          repaidAmount: item.repaidAmount,
-          status: item.status,
-          updatedAt: serverTimestamp()
-        });
-      });
-    });
-
-    $("chargeStatus").textContent = mode === "cash"
-      ? "Cobro en efectivo registrado correctamente."
-      : "Cobro digital registrado correctamente.";
-    $("chargeStatus").className = "status success";
-    $("chargeForm").reset();
-    closeModalAndGoTop("chargeModal", 1100);
-  } catch (err) {
-    console.error(err);
-    $("chargeStatus").textContent = "No se pudo registrar el cobro.";
-    $("chargeStatus").className = "status error";
+    if (!profileIsActive(currentProfile)) throw new Error("Tu usuario está inactivo. Consultá al administrador.");
+    showAuthenticatedApp();
+    statusMessage("loginStatus");
+  } catch (error) {
+    await signOut(auth).catch(() => {});
+    statusMessage("loginStatus", error?.message || "No se pudo cargar el perfil.", "error");
   } finally {
-    $("saveChargeBtn").disabled = false;
-    $("saveChargeBtn").textContent = "Registrar cobro";
+    setTimeout(() => $("splashScreen")?.classList.add("hidden"), 350);
   }
 });
 
-$("addExpenseBtn")?.addEventListener("click", () => {
-  $("expenseForm").reset();
-  $("expenseStatus").textContent = "";
-  $("expenseStatus").className = "status";
-  $("expenseModal").classList.remove("hidden");
-});
-
-$("addDebtBtn")?.addEventListener("click", () => {
-  if (!isAdminProfile()) return;
-  $("debtForm").reset();
-  $("debtStatus").textContent = "";
-  $("debtStatus").className = "status";
-  $("debtModal").classList.remove("hidden");
-});
-
-$("debtForm")?.addEventListener("submit", async event => {
-  event.preventDefault();
-  const admin = auth.currentUser;
-  if (!admin || !isAdminProfile()) return;
-
-  const amount = parseMoneyInput($("debtAmount").value);
-  const detail = $("debtDetail").value.trim();
-  const file = $("debtProof").files?.[0];
-
-  if (!amount || amount <= 0) {
-    $("debtStatus").textContent = "Ingresá un importe válido.";
-    $("debtStatus").className = "status error";
-    return;
-  }
-  if (!detail) {
-    $("debtStatus").textContent = "Indicá el motivo de la deuda.";
-    $("debtStatus").className = "status error";
-    return;
-  }
-
-  $("saveDebtBtn").disabled = true;
-  $("saveDebtBtn").textContent = "Guardando…";
-  $("debtStatus").textContent = "";
-
-  try {
-    let proofUrl = "";
-    let proofPath = "";
-    if (file) {
-      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      proofPath = `deudas/${admin.uid}/${localDayKey()}_${Date.now()}_${cleanName}`;
-      const storageRef = ref(storage, proofPath);
-      await uploadBytes(storageRef, file);
-      proofUrl = await getDownloadURL(storageRef);
-    }
-
-    const debtsRef = collection(db, ROOT_COLLECTIONS.debts);
-    await addDoc(debtsRef, {
-      type: "admin_debt",
-      debtType: "admin_debt",
-      amount,
-      totalAmount: amount,
-      remainingAmount: amount,
-      saldoPendiente: amount,
-      paidAmount: 0,
-      amountPaid: 0,
-      detail,
-      reason: detail,
-      notes: detail,
-      proofUrl,
-      proofPath,
-      receiptUrl: proofUrl,
-      receiptPath: proofPath,
-      dayKey: localDayKey(),
-      driverUid: admin.uid,
-      choferUid: admin.uid,
-      uid: admin.uid,
-      driverId: admin.uid,
-      driverName: currentDriverName(),
-      sourceModule: "pendientes",
-      status: "active",
-      debtStatus: "active",
-      createdByRole: "admin",
-      businessId: BUSINESS_ID,
-      createdByUid: admin.uid,
-      createdByName: currentDriverName() || "Administrador",
-      createdAtMs: Date.now(),
-      createdAt: serverTimestamp()
-    });
-
-    $("debtModal").classList.add("hidden");
-  } catch (err) {
-    console.error(err);
-    $("debtStatus").textContent = "No se pudo registrar la deuda.";
-    $("debtStatus").className = "status error";
-  } finally {
-    $("saveDebtBtn").disabled = false;
-    $("saveDebtBtn").textContent = "Registrar deuda";
-  }
-});
-
-$("expenseForm")?.addEventListener("submit", async e => {
-  e.preventDefault();
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const amount = parseMoneyInput($("expenseAmount").value);
-  const detail = $("expenseDetail").value.trim();
-  const file = $("expenseProof").files?.[0];
-
-  if (!amount || amount <= 0) {
-    $("expenseStatus").textContent = "Ingresá un importe válido.";
-    $("expenseStatus").className = "status error";
-    return;
-  }
-  if (!detail) {
-    $("expenseStatus").textContent = "Indicá el motivo del gasto.";
-    $("expenseStatus").className = "status error";
-    return;
-  }
-  if (!file) {
-    $("expenseStatus").textContent = "Adjuntá el comprobante del gasto.";
-    $("expenseStatus").className = "status error";
-    return;
-  }
-
-  $("saveExpenseBtn").disabled = true;
-  $("saveExpenseBtn").textContent = "Guardando…";
-  $("expenseStatus").textContent = "";
-
-  try {
-    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const proofPath = `gastos/${user.uid}/expense_${Date.now()}/comprobante_${cleanName}`;
-    const storageRef = ref(storage, proofPath);
-    await uploadBytes(storageRef, file);
-    const proofUrl = await getDownloadURL(storageRef);
-
-    const expensesRef = collection(db, ROOT_COLLECTIONS.expenses);
-    // El resumen se informa por Telegram, no se agrega un panel nuevo en la app.
-    // Se guarda el mismo cálculo que usa la interfaz para garantizar que ambos coincidan.
-    const expenseBefore = expensesTotal();
-    const reimbursementAppliedBefore = reimbursementCompensationTotal();
-    const accumulatedTotal = expenseBefore + amount;
-    const exploraReimbursement = Math.max(0, accumulatedTotal * 0.50 - reimbursementAppliedBefore);
-
-    await addDoc(expensesRef, {
-      amount,
-      monto: amount,
-      detail,
-      notes: detail,
-      expenseType: "otros",
-      tipo: "otros",
-      category: "otros",
-      proofUrl,
-      proofPath,
-      receiptUrl: proofUrl,
-      receiptPath: proofPath,
-      dayKey: localDayKey(),
-      weeklyPeriodId: currentWeeklyPeriodId(),
-      operatorUid: user.uid,
-      operatorName: currentDriverName(),
-      driverUid: user.uid,
-      choferUid: user.uid,
-      uid: user.uid,
-      ownerUid: user.uid,
-      driverId: user.uid,
-      choferId: user.uid,
-      driverName: currentDriverName(),
-      choferNombre: currentDriverName(),
-      payerRole: "driver",
-      sharedRate: 0.5,
-      porcentajeCompartido: 50,
-      // Snapshot para la notificación de Telegram. Coincide con "Total a reintegrar por Explora".
-      telegramExpenseLoadedAmount: amount,
-      telegramExpenseAccumulatedTotal: accumulatedTotal,
-      telegramExploraReimbursement: exploraReimbursement,
-      status: "active",
-      createdAtMs: Date.now(),
-      businessId: BUSINESS_ID,
-      createdAt: serverTimestamp()
-    });
-
-    $("expenseStatus").textContent = "Gasto registrado correctamente.";
-    $("expenseStatus").className = "status success";
-    $("expenseForm").reset();
-    closeModalAndGoTop("expenseModal", 1100);
-  } catch (err) {
-    console.error(err);
-    $("expenseStatus").textContent = "No se pudo registrar el gasto.";
-    $("expenseStatus").className = "status error";
-  } finally {
-    $("saveExpenseBtn").disabled = false;
-    $("saveExpenseBtn").textContent = "Registrar gasto";
-  }
-});
-
-$("addUberBtn")?.addEventListener("click", () => {
-  $("uberForm").reset();
-  $("uberStatus").textContent = "";
-  $("uberStatus").className = "status";
-  renderUberWeekSelector();
-  $("uberModal").classList.remove("hidden");
-});
-
-$("uberWeekSelect")?.addEventListener("change", updateUberWeekSummary);
-
-$("uberForm")?.addEventListener("submit", async e => {
-  e.preventDefault();
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const amount = parseMoneyInput($("uberAmount").value);
-  const week = selectedPendingUberWeek();
-  const file = $("uberProof").files?.[0];
-
-  if (!week) {
-    $("uberStatus").textContent = "Elegí una semana cerrada pendiente.";
-    $("uberStatus").className = "status error";
-    renderUberWeekSelector();
-    return;
-  }
-  if (!amount || amount <= 0) {
-    $("uberStatus").textContent = "Ingresá el total semanal de Uber.";
-    $("uberStatus").className = "status error";
-    return;
-  }
-  if (!file) {
-    $("uberStatus").textContent = `Adjuntá el comprobante de la semana ${week.label}.`;
-    $("uberStatus").className = "status error";
-    return;
-  }
-
-  $("saveUberBtn").disabled = true;
-  $("saveUberBtn").textContent = "Guardando…";
-  $("uberStatus").textContent = "";
-
-  try {
-    // Se usa una identificación determinística para impedir que la misma
-    // semana se cargue dos veces, incluso desde dos dispositivos distintos.
-    const uberDocumentId = `uber_${user.uid}_${week.weekKey.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
-    const uberDocRef = doc(db, ROOT_COLLECTIONS.uber, uberDocumentId);
-    const existing = await getDoc(uberDocRef);
-    if (existing.exists() || isUberWeekLoaded(week)) {
-      $("uberStatus").textContent = `La semana ${week.label} ya tiene comprobante.`;
-      $("uberStatus").className = "status error";
-      renderUberWeekSelector();
-      return;
-    }
-
-    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const proofPath = `uber_weekly/${user.uid}/${week.weekKey}/${Date.now()}_${cleanName}`;
-    const storageRef = ref(storage, proofPath);
-    await uploadBytes(storageRef, file, {
-      contentType: file.type || "image/jpeg",
-      customMetadata: {
-        module: "uber_weekly",
-        driverUid: user.uid,
-        weekId: week.weekKey,
-        uploadedByUid: user.uid
-      }
-    });
-    const proofUrl = await getDownloadURL(storageRef);
-
-    await setDoc(uberDocRef, {
-      closureId: uberDocumentId,
-      weekId: week.weekKey,
-      weekKey: week.weekKey,
-      weekLabel: week.label,
-      weekStartDate: week.weekStartDate,
-      weekCloseDate: week.weekCloseDate,
-      weekStartMs: parseLocalDateKey(week.weekStartDate)?.getTime() || Date.now(),
-      weekEndMs: parseLocalDateKey(week.weekCloseDate)?.getTime() || Date.now(),
-      grossAmount: amount,
-      totalAmount: amount,
-      amount,
-      driverShare: amount * 0.50,
-      driverNetAmount: amount * 0.50,
-      exploraShare: amount * 0.50,
-      debtAmount: amount * 0.50,
-      cashboxRate: 0.05,
-      cashboxAmount: amount * 0.05,
-      uberCashboxAmount: amount * 0.05,
-      proofUrl,
-      proofPath,
-      receiptUrl: proofUrl,
-      receiptPath: proofPath,
-      notificationPhotoUrl: proofUrl,
-      telegramPhotoUrl: proofUrl,
-      firebasePhotoUrl: proofUrl,
-      dayKey: localDayKey(),
-      driverUid: user.uid,
-      choferUid: user.uid,
-      uid: user.uid,
-      driverId: user.uid,
-      createdByUid: user.uid,
-      createdByRole: "driver",
-      driverName: currentDriverName(),
-      operatorUid: user.uid,
-      operatorName: currentDriverName(),
-      reviewStatus: "pending",
-      status: "pending_review",
-      locked: true,
-      businessId: BUSINESS_ID,
-      createdAtMs: Date.now(),
-      updatedAtMs: Date.now(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-
-    // Reflejo inmediato: permite continuar con la siguiente semana atrasada
-    // sin esperar la confirmación visual del listener de Firestore.
-    const savedAt = new Date();
-    uberClosures = [{
-      id: week.weekKey,
-      amount,
-      weekStartDate: week.weekStartDate,
-      weekCloseDate: week.weekCloseDate,
-      weekKey: week.weekKey,
-      weekLabel: week.label,
-      proofUrl,
-      proofPath,
-      dayKey: localDayKey(),
-      operatorUid: user.uid,
-      operatorName: currentProfile?.displayName || currentProfile?.username || "",
-      businessId: BUSINESS_ID,
-      createdAt: { toMillis: () => savedAt.getTime(), toDate: () => savedAt }
-    }, ...uberClosures.filter(item => item.id !== week.weekKey)];
-    render();
-
-    $("uberAmount").value = "";
-    $("uberProof").value = "";
-    renderUberWeekSelector();
-    const remaining = pendingUberWeeks().length;
-    $("uberStatus").textContent = remaining
-      ? `Comprobante de ${week.label} guardado. Quedan ${remaining} ${remaining === 1 ? "semana pendiente" : "semanas pendientes"}.`
-      : `Comprobante de ${week.label} guardado. Ya no quedan semanas pendientes.`;
-    $("uberStatus").className = "status success";
-    if (!remaining) closeModalAndGoTop("uberModal", 1300);
-  } catch (err) {
-    console.error(err);
-    $("uberStatus").textContent = err?.code === "permission-denied"
-      ? "Esa semana ya fue registrada o no tenés permiso para volver a cargarla."
-      : "No se pudo registrar el comprobante de Uber.";
-    $("uberStatus").className = "status error";
-  } finally {
-    $("saveUberBtn").disabled = pendingUberWeeks().length === 0;
-    $("saveUberBtn").textContent = "Registrar Uber";
-  }
-});
-
-function resetDriverClose() {
-  selectedCloseDirection = "";
-  $("driverCloseForm").reset();
-  $("driverCloseForm").classList.add("hidden");
-  $("driverCloseAmountField").classList.add("hidden");
-  $("driverCloseProofField").classList.add("hidden");
-  $("adminProofNotice").classList.add("hidden");
-  $("driverCloseProof").required = false;
-  $("closeStatus").textContent = "";
-  $("closeStatus").className = "status";
-  document.querySelectorAll(".close-choice").forEach(button => button.classList.remove("selected"));
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(error => console.warn("Service worker", error)));
 }
-
-function prepareDriverClose() {
-  resetDriverClose();
-  const model = settlementModel();
-  const payButton = $("choosePayExplora");
-  const collectButton = $("chooseCollectExplora");
-
-  if (model.from === "balanced") {
-    $("closeBalanceMessage").innerHTML = `<strong>Las cuentas ya están equilibradas.</strong><span>No hay ningún importe pendiente.</span>`;
-    payButton.disabled = true;
-    collectButton.disabled = true;
-    return;
-  }
-
-  if (model.from === "cash") {
-    $("closeBalanceMessage").innerHTML = `<strong>Debe pagar a Explora ${money(model.amount)}.</strong><span>Ese es el total necesario para que ambos queden equilibrados.</span>`;
-    payButton.disabled = false;
-    collectButton.disabled = true;
-    payButton.classList.add("required-action");
-    collectButton.classList.remove("required-action");
-  } else {
-    $("closeBalanceMessage").innerHTML = `<strong>Debe cobrar a Explora ${money(model.amount)}.</strong><span>Ese es el total necesario para que ambos queden equilibrados.</span>`;
-    payButton.disabled = true;
-    collectButton.disabled = false;
-    collectButton.classList.add("required-action");
-    payButton.classList.remove("required-action");
-  }
-}
-
-function selectDriverClose(direction) {
-  const model = settlementModel();
-  const expected = model.from === "cash" ? "driver_to_explora" : model.from === "digital" ? "explora_to_driver" : "";
-  if (!expected || direction !== expected) return;
-
-  selectedCloseDirection = direction;
-  $("driverCloseForm").reset();
-  $("driverCloseForm").classList.remove("hidden");
-  $("closeStatus").textContent = "";
-  $("closeStatus").className = "status";
-  document.querySelectorAll(".close-choice").forEach(button => button.classList.remove("selected"));
-
-  if (direction === "driver_to_explora") {
-    $("choosePayExplora").classList.add("selected");
-    $("driverCloseSelected").innerHTML = `<small>Pagar a Explora</small><strong>${money(model.amount)} pendientes</strong><span>Podés pagar el total o ingresar un importe menor.</span>`;
-    setMoneyInput("driverCloseAmount", model.amount);
-    $("driverCloseLimit").textContent = `Máximo disponible: ${money(model.amount)}.`;
-    $("driverCloseAmountField").classList.remove("hidden");
-    $("driverCloseProofField").classList.remove("hidden");
-    $("driverCloseProof").required = true;
-    $("adminProofNotice").classList.add("hidden");
-    $("confirmClose").textContent = "Registrar pago";
-  } else {
-    $("chooseCollectExplora").classList.add("selected");
-    $("driverCloseSelected").innerHTML = `<small>Cobrar a Explora</small><strong>${money(model.amount)} pendientes</strong><span>El administrador decidirá si paga el total o un importe parcial.</span>`;
-    $("driverCloseAmountField").classList.add("hidden");
-    $("driverCloseProofField").classList.add("hidden");
-    $("driverCloseProof").required = false;
-    $("adminProofNotice").classList.remove("hidden");
-    $("confirmClose").textContent = "Solicitar cobro";
-  }
-}
-
-function openAdminPayment(closureId) {
-  const item = closures.find(closure => closure.id === closureId);
-  if (!item) return;
-  const remaining = closureRemaining(item);
-  if (remaining <= 0) return;
-
-  selectedAdminClosureId = closureId;
-  $("adminClosureId").value = closureId;
-  $("adminPaymentForm").reset();
-  setMoneyInput("adminPaymentAmount", remaining);
-  $("adminPaymentLimit").textContent = `Saldo máximo: ${money(remaining)}.`;
-  $("adminPaymentSummary").innerHTML = `<small>Explora paga a</small><strong>${escapeHtml(item.operatorName || "Chofer")} · ${money(remaining)}</strong><span>Podés abonar el total o un importe menor.</span>`;
-  $("adminPaymentStatus").textContent = "";
-  $("adminPaymentStatus").className = "status";
-  $("adminClosureList").classList.add("hidden");
-  $("adminPaymentForm").classList.remove("hidden");
-}
-
-$("closeDayBtn")?.addEventListener("click", () => {
-  render();
-  $("closeModal").classList.remove("hidden");
-  if (isAdminProfile()) {
-    $("closeModalTitle").textContent = "Gestionar cierres";
-    $("closeDriverView").classList.add("hidden");
-    $("closeAdminView").classList.remove("hidden");
-    $("adminPaymentForm").classList.add("hidden");
-    $("adminClosureList").classList.remove("hidden");
-    selectedAdminClosureId = "";
-    renderAdminClosures();
-  } else {
-    $("closeModalTitle").textContent = "Pedir cierre";
-    $("closeAdminView").classList.add("hidden");
-    $("closeDriverView").classList.remove("hidden");
-    prepareDriverClose();
-  }
-});
-
-$("choosePayExplora")?.addEventListener("click", () => selectDriverClose("driver_to_explora"));
-$("chooseCollectExplora")?.addEventListener("click", () => selectDriverClose("explora_to_driver"));
-$("driverUseFullAmount")?.addEventListener("click", () => {
-  const model = settlementModel();
-  setMoneyInput("driverCloseAmount", model.amount);
-});
-
-$("driverCloseForm")?.addEventListener("submit", async event => {
-  event.preventDefault();
-  const user = auth.currentUser;
-  if (!user || !selectedCloseDirection || isAdminProfile()) return;
-
-  const model = settlementModel();
-  const expected = model.from === "cash" ? "driver_to_explora" : model.from === "digital" ? "explora_to_driver" : "";
-  if (expected !== selectedCloseDirection) {
-    $("closeStatus").textContent = "El saldo cambió. Volvé a abrir el cierre para recalcularlo.";
-    $("closeStatus").className = "status error";
-    return;
-  }
-
-  const isDriverPayment = selectedCloseDirection === "driver_to_explora";
-  const amount = isDriverPayment ? parseMoneyInput($("driverCloseAmount").value) : model.amount;
-  const file = $("driverCloseProof").files?.[0];
-  if (!amount || amount <= 0 || amount > model.amount + 0.5) {
-    $("closeStatus").textContent = `Ingresá un importe entre $1 y ${money(model.amount)}.`;
-    $("closeStatus").className = "status error";
-    return;
-  }
-  if (isDriverPayment && !file) {
-    $("closeStatus").textContent = "Adjuntá el comprobante del pago a Explora.";
-    $("closeStatus").className = "status error";
-    return;
-  }
-  if (!isDriverPayment) {
-    const alreadyPending = closures.some(item =>
-      item.operatorUid === user.uid && item.direction === "explora_pays_driver" && closureRemaining(item) > 0 && item.status !== "completed"
-    );
-    if (alreadyPending) {
-      $("closeStatus").textContent = "Ya tenés un cobro pendiente de Explora.";
-      $("closeStatus").className = "status error";
-      return;
-    }
-  }
-
-  $("confirmClose").disabled = true;
-  $("confirmClose").textContent = isDriverPayment ? "Guardando pago…" : "Enviando pedido…";
-  try {
-    const closureRef = doc(collection(db, ROOT_COLLECTIONS.closures));
-    let proofUrl = "";
-    let proofPath = "";
-    const remainingAmount = Math.max(0, model.amount - amount);
-
-    if (isDriverPayment) {
-      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      proofPath = `cierres_semanales/${currentWeeklyPeriodId()}/${user.uid}/${closureRef.id}_${Date.now()}_${cleanName}`;
-      const storageRef = ref(storage, proofPath);
-      await uploadBytes(storageRef, file);
-      proofUrl = await getDownloadURL(storageRef);
-
-      const paymentRef = doc(collection(db, ROOT_COLLECTIONS.payments));
-      const candidateAdvanceRefs = advances
-        .filter(item => advanceRemaining(item) > 0.5)
-        .map(item => doc(db, ROOT_COLLECTIONS.advances, item.id));
-      await runTransaction(db, async transaction => {
-        const freshAdvances = [];
-        for (const advanceRef of candidateAdvanceRefs) {
-          const snap = await transaction.get(advanceRef);
-          if (snap.exists()) freshAdvances.push({ id: snap.id, ...snap.data() });
-        }
-        const repaymentPlan = planAdvanceRepayment(amount, freshAdvances);
-        const baseDetail = remainingAmount <= 0.5 ? "Pago total a Explora" : "Pago parcial a Explora";
-        const detail = [
-          baseDetail,
-          repaymentPlan.totalApplied > 0.5 ? `Aplicado al adelanto: ${money(repaymentPlan.totalApplied)}` : ""
-        ].filter(Boolean).join(" · ");
-
-        transaction.set(paymentRef, {
-          // En la UI nueva se muestra como movimiento digital; para el backend histórico
-          // es un pago de liquidación por transferencia, con comprobante obligatorio.
-          method: "digital",
-          paymentMethod: "transfer",
-          metodoPago: "transfer",
-          financialCategory: "transfer",
-          type: "admin_billing_settlement_payment",
-          operationType: "admin_billing_settlement_payment",
-          movementType: "driver_payment",
-          sourceModule: "facturacion",
-          affectsBillingSettlement: true,
-          adjustmentDirection: "driver_to_explora",
-          amount,
-          monto: amount,
-          previousBillingBalance: model.amount,
-          newBillingBalance: remainingAmount,
-          advanceRepaymentAmount: repaymentPlan.totalApplied,
-          advanceAllocations: repaymentPlan.allocations.map(item => ({
-            advanceId: item.id,
-            amount: item.applied
-          })),
-          service: "Ajuste del chofer",
-          notes: detail,
-          detail,
-          proofUrl,
-          proofPath,
-          receiptUrl: proofUrl,
-          receiptPath: proofPath,
-          closureId: closureRef.id,
-          dayKey: localDayKey(),
-          weeklyPeriodId: currentWeeklyPeriodId(),
-          driverUid: user.uid,
-          choferUid: user.uid,
-          uid: user.uid,
-          ownerUid: user.uid,
-          driverId: user.uid,
-          driverName: currentDriverName(),
-          operatorUid: user.uid,
-          operatorName: currentProfile?.displayName || currentProfile?.username || "",
-          businessId: BUSINESS_ID,
-          createdAtMs: Date.now(),
-          createdAt: serverTimestamp()
-        });
-        const closureNowMs = Date.now();
-        transaction.set(closureRef, {
-          direction: "driver_pays_explora",
-          paymentDirection: "driver_to_explora",
-          requestedAmount: model.amount,
-          settlementAmount: model.amount,
-          paidAmountTotal: amount,
-          remainingAmount,
-          amountDueFromDriver: remainingAmount,
-          amountFromDriver: remainingAmount,
-          amountDueToDriver: 0,
-          amountToDriver: 0,
-          gross: model.grand,
-          grossAmount: model.grand,
-          expenseTotal: model.expense,
-          cashboxTotal: model.cashBox,
-          proofUrl,
-          proofPath,
-          receiptUrl: proofUrl,
-          receiptPath: proofPath,
-          proofUploadedByUid: user.uid,
-          proofUploadedByRole: "driver",
-          status: remainingAmount <= 0.5 ? "completed" : "partial",
-          dayKey: localDayKey(),
-          weeklyPeriodId: currentWeeklyPeriodId(),
-          closureKind: "facturacion",
-          closureType: "facturacion",
-          moduleKey: "facturacion",
-          payTab: "facturacion",
-          billingClosure: true,
-          closureMode: "settlement_only",
-          autoClosesCashbox: false,
-          cashboxClosedWithBilling: false,
-          affectsTabs: ["chofer", "explora"],
-          cashTotal: model.cash,
-          uberTotal: model.uber,
-          debtTotal: model.adminDebt + model.advanceDebt,
-          advanceDebtTotal: model.advanceDebt,
-          advanceRepaidAmount: repaymentPlan.totalApplied,
-          cashBox5: model.cashBox,
-          digitalTotal: model.digital,
-          expensesTotal: model.expense,
-          total: model.grand,
-          driverUid: user.uid,
-          choferUid: user.uid,
-          uid: user.uid,
-          driverName: currentDriverName(),
-          operatorUid: user.uid,
-          operatorName: currentProfile?.displayName || currentProfile?.username || "",
-          requestedByUid: user.uid,
-          requestedByRole: "driver",
-          createdByUid: user.uid,
-          createdByRole: "driver",
-          businessId: BUSINESS_ID,
-          cutoffAtMs: closureNowMs,
-          requestedAtMs: closureNowMs,
-          createdAtMs: closureNowMs,
-          requestedAt: serverTimestamp(),
-          createdAt: serverTimestamp(),
-          completedAt: remainingAmount <= 0.5 ? serverTimestamp() : null
-        });
-        repaymentPlan.allocations.forEach(item => {
-          const advanceRef = doc(db, ROOT_COLLECTIONS.advances, item.id);
-          transaction.update(advanceRef, {
-            remainingAmount: item.remainingAmount,
-            repaidAmount: item.repaidAmount,
-            status: item.status,
-            updatedAt: serverTimestamp()
-          });
-        });
-      });
-      $("closeStatus").textContent = remainingAmount <= 0.5
-        ? "Pago registrado. Las partes quedaron equilibradas."
-        : `Pago parcial registrado. Quedan ${money(remainingAmount)} pendientes.`;
-    } else {
-      const closureNowMs = Date.now();
-      await setDoc(closureRef, {
-        direction: "explora_pays_driver",
-        paymentDirection: "explora_to_driver",
-        requestedAmount: model.amount,
-        settlementAmount: model.amount,
-        paidAmountTotal: 0,
-        remainingAmount: model.amount,
-        amountDueFromDriver: 0,
-        amountFromDriver: 0,
-        amountDueToDriver: model.amount,
-        amountToDriver: model.amount,
-        gross: model.grand,
-        grossAmount: model.grand,
-        expenseTotal: model.expense,
-        cashboxTotal: model.cashBox,
-        status: "awaiting_admin_proof",
-        dayKey: localDayKey(),
-        weeklyPeriodId: currentWeeklyPeriodId(),
-        closureKind: "facturacion",
-        closureType: "facturacion",
-        moduleKey: "facturacion",
-        payTab: "facturacion",
-        billingClosure: true,
-        closureMode: "settlement_only",
-        autoClosesCashbox: false,
-        cashboxClosedWithBilling: false,
-        affectsTabs: ["chofer", "explora"],
-        cashTotal: model.cash,
-        uberTotal: model.uber,
-        debtTotal: model.adminDebt + model.advanceDebt,
-        advanceDebtTotal: model.advanceDebt,
-        cashBox5: model.cashBox,
-        digitalTotal: model.digital,
-        expensesTotal: model.expense,
-        total: model.grand,
-        driverUid: user.uid,
-        choferUid: user.uid,
-        uid: user.uid,
-        driverName: currentDriverName(),
-        operatorUid: user.uid,
-        operatorName: currentProfile?.displayName || currentProfile?.username || "",
-        requestedByUid: user.uid,
-        requestedByRole: "driver",
-        createdByUid: user.uid,
-        createdByRole: "driver",
-        businessId: BUSINESS_ID,
-        cutoffAtMs: closureNowMs,
-        requestedAtMs: closureNowMs,
-        createdAtMs: closureNowMs,
-        requestedAt: serverTimestamp(),
-        createdAt: serverTimestamp()
-      });
-      $("closeStatus").textContent = "Cobro solicitado. Falta el pago y comprobante del administrador.";
-    }
-    $("closeStatus").className = "status success";
-    setTimeout(() => $("closeModal").classList.add("hidden"), 1500);
-  } catch (err) {
-    console.error(err);
-    $("closeStatus").textContent = "No se pudo registrar el cierre.";
-    $("closeStatus").className = "status error";
-  } finally {
-    $("confirmClose").disabled = false;
-    $("confirmClose").textContent = isDriverPayment ? "Registrar pago" : "Solicitar cobro";
-  }
-});
-
-$("adminUseFullAmount")?.addEventListener("click", () => {
-  const item = closures.find(closure => closure.id === selectedAdminClosureId);
-  if (item) setMoneyInput("adminPaymentAmount", closureRemaining(item));
-});
-
-$("cancelAdminPayment")?.addEventListener("click", () => {
-  selectedAdminClosureId = "";
-  $("adminPaymentForm").classList.add("hidden");
-  $("adminClosureList").classList.remove("hidden");
-  renderAdminClosures();
-});
-
-$("adminPaymentForm")?.addEventListener("submit", async event => {
-  event.preventDefault();
-  const admin = auth.currentUser;
-  if (!admin || !isAdminProfile() || !selectedAdminClosureId) return;
-  const item = closures.find(closure => closure.id === selectedAdminClosureId);
-  if (!item) return;
-
-  const remaining = closureRemaining(item);
-  const amount = parseMoneyInput($("adminPaymentAmount").value);
-  const file = $("adminCloseProof").files?.[0];
-  if (!amount || amount <= 0 || amount > remaining + 0.5) {
-    $("adminPaymentStatus").textContent = `Ingresá un importe entre $1 y ${money(remaining)}.`;
-    $("adminPaymentStatus").className = "status error";
-    return;
-  }
-  if (!file) {
-    $("adminPaymentStatus").textContent = "Adjuntá el comprobante del pago de Explora.";
-    $("adminPaymentStatus").className = "status error";
-    return;
-  }
-
-  $("confirmAdminPayment").disabled = true;
-  $("confirmAdminPayment").textContent = "Guardando pago…";
-  try {
-    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-    const proofPath = `cierres_semanales/${currentWeeklyPeriodId()}/${item.operatorUid}/admin_${item.id}_${Date.now()}_${cleanName}`;
-    const storageRef = ref(storage, proofPath);
-    await uploadBytes(storageRef, file);
-    const proofUrl = await getDownloadURL(storageRef);
-
-    const paymentRef = doc(collection(db, ROOT_COLLECTIONS.payments));
-    const closureRef = doc(db, ROOT_COLLECTIONS.closures, item.id);
-    const newPaidTotal = Number(item.paidAmountTotal || 0) + amount;
-    const newRemaining = Math.max(0, remaining - amount);
-    const batch = writeBatch(db);
-    batch.set(paymentRef, {
-      // Ajuste interno: la UI lo muestra del lado efectivo del chofer, pero no debe
-      // sumarse otra vez a la facturación histórica ni disparar un Telegram de cobro.
-      method: "cash",
-      paymentMethod: "internal_admin_payment",
-      metodoPago: "internal_admin_payment",
-      financialCategory: "internal_admin_payment",
-      type: "settlement_adjustment",
-      operationType: "settlement_adjustment",
-      adjustmentDirection: "explora_to_driver",
-      internalSettlementAdjustment: true,
-      excludeFromBillingSettlement: true,
-      suppressTelegram: true,
-      amount,
-      monto: amount,
-      service: "Ajuste de Explora",
-      notes: newRemaining <= 0.5 ? "Pago total de Explora" : "Pago parcial de Explora",
-      detail: newRemaining <= 0.5 ? "Pago total de Explora" : "Pago parcial de Explora",
-      proofUrl,
-      proofPath,
-      receiptUrl: proofUrl,
-      receiptPath: proofPath,
-      closureId: item.id,
-      dayKey: localDayKey(),
-      weeklyPeriodId: currentWeeklyPeriodId(),
-      driverUid: item.operatorUid,
-      choferUid: item.operatorUid,
-      uid: item.operatorUid,
-      ownerUid: item.operatorUid,
-      driverId: item.operatorUid,
-      driverName: item.operatorName || "Chofer",
-      operatorUid: item.operatorUid,
-      operatorName: item.operatorName || "",
-      createdByUid: admin.uid,
-      createdByRole: "admin",
-      createdByName: currentProfile?.displayName || currentProfile?.username || "Administrador",
-      businessId: BUSINESS_ID,
-      createdAtMs: Date.now(),
-      createdAt: serverTimestamp()
-    });
-    batch.update(closureRef, {
-      paidAmountTotal: newPaidTotal,
-      remainingAmount: newRemaining,
-      amountDueToDriver: newRemaining,
-      amountToDriver: newRemaining,
-      amountDueFromDriver: 0,
-      amountFromDriver: 0,
-      lastProofUrl: proofUrl,
-      lastProofPath: proofPath,
-      proofUrl,
-      proofPath,
-      receiptUrl: proofUrl,
-      receiptPath: proofPath,
-      proofUploadedByUid: admin.uid,
-      proofUploadedByRole: "admin",
-      status: newRemaining <= 0.5 ? "completed" : "partially_paid",
-      updatedAtMs: Date.now(),
-      lastPaymentAt: serverTimestamp(),
-      completedAt: newRemaining <= 0.5 ? serverTimestamp() : null
-    });
-    await batch.commit();
-
-    $("adminPaymentStatus").textContent = newRemaining <= 0.5
-      ? "Pago registrado. El cierre quedó equilibrado."
-      : `Pago parcial registrado. Quedan ${money(newRemaining)} pendientes.`;
-    $("adminPaymentStatus").className = "status success";
-    setTimeout(() => {
-      selectedAdminClosureId = "";
-      $("adminPaymentForm").classList.add("hidden");
-      $("adminClosureList").classList.remove("hidden");
-      renderAdminClosures();
-    }, 1300);
-  } catch (err) {
-    console.error(err);
-    $("adminPaymentStatus").textContent = "No se pudo registrar el pago de Explora.";
-    $("adminPaymentStatus").className = "status error";
-  } finally {
-    $("confirmAdminPayment").disabled = false;
-    $("confirmAdminPayment").textContent = "Registrar pago";
-  }
-});

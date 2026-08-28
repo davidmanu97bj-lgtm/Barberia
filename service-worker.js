@@ -1,17 +1,40 @@
-const CACHE_PREFIX = "explora-shell";
+const CACHE_NAME = "barberia-ra-shell-v1";
+const APP_SHELL = [
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./barberia-core.mjs",
+  "./firebase-config.js",
+  "./manifest.json",
+  "./assets/barberia-logo.png",
+  "./icon-192.png",
+  "./icon-512.png"
+];
 
-self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("install", event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  self.skipWaiting();
+});
 
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys
-        .filter(key => key.startsWith(CACHE_PREFIX))
-        .map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
-// La aplicación sigue trabajando primero contra la red. Así los cambios de
-// login y de caja se reciben sin quedar atrapados en una versión anterior.
-self.addEventListener("fetch", () => {});
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
+        return response;
+      })
+      .catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html")))
+  );
+});
+
