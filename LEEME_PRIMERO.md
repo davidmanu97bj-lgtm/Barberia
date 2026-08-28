@@ -23,8 +23,16 @@ La cuenta propietaria existente debe tener uno de estos roles en `usuarios`, `us
 
 ## Telegram
 
-Los cobros y cierres ya guardan campos de evento preparados para Telegram, pero esta versión no incluye token ni grupo. Así se evita enviar información al grupo de Explora. La conexión al grupo nuevo se agrega en la siguiente etapa.
+Telegram está conectado exclusivamente al grupo **Barberia**, Chat ID `-5393018000`. Se envían avisos cuando:
+
+- se registra un cobro;
+- un barbero solicita un cierre;
+- el administrador completa un cierre.
+
+El token del bot **no está escrito dentro del proyecto**. Se guarda como secreto de Firebase con el nombre `BARBERIA_TELEGRAM_BOT_TOKEN`. En el primer despliegue, `DESPLEGAR_BARBERIA.sh` detecta que todavía no existe y Firebase pide pegar el token nuevo de `@Explora_notificaciones_bot`.
+
+Las funciones usan un registro interno `_telegram_delivery` para evitar que un mismo evento normal termine enviándose dos veces por una ejecución repetida.
 
 ## Despliegue desde iPhone / Cloud Shell
 
-Sube el ZIP, descomprímelo y ejecuta `bash DESPLEGAR_BARBERIA.sh`. El script fija el proyecto `barberia-c25a1`, instala dependencias, corre las pruebas y despliega Hosting, reglas y las funciones de creación/edición de barberos.
+Sube el ZIP, descomprímelo y ejecuta `bash DESPLEGAR_BARBERIA.sh`. El script fija el proyecto `barberia-c25a1`, configura el secreto de Telegram la primera vez, instala dependencias, corre las pruebas y despliega Hosting, reglas y todas las funciones de la barbería.

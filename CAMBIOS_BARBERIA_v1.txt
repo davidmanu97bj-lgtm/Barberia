@@ -13,3 +13,14 @@ BARBERÍA REPÚBLICA ARGENTINA · VERSIÓN 1
 - Cierres con reinicio inmediato a cero e historial conservado.
 - Préstamos, adelantos, Uber, gastos y toda referencia a Explora eliminados.
 - Datos listos para la integración posterior con un grupo nuevo de Telegram.
+
+ACTUALIZACIÓN TELEGRAM
+
+- Grupo exclusivo Barbería configurado con Chat ID -5393018000.
+- Cobros nuevos notifican al grupo Barbería.
+- Solicitudes de cierre notifican al grupo Barbería.
+- Cierres completados notifican al grupo Barbería.
+- Token del bot protegido con Firebase Secret Manager; no queda dentro del código.
+- Registro anti-duplicado para entregas de Telegram.
+- DESPLEGAR_BARBERIA.sh configura el secreto en el primer despliegue.
+
