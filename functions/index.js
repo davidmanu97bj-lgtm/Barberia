@@ -2,6 +2,9 @@ const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { defineSecret } = require("firebase-functions/params");
+const logger = require("firebase-functions/logger");
 
 initializeApp();
 
@@ -12,6 +15,9 @@ const BUSINESS_ID = "barberia-c25a1";
 const USER_EMAIL_DOMAIN = "barberia.local";
 const ADMIN_ROLES = new Set(["admin", "administrador", "owner", "propietario", "superadmin"]);
 const PROFILE_COLLECTIONS = ["administradores", "admins", "barberos", "usuarios", "users", "perfiles"];
+const TELEGRAM_CHAT_ID = "-5393018000";
+const TELEGRAM_BOT_TOKEN = defineSecret("BARBERIA_TELEGRAM_BOT_TOKEN");
+const TELEGRAM_DELIVERY_COLLECTION = "_telegram_delivery";
 
 function text(value) {
   return String(value ?? "").trim();
@@ -19,6 +25,138 @@ function text(value) {
 
 function normalized(value) {
   return text(value).normalize("NFKC").toLowerCase();
+}
+
+
+function money(value) {
+  const amount = Number(value || 0);
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0
+  }).format(Number.isFinite(amount) ? amount : 0);
+}
+
+function paymentMethodLabel(method) {
+  return normalized(method) === "digital" ? "Digital" : "Efectivo";
+}
+
+function settlementLine(direction, amount, barberName) {
+  const name = text(barberName) || "Barbero";
+  const settlementAmount = Math.abs(Number(amount || 0));
+  if (direction === "barber_pays_business") {
+    return `${name} debe entregar a Barbería: ${money(settlementAmount)}`;
+  }
+  if (direction === "business_pays_barber") {
+    return `Barbería debe pagar a ${name}: ${money(settlementAmount)}`;
+  }
+  return "Saldo equilibrado: no hay dinero por liquidar.";
+}
+
+function directionFromBalance(balance) {
+  const amount = Number(balance || 0);
+  if (amount > 0.5) return "barber_pays_business";
+  if (amount < -0.5) return "business_pays_barber";
+  return "balanced";
+}
+
+function buildChargeTelegramMessage(data = {}) {
+  const amount = Number(data.amount || data.monto || 0);
+  const barberName = text(data.barberName || data.barberoNombre) || "Barbero";
+  const balanceAfter = Number(data.balanceAfter || 0);
+  const direction = directionFromBalance(balanceAfter);
+  return [
+    "💈 NUEVO COBRO · BARBERÍA",
+    `Barbero: ${barberName}`,
+    `Servicio: ${text(data.service) || "Sin detalle"}`,
+    `Método: ${paymentMethodLabel(data.method || data.paymentMethod)}`,
+    `Cobro: ${money(amount)}`,
+    `Publicidad 10%: ${money(amount * 0.10)} (5% efectivo + 5% digital)`,
+    `Barbero 45%: ${money(amount * 0.45)}`,
+    `Barbería 45%: ${money(amount * 0.45)}`,
+    settlementLine(direction, Math.abs(balanceAfter), barberName)
+  ].join("\n");
+}
+
+function buildClosureRequestedTelegramMessage(data = {}) {
+  const barberName = text(data.barberName || data.barberoNombre) || "Barbero";
+  return [
+    "🧾 CIERRE SOLICITADO · BARBERÍA",
+    `Barbero: ${barberName}`,
+    `Total facturado: ${money(data.totalBilled)}`,
+    `Efectivo: ${money(data.cashTotal)}`,
+    `Digital: ${money(data.digitalTotal)}`,
+    `Publicidad 10%: ${money(data.advertisingFund)}`,
+    settlementLine(data.direction, data.settlementAmount, barberName),
+    "Estado: pendiente de resolución."
+  ].join("\n");
+}
+
+function buildClosureCompletedTelegramMessage(data = {}) {
+  const barberName = text(data.barberName || data.barberoNombre) || "Barbero";
+  return [
+    "✅ CIERRE COMPLETADO · BARBERÍA",
+    `Barbero: ${barberName}`,
+    settlementLine(data.direction, data.settlementAmount, barberName),
+    `Total del período: ${money(data.totalBilled)}`,
+    `Resuelto por: ${text(data.completedByName) || "Administrador"}`,
+    "Estado: completado."
+  ].join("\n");
+}
+
+function safeDeliveryId(value) {
+  return text(value).replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 240);
+}
+
+async function sendTelegramMessage(message) {
+  const token = TELEGRAM_BOT_TOKEN.value();
+  if (!token) throw new Error("Falta configurar BARBERIA_TELEGRAM_BOT_TOKEN.");
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+      disable_web_page_preview: true
+    })
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Telegram respondió ${response.status}${detail ? `: ${detail.slice(0, 300)}` : ""}`);
+  }
+}
+
+async function deliverTelegramOnce(deliveryId, message) {
+  const ref = db.collection(TELEGRAM_DELIVERY_COLLECTION).doc(safeDeliveryId(deliveryId));
+  try {
+    await ref.create({
+      businessId: BUSINESS_ID,
+      chatId: TELEGRAM_CHAT_ID,
+      status: "processing",
+      createdAt: FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    if (error?.code === 6 || error?.code === "already-exists" || error?.code === "6") {
+      logger.info("Notificación de Telegram ya procesada.", { deliveryId });
+      return false;
+    }
+    throw error;
+  }
+
+  try {
+    await sendTelegramMessage(message);
+    await ref.set({ status: "sent", sentAt: FieldValue.serverTimestamp() }, { merge: true });
+    return true;
+  } catch (error) {
+    await ref.delete().catch(() => {});
+    logger.error("No se pudo enviar la notificación de Barbería a Telegram.", {
+      deliveryId,
+      error: error?.message || String(error)
+    });
+    throw error;
+  }
 }
 
 function normalizeUsername(value) {
@@ -233,3 +371,80 @@ exports.adminUpdateBarber = onCall({
 
   return { ok: true, barberUid, name, active, passwordChanged: Boolean(password) };
 });
+
+exports.telegramBarberChargeCreated = onDocumentCreated({
+  document: "cobros/{chargeId}",
+  region: REGION,
+  memory: "256MiB",
+  timeoutSeconds: 60,
+  secrets: [TELEGRAM_BOT_TOKEN]
+}, async event => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+  const data = snapshot.data() || {};
+  if (data.businessId !== BUSINESS_ID || data.telegramReady !== true || data.telegramEventType !== "barber_charge_created") return;
+
+  const sent = await deliverTelegramOnce(
+    `charge_created_${event.params.chargeId}`,
+    buildChargeTelegramMessage(data)
+  );
+  if (sent) {
+    await snapshot.ref.set({
+      telegramStatus: "sent",
+      telegramChatId: TELEGRAM_CHAT_ID,
+      telegramSentAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  }
+});
+
+exports.telegramBarberClosureRequested = onDocumentCreated({
+  document: "cierres/{closureId}",
+  region: REGION,
+  memory: "256MiB",
+  timeoutSeconds: 60,
+  secrets: [TELEGRAM_BOT_TOKEN]
+}, async event => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+  const data = snapshot.data() || {};
+  if (data.businessId !== BUSINESS_ID || data.telegramReady !== true || data.telegramEventType !== "barber_closure_requested") return;
+
+  const sent = await deliverTelegramOnce(
+    `closure_requested_${event.params.closureId}`,
+    buildClosureRequestedTelegramMessage(data)
+  );
+  if (sent) {
+    await snapshot.ref.set({
+      telegramRequestStatus: "sent",
+      telegramChatId: TELEGRAM_CHAT_ID,
+      telegramRequestSentAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  }
+});
+
+exports.telegramBarberClosureCompleted = onDocumentUpdated({
+  document: "cierres/{closureId}",
+  region: REGION,
+  memory: "256MiB",
+  timeoutSeconds: 60,
+  secrets: [TELEGRAM_BOT_TOKEN]
+}, async event => {
+  if (!event.data) return;
+  const before = event.data.before.data() || {};
+  const after = event.data.after.data() || {};
+  const becameCompleted = before.status !== "completed" && after.status === "completed";
+  if (!becameCompleted || after.businessId !== BUSINESS_ID || after.telegramUpdateReady !== true || after.telegramUpdateEventType !== "barber_closure_completed") return;
+
+  const sent = await deliverTelegramOnce(
+    `closure_completed_${event.params.closureId}`,
+    buildClosureCompletedTelegramMessage(after)
+  );
+  if (sent) {
+    await event.data.after.ref.set({
+      telegramCompletionStatus: "sent",
+      telegramChatId: TELEGRAM_CHAT_ID,
+      telegramCompletionSentAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  }
+});
+
