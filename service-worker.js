@@ -1,4 +1,4 @@
-const CACHE_NAME = "barberia-ra-shell-v6";
+const CACHE_NAME = "barberia-ra-shell-v7";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
   "./firebase-config.js",
   "./manifest.json",
   "./assets/barberia-logo.png",
+  "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png"
 ];
