@@ -1,4 +1,4 @@
-const CACHE_NAME = "barberia-ra-shell-v5";
+const CACHE_NAME = "barberia-ra-shell-v6";
 const APP_SHELL = [
   "./",
   "./index.html",

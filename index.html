@@ -11,7 +11,7 @@
   <link rel="manifest" href="./manifest.json?v=4">
   <link rel="apple-touch-icon" href="./icon-192.png?v=4">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=4">
-  <link rel="stylesheet" href="./styles.css?v=4">
+  <link rel="stylesheet" href="./styles.css?v=5">
 </head>
 <body>
   <section id="splashScreen" class="splash-screen" aria-label="Cargando Barbería República Argentina">
@@ -190,8 +190,21 @@
           <input id="chargeDetail" type="text" maxlength="180" placeholder="Ej. Corte de Juan">
         </div>
         <div id="digitalProofField" class="field hidden">
-          <label for="chargeProof">Comprobante digital</label>
-          <input id="chargeProof" type="file" accept="image/*,.pdf">
+          <span class="field-label">Comprobante digital</span>
+          <div class="proof-picker" role="group" aria-label="Elegir cómo cargar el comprobante digital">
+            <label class="proof-option" for="chargeCameraProof">
+              <span aria-hidden="true">📷</span>
+              <strong>Sacar foto</strong>
+            </label>
+            <input id="chargeCameraProof" class="visually-hidden" type="file" accept="image/*" capture="environment">
+
+            <label class="proof-option" for="chargeProof">
+              <span aria-hidden="true">▧</span>
+              <strong>Subir de galería</strong>
+            </label>
+            <input id="chargeProof" class="visually-hidden" type="file" accept="image/*,.pdf">
+          </div>
+          <small id="chargeProofName" class="proof-file-name" aria-live="polite">Todavía no seleccionaste un comprobante.</small>
           <small>Imagen o PDF de hasta 10 MB.</small>
         </div>
         <div id="chargeStatus" class="status" aria-live="polite"></div>
@@ -324,6 +337,6 @@
     <span>✓</span><div><strong id="toastTitle">Operación exitosa</strong><small id="toastMessage">Los datos se guardaron correctamente.</small></div>
   </div>
 
-  <script type="module" src="./app.js?v=4"></script>
+  <script type="module" src="./app.js?v=5"></script>
 </body>
 </html>

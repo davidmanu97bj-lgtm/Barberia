@@ -140,7 +140,11 @@ function showModal(id) {
 }
 
 function hideModal(id) {
-  $(id)?.classList.add("hidden");
+  const modal = $(id);
+  if (modal?.contains(document.activeElement) && document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+  modal?.classList.add("hidden");
   if (!document.querySelector(".modal:not(.hidden)")) document.body.style.overflow = "";
 }
 
@@ -692,15 +696,30 @@ function selectedServiceDefinition() {
   return SERVICES.find(item => item.id === $("selectedService").value) || null;
 }
 
+function selectedChargeProof() {
+  return $("chargeCameraProof").files?.[0] || $("chargeProof").files?.[0] || null;
+}
+
+function updateChargeProofSelection(selectedInput = null) {
+  const cameraInput = $("chargeCameraProof");
+  const galleryInput = $("chargeProof");
+  if (selectedInput === cameraInput && cameraInput.files?.[0]) galleryInput.value = "";
+  if (selectedInput === galleryInput && galleryInput.files?.[0]) cameraInput.value = "";
+  const proof = selectedChargeProof();
+  $("chargeProofName").textContent = proof
+    ? `Comprobante seleccionado: ${proof.name || "foto tomada"}`
+    : "Todavía no seleccionaste un comprobante.";
+}
+
 function openChargeModal(mode) {
   $("chargeForm").reset();
+  updateChargeProofSelection();
   $("selectedService").value = "";
   $("chargeMode").value = mode;
   $("chargeModal").dataset.mode = mode;
   $("chargeModalTitle").textContent = mode === "cash" ? "Cobrar efectivo" : "Cobrar digital";
   $("chargeModeKicker").textContent = mode === "cash" ? "EFECTIVO · EN MANOS DEL BARBERO" : "DIGITAL · CUENTA DE LA BARBERÍA";
   $("digitalProofField").classList.toggle("hidden", mode !== "digital");
-  $("chargeProof").required = mode === "digital";
   $("serviceGrid").querySelectorAll(".service-option").forEach(item => item.classList.remove("selected"));
   statusMessage("chargeStatus");
   showModal("chargeModal");
@@ -710,7 +729,7 @@ function openChargePreview() {
   const service = selectedServiceDefinition();
   const amount = numberFromMoney($("chargeAmount").value);
   const mode = $("chargeMode").value;
-  const proof = $("chargeProof").files?.[0] || null;
+  const proof = selectedChargeProof();
   if (!service) return statusMessage("chargeStatus", "Seleccioná un servicio.", "error");
   if (!(amount > 0)) return statusMessage("chargeStatus", "Ingresá un importe válido.", "error");
   if (mode === "digital" && !proof) return statusMessage("chargeStatus", "El cobro digital necesita comprobante.", "error");
@@ -1085,6 +1104,8 @@ $("chargeAmount").addEventListener("input", event => {
   const digits = String(event.target.value || "").replace(/\D/g, "");
   event.target.value = digits ? new Intl.NumberFormat("es-AR").format(Number(digits)) : "";
 });
+$("chargeCameraProof").addEventListener("change", event => updateChargeProofSelection(event.currentTarget));
+$("chargeProof").addEventListener("change", event => updateChargeProofSelection(event.currentTarget));
 $("chargeForm").addEventListener("submit", event => { event.preventDefault(); openChargePreview(); });
 $("backToChargeButton").addEventListener("click", () => { hideModal("previewModal"); showModal("chargeModal"); });
 $("confirmChargeButton").addEventListener("click", savePendingCharge);

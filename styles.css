@@ -32,6 +32,15 @@ body {
 button, input, select { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; cursor: pointer; }
 .hidden { display: none !important; }
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
 
 .splash-screen {
   position: fixed;
@@ -111,7 +120,7 @@ button { -webkit-tap-highlight-color: transparent; cursor: pointer; }
   background: #fafbfc;
   color: var(--ink);
   padding: 13px 14px;
-  font-size: 15px;
+  font-size: 16px;
   transition: .16s ease;
 }
 .field input:focus, .field select:focus, .password-field input:focus {
@@ -120,6 +129,28 @@ button { -webkit-tap-highlight-color: transparent; cursor: pointer; }
   box-shadow: 0 0 0 4px rgba(11, 158, 217, .1);
 }
 .field small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.proof-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.proof-option {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  margin: 0 !important;
+  border: 1.5px solid rgba(22, 138, 85, .22);
+  border-radius: 14px;
+  background: rgba(22, 138, 85, .055);
+  color: var(--green) !important;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.proof-option:active { transform: scale(.985); }
+.proof-option:focus-within { border-color: var(--green); box-shadow: 0 0 0 4px rgba(22, 138, 85, .1); }
+.proof-option > span { font-size: 19px; line-height: 1; }
+.proof-option > strong { font-size: 11px; font-weight: 900; }
+.field .proof-file-name { color: var(--green); font-size: 11px; font-weight: 800; overflow-wrap: anywhere; }
 .password-field { position: relative; }
 .password-field input { padding-right: 58px; }
 .password-field button {
