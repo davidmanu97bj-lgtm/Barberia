@@ -1,0 +1,48 @@
+EXPLORA · UBER SEMANAL v81
+
+CAMBIOS REALIZADOS
+
+1. El cierre de Uber ahora contiene dos importes dentro del mismo menú:
+   - Uber cobrado en efectivo.
+   - Uber cobrado por transferencia.
+
+2. Reglas aplicadas:
+   - Efectivo: 50% para Explora + 5% de caja chica.
+   - Transferencia: 50% a favor del chofer y sin caja chica.
+
+3. Antes de guardar se muestra una confirmación con:
+   - Saldo actual y quién debe pagar.
+   - Importe e impacto del efectivo.
+   - Importe e impacto de la transferencia.
+   - Nuevo saldo y quién deberá pagar después.
+
+4. La semana y su fecha de cierre se calculan automáticamente. Solo pueden
+   cargarse semanas que hayan llegado a su fecha de cierre y todavía estén
+   pendientes.
+
+5. Avisos automáticos al iniciar:
+   - Faltan 2 días para cargar Uber.
+   - Falta 1 día para cargar Uber.
+   - Hoy debe cargarse el resultado de Uber.
+
+6. Se genera un único comprobante semanal visible en la lista inferior. El
+   comprobante detalla efectivo, transferencia y caja chica.
+
+7. Telegram recibe el comprobante con el total, efectivo, transferencia,
+   caja chica, semana y saldo final.
+
+8. El saldo del chofer, Tiempo real, Admin y Telegram utilizan la misma regla.
+
+COMPATIBILIDAD
+
+Los comprobantes antiguos de Uber, que no separaban los medios de pago, se
+mantienen como efectivo para conservar exactamente su impacto histórico.
+
+VALIDACIONES
+
+- Sintaxis de app.js y Functions: OK.
+- Pruebas del proyecto: 42/42 OK.
+- Prueba específica de Uber semanal dividido: OK.
+- Script Cloud Shell en modo validación completa: OK.
+- IDs HTML únicos: OK.
+

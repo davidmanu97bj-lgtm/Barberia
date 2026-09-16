@@ -1,0 +1,16 @@
+CAMBIOS v69 · REINTEGRO DE GASTOS Y TELEGRAM
+
+1. RESUMEN DEL CHOFER
+- Se agregó "Tu mitad de los gastos" sobre "Total a reintegrar por Explora".
+- Se aclaró que el importe es el 50% de los gastos menos lo ya utilizado.
+- El botón ahora dice "Usá este dinero para achicar tu deuda con Explora".
+- El botón conserva la identidad de Explora con fondo oscuro, borde dorado y mejor respuesta táctil.
+
+2. TELEGRAM · GASTOS
+- Se eliminó "Total acumulado de gastos" para evitar confusiones.
+- El mensaje muestra el gasto recién cargado.
+- El mensaje muestra el acumulado real que Explora todavía debe reintegrar.
+- Ese acumulado ya descuenta el dinero utilizado para achicar la deuda con Explora.
+
+3. VALIDACIÓN
+- Se agregaron pruebas automáticas para impedir que vuelva a mostrarse el total general de gastos.

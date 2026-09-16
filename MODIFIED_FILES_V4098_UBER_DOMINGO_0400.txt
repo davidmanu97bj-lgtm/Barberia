@@ -1,0 +1,10 @@
+EXPLORA v4098 · Semana Uber domingo 04:00
+
+Cambios:
+- Los períodos coinciden con la pantalla de Uber: domingo a domingo.
+- Ejemplos: 27 jul – 3 ago, 20 jul – 27 jul, 13 jul – 20 jul.
+- Corte semanal: domingo 04:00.
+- Fin del período: domingo siguiente 03:59:59.
+- El cierre disponible corresponde a la última semana finalizada.
+- El weekId conserva el sufijo _0400 y usa la fecha del domingo inicial.
+- Incluye las reglas Firestore y Storage corregidas.

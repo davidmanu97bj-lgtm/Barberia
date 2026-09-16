@@ -1,0 +1,18 @@
+EXPLORA v4087 — Fotos directas en avisos WhatsApp/Telegram
+
+ARCHIVOS MODIFICADOS
+- js/segments/13-script.mjs
+- js/segments/52-script.mjs
+- index.html
+- service-worker.js
+
+CAMBIOS
+1. Cobros con comprobante: guarda URL directa en receiptUrl y también en notificationPhotoUrl, telegramPhotoUrl, whatsappPhotoUrl y firebasePhotoUrl.
+2. Gastos: guarda los mismos alias tanto en gastos como en receipt_index.
+3. Cierres con comprobante: guarda el enlace directo normalizado en el documento del cierre.
+4. El mensaje de cierre conserva la línea “Ver foto del comprobante” con la URL de Firebase.
+5. Se actualizó la versión de caché para que teléfonos y tabletas descarguen los cambios.
+
+ACLARACIÓN
+- Los cobros en efectivo no tienen foto porque no solicitan comprobante.
+- Para cobros con tarjeta, QR o transferencia, gastos y cierres con comprobante, la URL queda disponible para el puente WhatsApp → Telegram.

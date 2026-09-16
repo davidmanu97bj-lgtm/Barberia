@@ -1,0 +1,17 @@
+EXPLORA v4040 · Deudas + WhatsApp iOS/Android
+
+Cambios aplicados:
+1. Bump completo de caché y query params para forzar que iOS/Android carguen los JS/CSS nuevos.
+2. El módulo antes llamado Pendientes queda como DEUDAS en el header y acciones.
+3. El formulario de Deudas mantiene ocultas las cuotas semanales: la deuda se maneja como saldo único, se reduce con pagos y puede incrementar por interés después de 15 días.
+4. Registros existentes queda como selector compacto.
+5. WhatsApp usa enlace universal https://wa.me/ para iOS, Android y PWA, evitando whatsapp://send y el error net::ERR_UNKNOWN_URL_SCHEME en Android.
+6. service-worker.js cambia a cache v4040 para limpiar versiones viejas.
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/13-script.mjs
+- js/segments/15-script.mjs
+- js/segments/52-script.mjs
+- css/segments/52-style.css

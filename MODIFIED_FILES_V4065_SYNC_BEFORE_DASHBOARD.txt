@@ -1,0 +1,26 @@
+EXPLORA v4065 · Sincronización antes de abrir dashboard
+
+Objetivo
+- Evitar que la app abra el menú con información vacía, incompleta o vieja después de restaurar sesión.
+- Mantener la sesión persistente: no volver al login salvo que el usuario pulse “Salir” o exista un error crítico real.
+
+Archivos modificados
+- index.html
+- css/segments/47-style.css
+- js/segments/11-script.mjs
+- js/segments/12-script.js
+- js/pwa-register.js
+- service-worker.js
+
+Cambios principales
+1. Pantalla de sincronización con spinner + progreso 0–100% sobre el splash/login.
+2. La app ya no abre una interfaz cacheada visualmente antes de recibir datos actuales.
+3. Después de login o reapertura, espera perfil actualizado, vehículo del chofer y datos semanales antes de mostrar el menú.
+4. Si Firestore tarda, mantiene “Sincronizando” y reintenta; no muestra menú viejo ni incompleto.
+5. El dashboard de chofer ya no hidrata datos vencidos/stale desde cache local.
+6. El panel admin evita mostrar resumen stale en el primer render.
+7. Service Worker/cache actualizados a v4065-sync-before-dashboard.
+
+Compatibilidad
+- iOS PWA / Safari
+- Android Chrome / PWA

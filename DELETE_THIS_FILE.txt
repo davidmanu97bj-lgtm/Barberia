@@ -1,0 +1,4 @@
+Eliminar del proyecto si existe:
+assets/icono_eficiencia_km.png
+
+Ya no se usa: pertenecía a la antigua Eficiencia Operativa.

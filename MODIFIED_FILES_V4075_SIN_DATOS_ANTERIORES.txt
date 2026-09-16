@@ -1,0 +1,28 @@
+EXPLORA v4075 · PRIMERA PINTURA SIN DATOS ANTERIORES
+
+ARCHIVOS MODIFICADOS
+- index.html
+- js/segments/03-script.js
+- js/segments/11-script.mjs
+- js/segments/37-script.js
+- js/pwa-register.js
+- service-worker.js
+
+CORRECCIÓN
+1. La sesión de Firebase continúa persistente y no vuelve al login.
+2. En un arranque nuevo, el dashboard permanece cubierto por el loader hasta terminar la primera sincronización autoritativa.
+3. Se eliminó la apertura inmediata de la copia visual guardada del usuario.
+4. Se eliminó la restauración automática de valores HTML guardados al iniciar, volver desde segundo plano o regresar mediante BFCache.
+5. El motor semanal ya no restaura un snapshot de sessionStorage después de haber cargado los datos actuales.
+6. FastCache deja de pintar automáticamente localStorage al cargar la página o volver a primer plano.
+7. Se cambió el esquema de FastCache a v225 para ignorar las entradas visuales de versiones anteriores.
+8. Si la app vuelve desde segundo plano o desde BFCache, conserva la sesión pero cubre temporalmente los datos congelados con el loader hasta completar la actualización.
+9. El administrador fuerza su resumen actual y el chofer fuerza su snapshot semanal actual antes de retirar el loader.
+10. El estado visual del cierre semanal guardado ya no se restaura automáticamente antes de la consulta actual.
+
+RESULTADO ESPERADO
+- No aparece primero un saldo, ranking, gasto o cierre anterior.
+- Se ve una sola carga estable y luego directamente la información vigente.
+- El login sólo aparece si no existe sesión autenticada o el usuario pulsa SALIR.
+
+11. Las cargas forzadas de inicio/reanudación no usan como respaldo visual el cierre ni el snapshot semanal guardado; ante una demora mantienen el estado de carga o error seguro.

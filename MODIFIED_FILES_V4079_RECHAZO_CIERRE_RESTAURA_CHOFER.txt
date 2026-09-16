@@ -1,0 +1,18 @@
+EXPLORA v4079 — RECHAZO DE CIERRE RESTAURA EL PANEL DEL CHOFER
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- js/pwa-register.js
+- service-worker.js
+- package.json
+
+Corrección:
+1. Un cierre rechazado deja de actuar como corte aunque conserve campos legacy como requested/on_demand.
+2. El rechazo se marca con cutoffActive=false, invalidatesCutoff=true y closureMode=rejected_on_demand.
+3. Facturación y Caja chica vuelven a tomar todos los movimientos posteriores al cierre válido anterior.
+4. Los cierres rechazados existentes de v4078 también se ignoran mediante rejected/rollbackRestored/statusLabel.
+5. Se actualizó el Service Worker y el registro PWA para impedir que iPhone/Android continúen cargando v4077/v4078 desde caché.
+6. El cierre rechazado permanece auditable en Actividad como NO ACEPTADO · Período restaurado.
+
+Después de desplegar, cerrar completamente la PWA y abrirla una vez para activar el nuevo Service Worker.

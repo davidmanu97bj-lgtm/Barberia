@@ -1,0 +1,24 @@
+EXPLORA v4013 · hard-disable control semanal de KM legacy
+
+Motivo:
+- En algunos dispositivos el service worker/cache viejo todavía mostraba el modal "EXPLORA · CONTROL SEMANAL / INICIO DE KILOMETRAJE".
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- js/segments/49-script.mjs
+- css/segments/51-style.css
+- css/segments/52-style.css
+
+Qué hace esta corrección:
+- Mantiene desactivado el módulo legacy de KM aunque algún HTML viejo intente cargar js/segments/49-script.mjs.
+- Elimina automáticamente cualquier #mileageOverlay / .mileage-overlay que aparezca por caché viejo.
+- Actualiza service worker a v4013-hard-disable-km y purga cachés explora-pwa-* anteriores.
+- Si se pide js/segments/49-script.mjs desde caché/service worker, devuelve un stub no-op.
+
+No se toca:
+- Home nuevo de pagos.
+- Cierres a demanda.
+- Carga de comprobantes.
+- Eficiencia/KM nueva integrada al cierre de facturación.

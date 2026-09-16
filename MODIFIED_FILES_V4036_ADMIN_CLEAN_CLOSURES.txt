@@ -1,0 +1,19 @@
+EXPLORA v4036 · Admin clean + cierre contable visual
+
+Archivos modificados:
+- index.html
+- js/segments/11-script.mjs
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios aplicados:
+1. Se retiraron visualmente los selectores Semana / Mes / Año del módulo admin compartido.
+2. Se retiraron visualmente los tabs Pagos / Gastos del módulo de comprobantes/admin compartido.
+3. Se ocultó el botón Actualizar de la esquina superior derecha cuando se abre Choferes.
+4. El modal Crear chofer ahora usa visual blanca estilo dashboard Explora: fondo claro, tarjetas blancas, bordes suaves, inputs claros y botón principal azul.
+5. El menú Cierre contable usa una pantalla blanca/amarilla estilo Últimas actividades, sin scroll-snap por chofer, con tarjetas verticales normales y más legibles.
+6. Se actualizó el texto admin del botón central a “Cierre contable”.
+
+Criterio técnico:
+- No se modificaron cálculos de cierres, Firestore, reglas financieras ni lógica de liquidación.
+- Cambios quirúrgicos sobre UI, navegación y estilos para reducir riesgo de regresión.

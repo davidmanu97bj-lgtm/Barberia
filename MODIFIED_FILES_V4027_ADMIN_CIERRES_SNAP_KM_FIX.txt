@@ -1,0 +1,14 @@
+V4027 ADMIN CIERRES SNAP KM FIX
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios:
+- Si el administrador pide cierre de facturación desde Admin > Cierres, no se le pide KM al admin.
+- El cierre queda con kmPendienteChofer / eficienciaPendienteDatos para que el chofer declare el KM al abrir su menú o al resolver el cierre.
+- Si el chofer pide cierre de facturación, el KM sigue siendo obligatorio para el chofer.
+- El payload de eficiencia ya no se calcula con KM 0 cuando el pedido lo inicia admin.
+- Ajuste visual compacto para evitar títulos cortados en la pantalla de cierres tipo snap.

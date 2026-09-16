@@ -1,0 +1,43 @@
+EXPLORA v4143 - PAGO DEL CHOFER APLICADO SOLO A FACTURACIÓN
+Fecha: 20 de agosto de 2026
+
+CAMBIO FUNCIONAL
+- "Deuda del chofer" continúa creando una deuda independiente, 100 % a cargo del chofer.
+- "Pago del chofer" ya no reduce multas, préstamos, adelantos ni otras deudas.
+- El pago se registra como un movimiento de Facturación y reduce el saldo de "quién paga a quién".
+- Ejemplo: si Chofer debe liquidar $10.000 y paga $10.000, Facturación queda en $0.
+- Las deudas independientes conservan exactamente su saldo anterior.
+- El pago no se suma como un servicio, no aumenta la facturación bruta, no genera caja chica y no altera rankings ni récords.
+- El movimiento queda visible en Actividades como "Pago del chofer".
+
+TRANSFERENCIA Y COMPROBANTE EN IPHONE
+- Efectivo y Transferencia responden como botones independientes.
+- Transferencia exige comprobante.
+- "Subir comprobante" abre el selector nativo de Fotos/Archivos mediante showPicker, con respaldo click.
+- Se aceptan JPG, PNG, WebP y PDF.
+- El archivo se guarda en billing_receipts/{chofer}/pagos-chofer, una ruta ya autorizada por Storage.
+
+TELEGRAM
+- Se envía "PAGO DEL CHOFER · FACTURACIÓN".
+- Incluye chofer, importe, medio, motivo, Facturación anterior y Facturación actual.
+- Informa expresamente "Deudas independientes: sin cambios".
+- Transferencia envía la imagen o PDF del comprobante.
+
+ARCHIVOS PRINCIPALES DE ESTA CORRECCIÓN
+- index.html
+- service-worker.js
+- css/segments/52-style.css
+- js/pwa-register.js
+- js/core/billing-settlement-payment-core.mjs (nuevo)
+- js/segments/11-script.mjs
+- js/segments/15-script.mjs
+- js/segments/52-script.mjs
+- functions/index.js
+- functions/telegram-billing-balance.js
+- functions/test/telegram-billing-balance.test.js
+- tests/admin-debt-menu-release.test.mjs
+- tests/billing-driver-payment.test.mjs (nuevo)
+
+DESPLIEGUE
+- Requiere publicar Firebase Hosting y Firebase Functions.
+- Comando: firebase deploy --project explora-control-operativo --only functions,hosting

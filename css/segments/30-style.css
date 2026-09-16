@@ -1,0 +1,30 @@
+
+  #performanceDerivatorCard[data-stable-derivation-card="true"],
+  .performance-ranking-card{
+    min-height:100%!important;
+    height:100%!important;
+    align-self:stretch!important;
+  }
+  .performance-dashboard-grid{align-items:stretch!important}
+  #performanceDerivatorBody{
+    min-height:190px!important;
+    height:190px!important;
+    display:grid!important;
+    place-items:center!important;
+    overflow:hidden!important;
+  }
+  .performance-derivator-winner{
+    min-height:190px!important;
+    height:190px!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    align-content:center!important;
+    overflow:hidden!important;
+  }
+  .performance-derivator-visual{min-height:82px!important;height:82px!important}
+  .performance-derivator-copy{min-height:92px!important;height:92px!important;display:grid!important;align-content:center!important}
+  #performanceDerivatorEmpty{
+    min-height:190px!important;
+    height:190px!important;
+    display:grid!important;
+  }
+  #performanceDerivatorEmpty[hidden]{display:none!important}

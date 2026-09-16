@@ -1,0 +1,15 @@
+V4031 · Fix quirúrgico menú inferior en Cierres admin
+
+Archivos modificados:
+- css/segments/52-style.css
+- index.html
+- service-worker.js
+
+Corrección:
+- Sólo CSS/cache bust.
+- En body.pay-admin-closures-open se dejó de forzar height:100svh.
+- La pantalla de cierres ahora usa 100dvh para que el bottom nav se ancle al viewport real en iPhone.
+- El menú inferior de Cierres conserva la misma estructura visual que Últimas actividades.
+- Se reforzó z-index, bottom:0, safe-area y color blanco del + central.
+
+No se tocó lógica financiera ni lógica de cierres.

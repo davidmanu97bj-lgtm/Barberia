@@ -1,0 +1,17 @@
+EXPLORA v73 · TIEMPO REAL E INHABILITACIÓN DE CHOFERES
+
+1. El bloque "Total facturado / Total gastado" fue reemplazado por "Tiempo real".
+2. Todos los choferes habilitados ven el nombre, quién debe liquidar y el monto actual de cada chofer activo.
+3. Rojo: el chofer debe liquidar a Explora. Verde: Explora debe liquidar al chofer.
+4. Los datos compartidos están sanitizados: no exponen comprobantes ni movimientos privados.
+5. Los saldos se actualizan automáticamente ante cobros, gastos, Uber, deudas, cierres y ajustes.
+6. Admin incorpora una pestaña explícita "Inhabilitar" dentro de Gestionar choferes.
+7. Al inhabilitar, se bloquea el acceso y el chofer desaparece de Tiempo real y de los menús operativos.
+8. El historial del chofer inhabilitado se conserva para consultas administrativas.
+9. Se agregaron reglas y pruebas de seguridad/consistencia para la nueva vista compartida.
+10. DESPLEGAR_EXPLORA_COMPLETO.sh ahora valida, prueba y despliega Hosting, reglas, Storage y Functions.
+11. El mismo SH inicializa o actualiza Git, crea el commit y hace push cuando existe el remoto origin.
+12. Si Git todavía no tiene remoto, conserva el commit local y continúa el despliegue sin perder cambios.
+
+DESPLIEGUE
+Ejecutar DESPLEGAR_EXPLORA_COMPLETO.sh para publicar Hosting, reglas y Functions.

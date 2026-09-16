@@ -1,0 +1,18 @@
+EXPLORA v4120 · cierre sin KM / sin Eficiencia Operativa
+
+Archivos modificados:
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- index.html
+- service-worker.js
+
+Cambios:
+- Se eliminó el campo "KM actual del auto" del cierre.
+- Pedir/cerrar facturación ya no exige KM inicial ni KM actual.
+- Los cierres pedidos por administrador ya no quedan en estado "KM pendiente".
+- Los cierres anteriores que tengan flags de KM pendiente ya no obligan al chofer a cargar KM.
+- Se eliminó el código y estilos legados de la antigua Eficiencia Operativa.
+- El módulo Uber semanal permanece intacto.
+- Se actualizó la versión/cache de la PWA para forzar la carga del cambio.
+
+- Se retiró el asset legado icono_eficiencia_km.png, que ya no tiene referencias activas.

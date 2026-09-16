@@ -1,0 +1,45 @@
+EXPLORA v4141 - ARCHIVOS PARA SUBIR A GIT
+Fecha: 20 de agosto de 2026
+
+INSTRUCCIONES
+1. Descomprimir archivos-modificados-v4141-para-git.zip.
+2. Abrir la carpeta santander-main.
+3. Copiar su contenido en la raíz del repositorio, conservando las carpetas.
+4. Confirmar el reemplazo de los archivos existentes.
+5. Subir/confirmar los cambios en Git.
+
+No se debe subir el ZIP dentro del repositorio: se suben los archivos extraídos.
+
+ARCHIVOS NUEVOS O MODIFICADOS RESPECTO DEL MAIN RECIBIDO
+- ARCHIVOS_MODIFICADOS_V4141_PARA_GIT.txt
+- MODIFIED_FILES_V4139_ADMIN_DEBT_PAYMENT.txt
+- MODIFIED_FILES_V4140_TELEGRAM_DEBT_PAYMENT.txt
+- MODIFIED_FILES_V4141_DEUDAS_PAGOS_ADMIN.txt
+- index.html
+- service-worker.js
+- css/segments/52-style.css
+- js/pwa-register.js
+- js/core/admin-debt-payment-core.mjs
+- js/core/admin-debt-ledger-core.mjs
+- js/segments/11-script.mjs
+- js/segments/13-script.mjs
+- js/segments/15-script.mjs
+- js/segments/52-script.mjs
+- functions/package.json
+- functions/package-lock.json
+- functions/index.js
+- functions/telegram-debt-payment.js
+- functions/telegram-driver-debt.js
+- functions/test/telegram-debt-payment.test.js
+- functions/test/telegram-driver-debt.test.js
+- tests/admin-debt-payment.test.mjs
+- tests/admin-debt-ledger.test.mjs
+- tests/admin-debt-menu-release.test.mjs
+
+PUBLICACIÓN FIREBASE
+Después de actualizar Git, esta versión requiere desplegar:
+- Firebase Hosting.
+- Firebase Functions.
+
+Comando desde la raíz del proyecto:
+firebase deploy --project explora-control-operativo --only functions,hosting

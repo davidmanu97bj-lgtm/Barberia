@@ -1,0 +1,25 @@
+EXPLORA v4053 · Modal de cierre centrado + datos de perfil visibles
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios aplicados:
+1. En los modales de cierre se agrega una tarjeta visible con los datos de perfil correspondientes.
+2. Si Explora debe liquidar al chofer, el modal muestra:
+   - Alias del chofer
+   - CUIT del chofer
+   - Celular del chofer
+3. Si el chofer debe liquidar a Explora, el modal muestra:
+   - Alias de Explora
+   - CUIT de Explora
+   - Celular de Explora
+4. Los datos se toman primero del cierre guardado; si no existen, se hace fallback al perfil actual del chofer cargado en state.drivers/state.profile.
+5. El cierre guarda también driverPaymentPhoneDisplay para conservar el número visible.
+6. El modal de cierre queda centrado visualmente para admin y chofer.
+7. Se mantiene max-height + overflow interno para que no se corte en pantallas chicas.
+8. Se actualizó cache/versionado para evitar CSS/JS viejo.
+
+No se tocaron cálculos financieros, Firestore de movimientos, reglas de cierre, histórico ni WhatsApp.

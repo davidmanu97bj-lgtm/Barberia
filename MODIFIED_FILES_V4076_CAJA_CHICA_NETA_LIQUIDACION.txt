@@ -1,0 +1,16 @@
+EXPLORA · v4076 · Caja chica neteada en liquidación a favor del chofer
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- functions/index.js
+- service-worker.js
+
+Regla aplicada:
+- El efectivo actual del período abierto conserva el importe total cobrado.
+- Digital, total facturado y parte de cada uno siguen calculándose sobre el total completo.
+- En la tarjeta Chofer se agrega el desglose “Caja chica 5% efectivo”.
+- Cuando Explora debe liquidar al chofer, la liquidación final descuenta el 5% correspondiente al efectivo elegible.
+- Si el chofer debe liquidar a Explora, Facturación no suma ese 5%: continúa pendiente en el módulo Caja chica.
+- La caja chica ya compensada o reservada por una liquidación a favor del chofer se descuenta del saldo abierto de Caja chica para evitar cobrarla dos veces.
+- Los cierres guardan el importe previo, el 5% generado, el 5% compensado y el resultado final.

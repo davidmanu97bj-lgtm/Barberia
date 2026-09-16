@@ -1,0 +1,10 @@
+EXPLORA v4097 · Semana Uber lunes 04:00
+
+Cambios:
+- La semana de Uber comienza cada lunes a las 04:00.
+- Finaliza el lunes siguiente a las 03:59:59.
+- El cierre disponible corresponde siempre a la última semana finalizada.
+- weekId incluye la fecha de inicio y el sufijo _0400.
+- Se quitó el modo de prueba.
+- Se muestra el próximo reinicio y el tiempo restante.
+- Se incluyen las reglas Firestore/Storage corregidas v4096.

@@ -1,0 +1,238 @@
+
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"],
+    .closure-receipt-panel[data-requirement="ALREADY_CONFIRMED"]{border-color:rgba(92,226,142,.34);background:linear-gradient(180deg,rgba(26,126,70,.16),rgba(10,45,28,.18));}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-panel-head span,
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-administrative-status strong{color:#8ff0b2;}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-panel-head small{display:none;}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-administrative-status{border-color:rgba(92,226,142,.28);background:rgba(26,126,70,.12);}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-actions{display:none!important;}
+  
+/* EXPLORA · Pendientes: aviso compacto + visor blanco de comprobante */
+.debt-notification-stack{
+  display:grid!important;
+  gap:12px!important;
+  margin:12px 0 18px!important;
+}
+.debt-notification-stack[hidden]{display:none!important;}
+.debt-notification-card{
+  position:relative!important;
+  min-width:0!important;
+  border:1px solid rgba(221,226,238,.96)!important;
+  border-radius:22px!important;
+  background:#fff!important;
+  color:#242637!important;
+  box-shadow:0 18px 42px rgba(32,38,61,.08)!important;
+  padding:14px 92px 38px 14px!important;
+  display:block!important;
+  overflow:hidden!important;
+}
+.debt-notification-card::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:linear-gradient(180deg,#ffe16b,#f5c84a);
+  opacity:.95;
+}
+.debt-notification-head{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  min-width:0;
+}
+.debt-notification-symbol{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  background:#eef4ff;
+  color:#4e50e6;
+  font-weight:950;
+  font-size:22px;
+  line-height:1;
+}
+.debt-notification-copy{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.debt-notification-card strong{
+  color:#242637!important;
+  font-size:13px!important;
+  letter-spacing:.06em!important;
+  text-transform:uppercase!important;
+  line-height:1.15!important;
+}
+.debt-notification-card span,
+.debt-notification-card small{
+  color:#646a80!important;
+  line-height:1.28!important;
+}
+.debt-notification-card span{
+  font-weight:850!important;
+  color:#303345!important;
+}
+.debt-notification-close{
+  position:absolute;
+  top:11px;
+  right:12px;
+  border:0!important;
+  border-radius:999px!important;
+  background:#f3f5fb!important;
+  color:#303345!important;
+  font-weight:850!important;
+  font-size:11px!important;
+  min-height:28px!important;
+  padding:0 12px!important;
+  box-shadow:none!important;
+}
+.debt-photo-mini{
+  position:absolute;
+  right:12px;
+  bottom:10px;
+  border:1px solid rgba(78,80,230,.16)!important;
+  border-radius:999px!important;
+  background:#f4f6ff!important;
+  color:#4e50e6!important;
+  font-weight:900!important;
+  font-size:11px!important;
+  letter-spacing:.01em!important;
+  min-height:28px!important;
+  padding:0 12px!important;
+  text-transform:lowercase!important;
+  box-shadow:none!important;
+}
+.debt-notification-actions{display:none!important;}
+.debt-photo-modal[hidden]{display:none!important;}
+.debt-photo-modal{
+  position:fixed;
+  inset:0;
+  z-index:10050;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:rgba(17,22,36,.34);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.debt-photo-backdrop{
+  position:absolute;
+  inset:0;
+}
+.debt-photo-sheet{
+  position:relative;
+  z-index:1;
+  width:min(94vw,460px);
+  max-height:min(84vh,760px);
+  border-radius:28px;
+  background:#fff;
+  color:#232536;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 28px 70px rgba(21,25,42,.26);
+  border:1px solid rgba(226,230,241,.96);
+}
+.debt-photo-header{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+  padding:18px 18px 12px;
+  border-bottom:1px solid rgba(226,230,241,.9);
+}
+.debt-photo-header span{
+  display:block;
+  color:#d4aa2d;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+.debt-photo-header strong{
+  display:block;
+  color:#222436;
+  font-size:19px;
+  line-height:1.15;
+  margin-top:4px;
+}
+.debt-photo-header small{
+  display:block;
+  color:#7b8193;
+  font-size:12px;
+  margin-top:6px;
+}
+.debt-photo-close{
+  width:44px;
+  height:44px;
+  border-radius:15px;
+  border:1px solid rgba(212,218,232,.95);
+  background:#f7f8fc;
+  color:#242637;
+  font-size:28px;
+  line-height:1;
+  font-weight:600;
+}
+.debt-photo-body{
+  background:#f4f6fb;
+  padding:12px;
+  overflow:auto;
+  display:grid;
+  place-items:center;
+  min-height:180px;
+}
+.debt-photo-body img{
+  display:block;
+  max-width:100%;
+  height:auto;
+  max-height:58vh;
+  object-fit:contain;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 10px 28px rgba(33,39,57,.12);
+}
+.debt-photo-file{
+  width:100%;
+  border:1px solid rgba(213,219,233,.96);
+  border-radius:20px;
+  padding:18px;
+  background:#fff;
+  display:grid;
+  gap:8px;
+  text-align:center;
+}
+.debt-photo-file strong{font-size:18px;color:#242637;}
+.debt-photo-file span{color:#6a7083;}
+.debt-photo-file a{color:#4e50e6;font-weight:900;text-decoration:none;}
+.debt-photo-footer{
+  padding:12px 14px 14px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  border-top:1px solid rgba(226,230,241,.9);
+  background:#fff;
+}
+.debt-photo-footer a,
+.debt-photo-footer button{
+  min-height:44px;
+  border-radius:15px;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  font-weight:900;
+  border:1px solid rgba(218,223,237,.96);
+  background:#f7f8fc;
+  color:#242637;
+}
+.debt-photo-footer a{
+  background:#fff7db;
+  border-color:rgba(216,171,44,.38);
+  color:#8b6813;
+}
+.debt-photo-modal-open{overflow:hidden;}
+@media (max-width:480px){
+  .debt-notification-card{padding-right:82px!important;}
+  .debt-photo-sheet{width:calc(100vw - 24px);border-radius:24px;}
+}

@@ -1,0 +1,54 @@
+
+    /* v232 · Fallback estable para WKWebView/HTMLKeep.
+       Evita blur compuesto dentro de una capa fixed con scroll horizontal. */
+    html.explora-ios-webview .main-bottom-nav.performance-bottom-nav,
+    html.explora-bottom-nav-safe-mode .main-bottom-nav.performance-bottom-nav {
+      position: fixed !important;
+      inset: auto 0 0 0 !important;
+      width: min(100%, 520px) !important;
+      margin-inline: auto !important;
+      background-color: rgba(7, 10, 18, .94) !important;
+      background-image: linear-gradient(180deg, rgba(18, 24, 32, .96), rgba(7, 10, 18, .985)) !important;
+      border-top: 1px solid rgba(255, 255, 255, .07) !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      transform: none !important;
+      -webkit-transform: none !important;
+      will-change: auto !important;
+      contain: none !important;
+      isolation: auto !important;
+      backface-visibility: visible !important;
+      -webkit-backface-visibility: visible !important;
+      opacity: 1 !important;
+      overflow: visible !important;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, .24) !important;
+    }
+
+    html.explora-ios-webview .performance-goal-viewport,
+    html.explora-bottom-nav-safe-mode .performance-goal-viewport,
+    html.explora-ios-webview .performance-goal-track,
+    html.explora-bottom-nav-safe-mode .performance-goal-track {
+      background: transparent !important;
+      transform: none !important;
+      -webkit-transform: none !important;
+      will-change: auto !important;
+      contain: none !important;
+      isolation: auto !important;
+      backface-visibility: visible !important;
+      -webkit-backface-visibility: visible !important;
+    }
+
+    html.explora-ios-webview .performance-goal-viewport,
+    html.explora-bottom-nav-safe-mode .performance-goal-viewport {
+      -webkit-overflow-scrolling: auto !important;
+      overscroll-behavior-x: contain !important;
+    }
+
+    html.explora-ios-webview .main-bottom-nav.performance-bottom-nav::before,
+    html.explora-ios-webview .main-bottom-nav.performance-bottom-nav::after,
+    html.explora-bottom-nav-safe-mode .main-bottom-nav.performance-bottom-nav::before,
+    html.explora-bottom-nav-safe-mode .main-bottom-nav.performance-bottom-nav::after {
+      content: none !important;
+      display: none !important;
+    }
+  

@@ -1,0 +1,8 @@
+EXPLORA v4094 · Cierre Uber: resumen y visual clara
+
+- El resumen muestra únicamente Deudas (50%) y Caja chica Uber (5%).
+- Se quitaron las referencias al importe restante o parte neta del chofer.
+- Se reemplazaron los fondos negros del formulario por superficies claras.
+- Se mejoraron campos, selector de archivo, tarjetas de importes y botones.
+- Los puntos de miles continúan agregándose automáticamente.
+- Se incluyen las reglas completas firestore.rules y storage.rules.

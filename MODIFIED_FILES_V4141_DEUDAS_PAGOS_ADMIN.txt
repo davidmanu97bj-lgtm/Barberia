@@ -1,0 +1,43 @@
+EXPLORA v4141 - DEUDAS Y PAGOS DEL CHOFER
+Fecha: 20 de agosto de 2026
+
+CAMBIO FUNCIONAL
+- Admin > Más > Deudas ahora muestra solamente dos operaciones:
+  1. Deuda del chofer.
+  2. Pago del chofer.
+- Deuda del chofer: chofer, detalle/motivo, importe y comprobante opcional.
+- Pago del chofer: chofer, importe, efectivo/transferencia, motivo y comprobante.
+- El comprobante es obligatorio solamente para transferencia.
+- Una deuda queda 100 % a cargo del chofer.
+- Un pago es reconocido 100 % por Explora y reduce primero las deudas más antiguas.
+- La pantalla muestra la deuda anterior, el movimiento, la deuda resultante y quién paga a quién.
+- Se envía Telegram tanto al registrar una deuda como al registrar un pago.
+- Telegram incluye chofer, motivo, importe, deuda anterior y deuda actual.
+- Los comprobantes PDF se envían a Telegram como documento; las imágenes, como foto.
+- Se corrigió la versión de caché PWA para que el cambio aparezca en iPhone.
+
+ARCHIVOS PRINCIPALES MODIFICADOS
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- css/segments/52-style.css
+- js/segments/11-script.mjs
+- js/segments/13-script.mjs
+- js/segments/15-script.mjs
+- js/segments/52-script.mjs
+- js/core/admin-debt-payment-core.mjs
+- js/core/admin-debt-ledger-core.mjs (nuevo)
+- functions/index.js
+- functions/telegram-debt-payment.js
+- functions/telegram-driver-debt.js (nuevo)
+
+PRUEBAS
+- tests/admin-debt-payment.test.mjs
+- tests/admin-debt-ledger.test.mjs (nuevo)
+- tests/admin-debt-menu-release.test.mjs (nuevo)
+- functions/test/telegram-debt-payment.test.js
+- functions/test/telegram-driver-debt.test.js (nuevo)
+
+DESPLIEGUE
+- Requiere publicar Firebase Hosting y Firebase Functions.
+- El instalador actualizar-v4141.sh instala las dependencias de Functions y ejecuta ambos despliegues.

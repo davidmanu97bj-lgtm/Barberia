@@ -1,0 +1,10 @@
+EXPLORA v4085 — MODIFICAR VALOR ADMINISTRADOR (CORRECCIÓN REAL)
+
+- El acceso Administrador > Comprobantes activa un modo administrador explícito.
+- Cada pago de cliente muestra MODIFICAR VALOR sin depender de que el rol visual termine de sincronizar.
+- Se muestran todos los comprobantes; no se filtran automáticamente por mes o semana.
+- Firestore sigue siendo la autoridad final de permisos.
+- Se corrigieron BUILD y caché PWA para no reutilizar v4082/v4083/v4084.
+- Se agrega el indicador ADMIN · EDICIÓN DE VALORES ACTIVA para confirmar que la versión correcta fue publicada.
+
+Archivos: index.html, service-worker.js, js/pwa-register.js, js/segments/09-script.js, js/segments/11-script.mjs, js/segments/13-script.mjs, css/segments/53-style.css.

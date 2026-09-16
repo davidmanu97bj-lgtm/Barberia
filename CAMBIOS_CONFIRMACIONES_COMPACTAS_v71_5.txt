@@ -1,0 +1,13 @@
+EXPLORA v71.5 — Confirmaciones compactas
+
+Archivos modificados:
+- styles.css
+- index.html
+
+Cambios:
+- Se redujo el tamaño general del modal de confirmación en iPhone.
+- Se redujeron márgenes, espacios verticales, icono, títulos, tarjetas y botones.
+- Se conserva toda la información y toda la lógica.
+- El cambio aplica al modal de confirmación compartido por efectivo, digital, Uber y gastos.
+- index.html solo actualiza la versión de styles.css para evitar caché antigua en iPhone.
+- Se conservan los botones de gasto Lavadero, Combustible y Otro, incluido el comportamiento obligatorio de Otro.

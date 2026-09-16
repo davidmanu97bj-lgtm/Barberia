@@ -1,0 +1,16 @@
+MODIFICACIÓN: Ajustes visuales del módulo Pendientes
+
+Archivos modificados:
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios realizados:
+1. La barra superior de módulos ahora usa scroll horizontal para que Chofer, Explora, Gastos, Caja chica y Pendientes queden siempre en una sola línea.
+2. Al seleccionar Pendientes, la pestaña activa se desplaza automáticamente al centro/visible.
+3. En Pendientes se ocultan los botones Registrar cobro y Cargar gasto.
+4. En Pendientes queda solo la acción Reducir deuda.
+5. Se acortó el texto descriptivo para evitar cortes visuales.
+6. El subtítulo ahora permite salto de línea y no se corta hacia la derecha.
+
+No se modificaron reglas Firestore, Storage ni Functions.
+No se modificó la lógica de Chofer, Explora, Gastos, Caja chica, ranking, cierres ni facturación.

@@ -1,0 +1,36 @@
+EXPLORA v4016 · Orden de tarjetas + campanitas de cambios
+
+Cambios aplicados sobre v4015:
+
+1) Orden del Home financiero:
+   - Chofer primero
+   - Explora segundo
+   - Gastos tercero
+   - Caja chica cuarto
+
+2) Nueva tarjeta inicial por defecto:
+   - Al abrir el Home financiero entra primero en Chofer.
+
+3) Campanitas pequeñas sobre tarjetas:
+   - Cobro en efectivo: suma aviso en Chofer y Caja chica.
+   - Gasto cargado: suma aviso en Gastos.
+   - Cobro digital/transferencia/QR/tarjeta: suma aviso en Explora.
+   - Si se carga más de un movimiento sin abrir la tarjeta, acumula 1, 2, 3...
+   - Al tocar la tarjeta correspondiente, se borra solo el contador de esa tarjeta.
+
+4) Persistencia local:
+   - Los avisos quedan guardados por chofer en localStorage.
+   - No se cuentan como nuevos los movimientos históricos del primer arranque.
+
+5) Cache/PWA:
+   - service worker actualizado a v4016-card-alerts.
+   - pwa-register actualizado a v4016-card-alerts.
+   - index.html usa cache busting v4016-card-alerts.
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- js/segments/52-style.css

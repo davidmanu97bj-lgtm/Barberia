@@ -1,0 +1,12 @@
+EXPLORA v4099 — CIERRE UBER + WHATSAPP + ADMIN
+
+Cambios:
+- La etiqueta semanal muestra el domingo final de Uber:
+  ejemplo 27/7 – 3/8.
+- Al registrar el cierre se abre WhatsApp de Explora.
+- El mensaje incluye:
+  chofer, semana, total, deuda 50%, caja chica 5% y enlace de la captura.
+- La foto se comparte como enlace directo de Firebase, debido a la limitación
+  de WhatsApp para adjuntar automáticamente desde una PWA.
+- El administrador puede abrir la captura, aprobar o rechazar el cierre.
+- Si se rechaza, el chofer puede volver a cargar esa semana.

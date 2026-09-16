@@ -1,0 +1,7 @@
+EXPLORA v4101 — BANDEJA ADMIN DE CIERRES UBER
+
+- Corrige la consulta global de uber_weekly_closures en administrador.
+- Muestra cantidad de cierres Uber pendientes.
+- Bandeja con chofer, semana, total y comprobante.
+- Ver comprobante, revisar, aceptar o rechazar.
+- Luego de la decisión vuelve a la bandeja.

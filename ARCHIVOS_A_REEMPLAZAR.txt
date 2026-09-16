@@ -1,0 +1,11 @@
+Reemplazar exactamente estos 7 archivos en el repositorio:
+
+1. index.html
+2. service-worker.js
+3. functions/index.js
+4. js/pwa-register.js
+5. js/segments/11-script.mjs
+6. css/segments/50-style.css
+7. css/segments/52-style.css
+
+No subir node_modules, el ZIP completo ni deploy-cloud-shell.sh.

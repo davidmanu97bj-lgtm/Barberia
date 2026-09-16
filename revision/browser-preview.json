@@ -1,0 +1,102 @@
+[
+  {
+    "width": 320,
+    "noHorizontalOverflow": true,
+    "settlement": "Explora te debe\n$\u00a015.150\nImporte pendiente de liquidar; no es un cobro nuevo.",
+    "pageErrors": [],
+    "nav": {
+      "rect": {
+        "x": 0,
+        "y": 768,
+        "width": 320,
+        "height": 76,
+        "top": 768,
+        "right": 320,
+        "bottom": 844,
+        "left": 0
+      },
+      "position": "fixed",
+      "left": "160px",
+      "right": "-160px",
+      "width": "320px",
+      "maxWidth": "760px",
+      "transform": "matrix(1, 0, 0, 1, -160, 0)",
+      "translate": "none"
+    }
+  },
+  {
+    "width": 390,
+    "noHorizontalOverflow": true,
+    "settlement": "Explora te debe\n$\u00a015.150\nImporte pendiente de liquidar; no es un cobro nuevo.",
+    "pageErrors": [],
+    "nav": {
+      "rect": {
+        "x": 0,
+        "y": 774,
+        "width": 390,
+        "height": 70,
+        "top": 774,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      },
+      "position": "fixed",
+      "left": "195px",
+      "right": "-195px",
+      "width": "390px",
+      "maxWidth": "760px",
+      "transform": "matrix(1, 0, 0, 1, -195, 0)",
+      "translate": "none"
+    }
+  },
+  {
+    "width": 768,
+    "noHorizontalOverflow": true,
+    "settlement": "Explora te debe\n$\u00a015.150\nImporte pendiente de liquidar; no es un cobro nuevo.",
+    "pageErrors": [],
+    "nav": {
+      "rect": {
+        "x": 4,
+        "y": 774,
+        "width": 760,
+        "height": 70,
+        "top": 774,
+        "right": 764,
+        "bottom": 844,
+        "left": 4
+      },
+      "position": "fixed",
+      "left": "384px",
+      "right": "-376px",
+      "width": "760px",
+      "maxWidth": "760px",
+      "transform": "matrix(1, 0, 0, 1, -380, 0)",
+      "translate": "none"
+    }
+  },
+  {
+    "width": 1280,
+    "noHorizontalOverflow": true,
+    "settlement": "Explora te debe\n$\u00a015.150\nImporte pendiente de liquidar; no es un cobro nuevo.",
+    "pageErrors": [],
+    "nav": {
+      "rect": {
+        "x": 260,
+        "y": 774,
+        "width": 760,
+        "height": 70,
+        "top": 774,
+        "right": 1020,
+        "bottom": 844,
+        "left": 260
+      },
+      "position": "fixed",
+      "left": "640px",
+      "right": "-120px",
+      "width": "760px",
+      "maxWidth": "760px",
+      "transform": "matrix(1, 0, 0, 1, -380, 0)",
+      "translate": "none"
+    }
+  }
+]

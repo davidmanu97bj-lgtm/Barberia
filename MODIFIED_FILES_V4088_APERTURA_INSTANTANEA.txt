@@ -1,0 +1,14 @@
+EXPLORA v4088 — APERTURA INSTANTÁNEA Y SINCRONIZACIÓN SILENCIOSA
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/11-script.mjs
+- js/segments/37-script.js
+
+Cambios:
+1. Cuando Firebase restaura una sesión ya conocida, la app abre inmediatamente con la última interfaz guardada.
+2. Perfil, saldos, actividades, vehículo y cierres se actualizan en segundo plano.
+3. Al volver desde segundo plano ya no aparece el splash de sincronización ni se bloquea el menú.
+4. El loader completo queda para el primer acceso, después de cerrar sesión o cuando no existe una sesión local válida.
+5. Se actualizó la caché PWA a v4088.

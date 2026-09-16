@@ -1,0 +1,17 @@
+
+    :root{--safe-bottom-offset:calc(env(safe-area-inset-bottom) + 28px)}
+    #performanceDerivatorDerived{display:flex!important;align-items:center;justify-content:center;gap:.35em;max-width:100%;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:center;line-height:1.12;font-size:clamp(9px,7.1cqw,12px)!important}
+    .performance-derivator-derived-label,.performance-derivator-derived-amount{display:inline;max-width:100%;overflow:visible;text-overflow:clip;white-space:normal}
+    .performance-derivator-derived-amount{font-variant-numeric:tabular-nums;font-weight:950}
+    @container (max-width:165px){#performanceDerivatorDerived{flex-direction:column;gap:2px}.performance-derivator-derived-label,.performance-derivator-derived-amount{display:block}}
+    #billingFormBackdrop.billing-form-backdrop{z-index:2400;inset:0;height:var(--visual-viewport-height,100dvh);max-height:var(--visual-viewport-height,100dvh);padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));touch-action:pan-y}
+    #billingFormBackdrop .billing-form-card{max-height:calc(var(--visual-viewport-height,100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);min-height:0}
+    #billingFormBackdrop .billing-modal-content{overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y!important;min-height:0;padding-bottom:calc(var(--safe-bottom-offset) + 18px)}
+    body.billing-form-open #performanceGoalViewport,body.billing-form-open #mainBottomNav,body.billing-form-open .main-bottom-nav{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+    body.billing-form-open{overflow:hidden!important;touch-action:none!important}
+    body.billing-form-open #billingFormBackdrop,body.billing-form-open #billingFormBackdrop *{touch-action:pan-y}
+    .derivation-payment-grid.is-invalid,.derivation-payment-grid[aria-invalid="true"]{outline:2px solid rgba(255,104,104,.72);outline-offset:5px;border-radius:15px;background:rgba(120,20,28,.10)}
+    .derivation-simple-main{padding-bottom:calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 180px)!important}
+    [aria-invalid="true"]{scroll-margin-top:18px;scroll-margin-bottom:34px}
+    .explora-field-error{border-color:rgba(255,104,104,.68)!important;box-shadow:0 0 0 2px rgba(255,104,104,.10)!important}
+  

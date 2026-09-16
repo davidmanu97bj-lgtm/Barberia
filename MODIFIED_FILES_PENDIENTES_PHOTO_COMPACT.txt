@@ -1,0 +1,16 @@
+EXPLORA · Pendientes · aviso compacto y visor blanco de comprobante
+
+Archivos modificados:
+- js/segments/14-script.mjs
+- css/segments/14-style.css
+- index.html
+- service-worker.js
+
+Cambios:
+- Se quitó el cartel rojo grande de deuda nueva.
+- El aviso de deuda pendiente ahora es una tarjeta blanca compacta, consistente con la visual actual.
+- El botón ACÉPTAR se reemplazó por Cerrar.
+- El botón Ver archivo se reemplazó por "ver foto", pequeño y ubicado abajo a la derecha.
+- Al tocar "ver foto" se abre un modal blanco moderno dentro de la app.
+- Ya no se deriva al visor oscuro de Archivo Oficial para este aviso.
+- Se actualizó la versión de carga para evitar caché de PWA.

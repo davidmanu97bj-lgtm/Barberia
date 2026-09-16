@@ -1,0 +1,17 @@
+V4078 · NO ACEPTAR CIERRE Y RESTAURAR PERÍODO
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios:
+1. En el panel admin, todo cierre abierto puede abrirse para revisión aunque esté esperando el pago del chofer.
+2. El modal admin incorpora el botón rojo “No aceptar cierre” (o “Anular cierre” si el pedido lo inició admin).
+3. Solo se permite rechazar cierres abiertos y sin comprobante.
+4. Al rechazar, el cierre queda auditado como “rechazado” y deja de actuar como corte operativo.
+5. Facturación y Caja chica recuperan automáticamente el período previo, incluyendo los importes que habían quedado en $0 por el pedido equivocado.
+6. Los movimientos posteriores al pedido también continúan dentro del período abierto.
+7. El cierre rechazado permanece visible en Actividad como “NO ACEPTADO · Período restaurado”, pero desaparece de pendientes y notificaciones.
+
+No se borran movimientos ni cierres históricos.

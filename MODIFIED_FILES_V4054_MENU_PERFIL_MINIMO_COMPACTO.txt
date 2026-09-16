@@ -1,0 +1,31 @@
+EXPLORA v4054 · Menú Más mínimo + perfil compacto
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios aplicados:
+1. En admin, el menú Más queda solo con:
+   - Mi perfil
+   - Deudas
+   - Salir
+2. En chofer, el menú Más queda solo con:
+   - Mi perfil
+   - Salir
+3. Se elimina visualmente el bloque Administración del menú Más.
+4. Mi perfil fue compactado para entrar en una sola pantalla sin scroll visible.
+5. En Mi perfil se dejaron solo los datos necesarios:
+   - Celular WhatsApp con selector de país
+   - CUIT
+   - Alias
+6. El selector de país no muestra nombres: solo bandera y código:
+   - 🇦🇷 +549
+   - 🇵🇾 +595
+   - 🇧🇷 +55
+   - 🇺🇾 +598
+7. El guardado de perfil funciona para admin y chofer.
+8. El teléfono se guarda normalizado y conserva compatibilidad con campos anteriores.
+
+No se tocaron cálculos, cierres, histórico, WhatsApp de envío ni Firestore de movimientos.

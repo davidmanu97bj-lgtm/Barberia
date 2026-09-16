@@ -1,0 +1,27 @@
+ARCHIVOS MODIFICADOS PARA GIT · EXPLORA v79
+
+ARCHIVOS DE LA APLICACIÓN
+- app.js
+- index.html
+- styles.css
+
+FUNCTIONS / TELEGRAM
+- functions/index.js
+- functions/tests/team-realtime-contract.test.js
+
+PRUEBAS DEL NUEVO CIERRE
+- tests/closure-direct-flow.test.mjs
+
+DESPLIEGUE CLOUD SHELL
+- DESPLEGAR_EXPLORA_COMPLETO.sh
+
+DOCUMENTACIÓN DE ESTA ENTREGA
+- CAMBIOS_CIERRE_DIRECTO_v77.txt
+- CAMBIOS_SH_AUTOGESTIONABLE_v79.txt
+- ARCHIVOS_MODIFICADOS_V79_PARA_GIT.txt
+
+IMPORTANTE
+El archivo DESPLEGAR_EXPLORA_COMPLETO.sh ya agrega estos cambios a Git, crea el
+commit, intenta subirlo al remoto y después despliega Rules, Storage, Functions
+y Hosting. El ZIP de archivos modificados conserva exactamente las carpetas
+functions/tests y tests para que no haya que reconstruirlas manualmente.

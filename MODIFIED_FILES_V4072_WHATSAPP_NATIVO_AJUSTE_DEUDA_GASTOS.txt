@@ -1,0 +1,29 @@
+EXPLORA v4072 · WhatsApp nativo directo + aviso por ajuste de deuda con Gastos
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+
+Cambios aplicados:
+1. Cuando un chofer aplica correctamente saldo de Gastos para reducir una deuda, Explora recibe un mensaje de WhatsApp con:
+   - chofer que realizó el ajuste;
+   - monto que Explora debía liquidar antes;
+   - monto usado para reducir la deuda;
+   - monto que Explora debe liquidar después;
+   - deuda anterior y deuda restante;
+   - aclaración de que el ajuste no requiere comprobante.
+2. El WhatsApp se abre solamente después de que la transacción de Firebase termina correctamente.
+3. Todos los flujos existentes de mensajes usan una única función nativa:
+   - chofer pide cierre -> Explora;
+   - Explora pide cierre -> chofer;
+   - chofer sube comprobante -> Explora;
+   - Explora sube comprobante -> chofer;
+   - ajuste de deuda con Gastos -> Explora.
+4. Android usa un Intent explícito con package=com.whatsapp.
+5. iPhone/iPad usa whatsapp://send directamente.
+6. En iOS y Android se eliminaron wa.me, api.whatsapp.com y browser_fallback_url para impedir pantallas web intermedias.
+7. Escritorio conserva solamente web.whatsapp.com, fuera de iOS y Android.
+8. Caché PWA actualizado a v4072 para evitar que continúe cargándose el JavaScript anterior.
+
+No se modificaron cálculos, reglas de Firestore, diseño, navegación ni estados de cierre.

@@ -1,0 +1,10 @@
+EXPLORA v4114 — CIERRES DEL CHOFER VISIBLES EN ADMIN
+
+Archivo modificado:
+- js/segments/52-script.mjs
+
+Corrección:
+- La escucha global de cierres_semanales ya no usa limit() sin orden.
+- Firestore podía devolver solo un subconjunto arbitrario y dejar afuera el cierre recién solicitado.
+- Ahora toda solicitud de cierre creada por un chofer llega en tiempo real a Últimas actividades y a la campana del administrador.
+- Al tocar el cierre se abre el modal con No aceptar cierre y la acción correspondiente para aceptar/cargar comprobante/cerrar.

@@ -1,0 +1,38 @@
+EXPLORA v4046 · Datos de perfil en WhatsApp + menús compactos
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/11-script.mjs
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios de WhatsApp/cierre:
+1. Cuando el chofer pide cierre, el mensaje que recibe Explora incluye siempre datos del perfil del chofer:
+   - Alias
+   - CUIT
+   - Celular
+2. Cuando Explora/admin pide cierre al chofer, el mensaje que recibe el chofer incluye siempre datos del perfil de Explora/admin:
+   - Alias
+   - CUIT
+   - Celular
+3. Cuando Explora carga comprobante, el aviso al chofer también incluye datos de Explora/admin.
+4. Cuando el chofer carga comprobante, el aviso a Explora también incluye datos del chofer.
+5. Estos datos salen de Mi perfil de cada usuario y se guardan normalizados en Firestore.
+
+Cambios de perfil:
+1. Mi perfil mantiene selector obligatorio de país.
+2. Argentina +54 9 queda prefijado.
+3. Alias, CUIT y celular son obligatorios porque ahora se envían en los mensajes de cierre.
+
+Cambios visuales/menús:
+1. El menú Más de admin queda compacto: Mi perfil, Deudas y Salir.
+2. El menú de admin se mantiene simétrico y corto para entrar en una pantalla.
+3. Se conserva el refuerzo responsive de Deudas admin para iOS/Android.
+
+Correcciones preservadas:
+1. Android abre WhatsApp con Intent explícito package=com.whatsapp para evitar net::ERR_UNKNOWN_URL_SCHEME.
+2. iOS usa whatsapp://send.
+3. Explora pide cierre y manda comprobante al número guardado por el chofer en su perfil.
+
+No se tocaron reglas financieras, Firestore de movimientos, Storage ni cálculos de cierres/deudas.

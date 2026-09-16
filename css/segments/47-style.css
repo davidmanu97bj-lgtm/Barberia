@@ -1,0 +1,271 @@
+/* EXPLORA v2.4.11 · Identidad visual oficial dorada aplicada en toda la app. */
+
+.explora-splash-logo,
+.explora-login-brand,
+.explora-brand-real,
+.new-service-logo-wrap{
+  isolation:isolate;
+}
+
+.explora-splash-brand-image,
+.explora-login-brand-image,
+.explora-header-brand-image,
+.new-service-brand-image{
+  display:block;
+  object-fit:contain;
+  object-position:center;
+  max-width:100%;
+  height:auto;
+  filter:drop-shadow(0 8px 24px rgba(205,154,48,.16));
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+/* Splash de carga */
+.explora-splash-logo{
+  width:min(86vw,460px);
+  padding:0 12px;
+}
+.explora-splash-brand-image{
+  width:100%;
+  margin:0 auto;
+}
+.explora-splash-sub{
+  margin-top:12px!important;
+  font-size:10px!important;
+  letter-spacing:.32em!important;
+}
+
+/* Inicio de sesión */
+.explora-login-brand-image{
+  width:min(100%,310px);
+  margin:0 auto 8px;
+}
+.explora-login-brand p{
+  margin-top:8px!important;
+}
+
+/* Encabezado principal */
+.explora-brand-real{
+  min-width:0;
+  flex:0 1 auto;
+  gap:0!important;
+}
+.explora-header-brand-image{
+  width:clamp(138px,38vw,198px);
+  max-height:58px;
+}
+
+/* Encabezado de Registrar cobro */
+.new-service-logo-wrap{
+  display:flex!important;
+  min-width:0;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+}
+.new-service-brand-image{
+  width:clamp(140px,40vw,205px);
+  max-height:64px;
+  margin:0 auto;
+}
+.new-service-logo-sub{
+  margin-top:2px!important;
+  font-size:clamp(6px,1.8vw,9px)!important;
+  letter-spacing:.28em!important;
+  margin-left:.28em!important;
+}
+
+/* Eliminar por completo las marcas tipográficas anteriores. */
+.explora-splash-mark,
+.explora-splash-word,
+.explora-login-mark,
+.explora-login-brand h1,
+.explora-mark-real,
+.explora-word-real,
+.explora-sub-real,
+.new-service-emblem,
+.new-service-logo{
+  display:none!important;
+}
+
+@media (max-width:390px){
+  .explora-header-brand-image{width:clamp(126px,36vw,154px)}
+  .new-service-brand-image{width:clamp(126px,37vw,166px)}
+  .explora-login-brand-image{width:min(100%,270px)}
+}
+
+@media (max-width:340px){
+  .explora-header-brand-image{width:118px}
+  .new-service-brand-image{width:120px}
+  .new-service-logo-sub{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .explora-splash-logo{animation:none!important}
+}
+
+/* EXPLORA v4065 · sincronización real antes de abrir dashboard */
+.explora-sync-panel{
+  width:min(86vw,380px);
+  margin:22px auto 0;
+  padding:18px 16px 16px;
+  border:1px solid rgba(245,185,66,.22);
+  border-radius:24px;
+  background:linear-gradient(180deg,rgba(16,18,21,.78),rgba(4,6,8,.92));
+  box-shadow:0 22px 70px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.035);
+  color:#fff;
+  text-align:center;
+}
+.explora-sync-spinner{
+  width:36px;
+  height:36px;
+  margin:0 auto 12px;
+  border-radius:50%;
+  border:3px solid rgba(245,185,66,.18);
+  border-top-color:#f5c75d;
+  animation:exploraSyncSpin .78s linear infinite;
+}
+.explora-sync-panel strong{
+  display:block;
+  color:#f5c75d;
+  font-size:15px;
+  font-weight:950;
+  letter-spacing:.04em;
+}
+.explora-sync-panel small{
+  display:block;
+  min-height:32px;
+  margin-top:7px;
+  color:rgba(255,255,255,.70);
+  font-size:12px;
+  line-height:1.34;
+}
+.explora-sync-progress{
+  width:100%;
+  height:8px;
+  margin-top:14px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,.085);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.35);
+}
+.explora-sync-progress span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#b98126,#f5c75d,#ffe08a);
+  box-shadow:0 0 18px rgba(245,199,93,.36);
+  transition:width .22s ease;
+}
+.explora-sync-percent{
+  margin-top:8px;
+  color:rgba(255,255,255,.74);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+body.explora-login-visible .explora-sync-panel,
+body.explora-role-blocked .explora-sync-panel{display:none!important;}
+@keyframes exploraSyncSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.explora-sync-spinner{animation:none}.explora-sync-progress span{transition:none}}
+
+
+/* EXPLORA v4122 · arranque autoritativo con aro verde 360°, sin porcentajes */
+.explora-splash{
+  background:
+    radial-gradient(circle at 50% 34%,rgba(27,58,39,.18),transparent 34%),
+    #030405!important;
+}
+.explora-splash-logo{
+  display:flex;
+  width:min(84vw,430px);
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:0 18px;
+  animation:none!important;
+}
+.explora-splash-brand-image{width:min(100%,360px);margin:0 auto 30px}
+.explora-sync-panel,.explora-sync-spinner,.explora-sync-progress,.explora-sync-percent{display:none!important}
+.explora-sync-ring{
+  --sync-angle:0deg;
+  position:relative;
+  width:58px;
+  height:58px;
+  margin:0 auto 18px;
+  border-radius:50%;
+  background:conic-gradient(#49dc7d var(--sync-angle),rgba(73,220,125,.13) 0deg);
+  box-shadow:0 0 28px rgba(73,220,125,.12);
+  transition:none;
+}
+.explora-sync-ring::before{
+  content:"";
+  position:absolute;
+  inset:5px;
+  border-radius:50%;
+  background:#050708;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+}
+.explora-sync-ring span{
+  position:absolute;
+  z-index:2;
+  top:1px;
+  left:50%;
+  width:8px;
+  height:8px;
+  margin-left:-4px;
+  border-radius:50%;
+  background:#65f197;
+  box-shadow:0 0 14px rgba(101,241,151,.75);
+  transform-origin:4px 28px;
+  transform:rotate(var(--sync-angle));
+  transition:none;
+}
+.explora-sync-title{
+  display:block;
+  color:#f1f3f5;
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.explora-sync-detail{
+  display:block;
+  width:min(84vw,340px);
+  min-height:18px;
+  margin-top:8px;
+  color:rgba(255,255,255,.56);
+  font-size:12px;
+  line-height:1.4;
+  text-align:center;
+}
+body.explora-auth-checking .explora-splash{opacity:1;visibility:visible;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){
+  .explora-sync-ring,.explora-sync-ring span{transition:none!important}
+}
+
+
+/* EXPLORA v4123 · compuerta autoritativa total: no existe dashboard visible debajo del splash */
+body.explora-auth-checking .app-shell,
+body.explora-auth-checking #mainBottomNav,
+body.explora-auth-checking .main-bottom-nav,
+body.explora-auth-checking .explora-pay-home,
+body.explora-auth-checking .driver-dashboard,
+body.explora-auth-checking .admin-dashboard {
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+body.explora-auth-checking .explora-splash {
+  display:flex!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  z-index:2147483646!important;
+}
+body.explora-auth-checking.explora-splash-hidden .explora-splash {
+  display:flex!important;
+  opacity:1!important;
+  visibility:visible!important;
+}

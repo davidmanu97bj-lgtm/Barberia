@@ -1,0 +1,12 @@
+Modificación aplicada: WhatsApp nativo directo
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+
+Cambio principal:
+- El pedido de cierre ya no abre primero wa.me/api.whatsapp.com en iOS/Android.
+- Ahora intenta abrir directamente la app WhatsApp con whatsapp://send.
+- Si WhatsApp no está instalado, recién ahí cae al enlace web como respaldo.
+- Se actualizó el versionado del script y el service worker para evitar caché viejo.

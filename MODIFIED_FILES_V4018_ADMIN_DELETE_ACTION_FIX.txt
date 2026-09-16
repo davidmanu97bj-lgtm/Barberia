@@ -1,0 +1,17 @@
+Corrección v4018 - Borrar movimientos admin
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- functions/index.js
+
+Cambios:
+- Al tocar OK ahora se muestra estado visible: Borrando y ajustando cierre.
+- El mensaje de resultado/error queda fijo arriba del modal aunque la lista esté scrolleada.
+- Si Cloud Functions no responde o no está desplegada, intenta borrado directo en Firestore.
+- Cobro/gasto se elimina; caja chica se excluye del cálculo.
+- Se ajustan cierres relacionados cuando contienen el movimiento borrado.
+- Caché actualizado a v4018-admin-delete-action-fix.

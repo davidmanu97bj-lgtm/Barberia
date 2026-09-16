@@ -1,0 +1,24 @@
+EXPLORA v4139 · ENTREGA DE DEUDA REGISTRADA POR ADMINISTRADOR
+
+CAMBIOS
+- En Administrador > Cierre contable > Deudas aparece "Registrar entrega".
+- El administrador elige efectivo o transferencia para el chofer seleccionado.
+- Efectivo se confirma directamente; transferencia exige comprobante.
+- Antes de guardar se muestra deuda anterior, monto entregado y saldo resultante.
+- El pago se aplica atómicamente primero a la deuda más antigua.
+- No se permiten montos mayores al saldo pendiente.
+- Se registra trazabilidad completa en deuda_pagos, deuda_movimientos y notificaciones.
+- El tablero y las actividades recalculan inmediatamente el saldo.
+
+ARCHIVOS MODIFICADOS
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+ARCHIVOS NUEVOS
+- js/core/admin-debt-payment-core.mjs
+- tests/admin-debt-payment.test.mjs
+
+DESPLIEGUE
+firebase deploy --only hosting

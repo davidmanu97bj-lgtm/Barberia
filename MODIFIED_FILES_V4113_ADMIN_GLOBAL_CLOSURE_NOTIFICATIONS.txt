@@ -1,0 +1,8 @@
+CORRECCIÓN V4113 — NOTIFICACIONES GLOBALES DE CIERRE EN ADMINISTRADOR
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+
+Cambio:
+La campana y la pantalla de notificaciones del administrador ahora consultan todos los cierres pendientes, incluso cuando hay otro chofer seleccionado. Al tocar una notificación, la app selecciona automáticamente al chofer correspondiente y abre el cierre/comprobante.

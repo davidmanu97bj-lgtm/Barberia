@@ -1,0 +1,17 @@
+EXPLORA v71.7 — SALDO Y LIQUIDACIÓN MÁS CLAROS
+
+Cambios visuales únicamente. No se modificó la lógica de cálculo.
+
+1. Cuando CHOFER DEBE LIQUIDAR A EXPLORA:
+   - Estado animado en rojo.
+   - Se muestra una explicación debajo del monto indicando cuánto más tiene registrado el lado del chofer y que esa diferencia corresponde a Explora.
+
+2. Cuando EXPLORA DEBE LIQUIDAR AL CHOFER:
+   - Estado animado en verde.
+   - Se muestra una explicación debajo del monto indicando cuánto más tiene registrado el lado de Explora y que esa diferencia corresponde al chofer.
+
+3. Cuando las cuentas están equilibradas:
+   - Estado neutro.
+   - Mensaje: Vos y Explora están equilibrados. No hay diferencia pendiente.
+
+4. Se actualizó el versionado de app.js y styles.css en index.html para evitar caché anterior en iPhone.

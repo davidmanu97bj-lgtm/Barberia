@@ -1,0 +1,378 @@
+
+    /* WEEKLY_CLOSURE_STATUS_AND_SUMMARY · lectura inmediata para choferes */
+    .weekly-closure-overlay{
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      overflow-y:auto;
+      overflow-x:hidden;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior-y:contain;
+      touch-action:pan-y;
+      padding:calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px);
+    }
+    .weekly-closure-overlay[hidden]{display:none!important}
+    .weekly-closure-modal{
+      flex:0 0 auto;
+      width:min(100%,540px);
+      max-height:none;
+      min-height:0;
+      margin:0 auto;
+      overflow:visible;
+    }
+    .weekly-closure-header{
+      position:sticky;
+      top:0;
+      z-index:8;
+      border-radius:27px 27px 0 0;
+      background:linear-gradient(180deg,rgba(21,26,31,.995),rgba(13,17,21,.985));
+      -webkit-backdrop-filter:blur(14px);
+      backdrop-filter:blur(14px);
+    }
+    .weekly-closure-content{
+      flex:0 0 auto;
+      min-height:0;
+      height:auto;
+      overflow:visible;
+      overscroll-behavior:auto;
+      padding:14px 14px calc(18px + env(safe-area-inset-bottom));
+      gap:12px;
+    }
+    #weeklyClosureContent > [data-weekly-section]{
+      display:block!important;
+      min-width:0;
+      margin:0;
+      visibility:visible!important;
+      opacity:1!important;
+    }
+    .closure-period-card,.closure-driver-block,.closure-final-card,.closure-receipt-panel{
+      min-width:0;
+      max-width:100%;
+      flex:none;
+    }
+    .closure-driver-block{
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:23px;
+      background:linear-gradient(180deg,rgba(22,27,32,.97),rgba(9,12,15,.985));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 16px 38px rgba(0,0,0,.20);
+    }
+    .closure-driver-block--week{border-color:rgba(105,184,255,.34);background:linear-gradient(180deg,rgba(31,91,151,.15),rgba(9,19,30,.94))}
+    .closure-driver-block--share{border-color:rgba(92,226,142,.35);background:linear-gradient(180deg,rgba(25,126,69,.18),rgba(8,33,21,.95))}
+    .closure-driver-block--discounts{border-color:rgba(255,104,113,.37);background:linear-gradient(180deg,rgba(153,34,45,.16),rgba(43,11,16,.95))}
+    .closure-driver-block-head{
+      min-height:54px;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      padding:13px 15px 12px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .closure-driver-block-head span[aria-hidden="true"]{font-size:16px;line-height:1}
+    .closure-driver-block-head h3{
+      margin:0;
+      color:#f3c45d;
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.13em;
+      text-transform:uppercase;
+    }
+    .closure-driver-list{display:grid;gap:0;min-height:0}
+    .closure-simple-row{
+      display:grid!important;
+      grid-template-columns:minmax(0,1fr) minmax(112px,auto);
+      align-items:center;
+      gap:14px;
+      min-height:52px;
+      margin:0;
+      padding:10px 15px;
+      visibility:visible!important;
+      border-bottom:1px solid rgba(255,255,255,.055);
+    }
+    .closure-simple-row:last-child{border-bottom:0}
+    .closure-simple-row>span{
+      color:rgba(255,255,255,.75);
+      font-size:13px;
+      font-weight:780;
+      line-height:1.28;
+    }
+    .closure-simple-row>strong{
+      color:#fff;
+      text-align:right;
+      font-size:clamp(16px,4.5vw,21px);
+      line-height:1.12;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      font-variant-numeric:tabular-nums;
+    }
+    .closure-simple-row>strong.is-positive{color:#72eba4}
+    .closure-simple-row>strong.is-negative{color:#ff9d9d}
+    .closure-simple-row>strong.is-info{color:#9ecfff}
+    .closure-simple-row>strong.is-neutral{color:#f4f6f8}
+    .closure-share-percent{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:center;
+      gap:15px;
+      padding:17px 15px 15px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .closure-share-percent span{color:rgba(255,255,255,.79);font-size:14px;font-weight:850}
+    .closure-share-percent strong{
+      color:#72eba4;
+      font-size:clamp(35px,10vw,50px);
+      line-height:1;
+      font-weight:950;
+      font-variant-numeric:tabular-nums;
+    }
+    .closure-share-includes{padding:12px 15px 13px;border-bottom:1px solid rgba(255,255,255,.07)}
+    .closure-share-includes>span{display:block;margin-bottom:8px;color:rgba(255,255,255,.51);font-size:10px;font-weight:950;letter-spacing:.10em;text-transform:uppercase}
+    .closure-share-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-height:32px}
+    .closure-share-line span{color:rgba(255,255,255,.79);font-size:13px;font-weight:780}
+    .closure-share-line strong{color:#a8efc1;font-size:14px;font-weight:950;font-variant-numeric:tabular-nums}
+    .closure-share-total{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(150px,auto);
+      align-items:center;
+      gap:14px;
+      padding:15px;
+      background:rgba(69,207,119,.075);
+    }
+    .closure-share-total span{color:#b7e9c9;font-size:13px;font-weight:950;text-transform:uppercase;letter-spacing:.06em}
+    .closure-share-total strong{
+      color:#72eba4;
+      text-align:right;
+      font-size:clamp(25px,7.8vw,39px);
+      line-height:1;
+      font-weight:950;
+      overflow-wrap:anywhere;
+      font-variant-numeric:tabular-nums;
+    }
+    .closure-final-section{display:block!important}
+    .closure-final-card{
+      min-height:190px;
+      border:1px solid rgba(255,255,255,.11);
+      border-radius:27px;
+      padding:25px 17px 23px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 22px 50px rgba(0,0,0,.29);
+    }
+    .closure-final-card[data-result="driver-pays"]{background:linear-gradient(135deg,rgba(153,34,45,.34),rgba(68,15,22,.55));border-color:rgba(255,104,113,.50)}
+    .closure-final-card[data-result="admin-pays"]{background:linear-gradient(135deg,rgba(25,126,69,.34),rgba(8,54,31,.53));border-color:rgba(92,226,142,.44)}
+    .closure-final-card[data-result="balanced"]{background:linear-gradient(135deg,rgba(36,105,177,.34),rgba(11,43,78,.53));border-color:rgba(105,184,255,.46)}
+    .closure-final-kicker{display:block;color:#f3c45d;font-size:11px;font-weight:950;letter-spacing:.14em;text-transform:uppercase}
+    .closure-final-card>b{display:block;margin-top:12px;color:#fff;font-size:clamp(21px,5.8vw,28px);font-weight:950;line-height:1.18;text-wrap:balance}
+    .closure-final-card>strong{display:block;margin-top:13px;color:#fff;font-size:clamp(44px,13vw,68px);font-weight:950;line-height:1;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+    .closure-final-card>small{display:block;margin-top:12px;color:rgba(255,255,255,.73);font-size:13px;line-height:1.42}
+    .closure-final-card[data-result="driver-pays"]>strong{color:#ff9d9d}
+    .closure-final-card[data-result="admin-pays"]>strong{color:#72eba4}
+    .closure-final-card[data-result="balanced"]>strong{color:#86c8ff}
+    .closure-receipt-card,.closure-receipt-section,.closure-receipt-form,.closure-upload-section{overflow:visible;max-height:none}
+    .weekly-closure-msg[hidden],.closure-receipt-diagnostic[hidden],.weekly-closure-existing-receipt[hidden],.closure-receipt-form[hidden]{display:none!important}
+    .closure-receipt-diagnostic-grid{grid-template-columns:minmax(118px,.82fr) minmax(0,1.18fr)}
+    @media(max-width:390px){
+      .weekly-closure-overlay{padding-left:8px;padding-right:8px}
+      .weekly-closure-content{padding-left:11px;padding-right:11px;gap:10px}
+      .weekly-closure-header{padding:15px 14px 13px}
+      .closure-period-card{grid-template-columns:1fr 1fr;gap:8px;padding:8px}
+      .closure-period-cell{min-height:64px;padding:9px 10px}
+      .closure-simple-row{grid-template-columns:minmax(0,1fr) minmax(98px,auto);gap:9px;padding:10px 12px}
+      .closure-simple-row>span{font-size:12px}
+      .closure-share-percent,.closure-share-includes,.closure-share-total{padding-left:12px;padding-right:12px}
+      .closure-share-total{grid-template-columns:minmax(0,1fr) minmax(132px,auto)}
+      .closure-receipt-diagnostic-grid{grid-template-columns:1fr}
+      .closure-receipt-diagnostic-grid span{padding-bottom:2px;border-bottom:0}
+      .closure-receipt-diagnostic-grid b{padding-top:2px}
+    }
+    @media(max-width:340px){
+      .closure-period-card{grid-template-columns:1fr}
+      .closure-simple-row{grid-template-columns:minmax(0,1fr) minmax(86px,auto)}
+      .closure-share-total{grid-template-columns:1fr}
+      .closure-share-total strong{text-align:left}
+    }
+  
+
+    /* v2.4.3 · cierre semanal en cuatro bloques, sin conceptos repetidos */
+    .closure-driver-block--result{border-color:rgba(92,226,142,.35);background:linear-gradient(180deg,rgba(25,126,69,.18),rgba(8,33,21,.95))}
+    .closure-driver-block--adjustments{border-color:rgba(217,183,96,.36);background:linear-gradient(180deg,rgba(111,78,18,.16),rgba(25,18,7,.96))}
+    .closure-driver-block--liquidation{border-color:rgba(121,171,220,.35);background:linear-gradient(180deg,rgba(34,69,105,.17),rgba(9,17,26,.97))}
+    .closure-summary-expense-row>strong{color:#ff9d9d!important}
+    .closure-summary-total-row{min-height:64px;background:rgba(69,207,119,.075);border-top:1px solid rgba(92,226,142,.18)}
+    .closure-summary-total-row>span{color:#b7e9c9;font-weight:950;text-transform:uppercase;letter-spacing:.045em}
+    .closure-summary-total-row>strong{font-size:clamp(22px,6.8vw,34px);color:#72eba4}
+    .closure-liquidation-list{border-bottom:1px solid rgba(255,255,255,.07)}
+    .closure-liquidation-result{min-height:170px;margin:14px;border-radius:21px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 15px 34px rgba(0,0,0,.24)}
+    .closure-liquidation-result>strong{font-size:clamp(40px,12vw,62px)}
+    .closure-liquidation-result>b{font-size:clamp(19px,5.4vw,26px)}
+    @media(max-width:390px){
+      .closure-liquidation-result{margin:11px;min-height:158px;padding:21px 14px 20px}
+      .closure-summary-total-row>strong{font-size:clamp(21px,6.5vw,30px)}
+    }
+
+    /* ── LIQUIDACIÓN CORRIDA v2.5 ─────────────────────────────────── */
+
+    /* Sección caja chica */
+    .closure-driver-block--repair-fund{
+      border-color:rgba(255,200,80,.32);
+      background:linear-gradient(180deg,rgba(120,80,10,.18),rgba(22,14,4,.97));
+    }
+
+    /* Sección gastos detallados */
+    .closure-driver-block--expenses-detail{
+      border-color:rgba(255,130,110,.34);
+      background:linear-gradient(180deg,rgba(130,38,28,.16),rgba(28,9,6,.97));
+    }
+
+    /* Sub-sección label (texto corrido entre filas) */
+    .closure-liq-subsection-label{
+      padding:9px 15px 5px;
+      color:rgba(255,255,255,.44);
+      font-size:10px;
+      font-weight:950;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      border-top:1px solid rgba(255,255,255,.055);
+    }
+    .closure-liq-subsection-label:first-child{border-top:0}
+
+    /* Filas sub-indentadas */
+    .closure-simple-row.closure-liq-sub{
+      padding-left:22px;
+      background:rgba(255,255,255,.018);
+    }
+    .closure-simple-row.closure-liq-sub>span{
+      font-size:12px;
+      color:rgba(255,255,255,.62);
+    }
+    .closure-simple-row.closure-liq-sub>strong{
+      font-size:clamp(14px,4vw,18px);
+    }
+
+    /* Total row en sección ingresos */
+    .closure-simple-row.closure-liq-total{
+      min-height:60px;
+      background:rgba(105,184,255,.07);
+      border-top:1px solid rgba(105,184,255,.18);
+    }
+    .closure-simple-row.closure-liq-total>span{
+      color:#b3d9ff;
+      font-weight:950;
+      text-transform:uppercase;
+      letter-spacing:.045em;
+    }
+    .closure-simple-row.closure-liq-total>strong{
+      font-size:clamp(20px,6vw,30px);
+      color:#9ecfff;
+    }
+
+    /* Nota de caja chica */
+    .closure-liq-note{
+      margin:0 15px 4px;
+      padding:9px 12px;
+      border-radius:10px;
+      background:rgba(255,200,80,.09);
+      border:1px solid rgba(255,200,80,.22);
+      color:#e8c86a;
+      font-size:11px;
+      font-weight:800;
+      line-height:1.48;
+    }
+
+    /* Fila diferencia */
+    .closure-liq-diff-row{
+      background:rgba(255,255,255,.025);
+      border-top:1px solid rgba(255,255,255,.09)!important;
+    }
+    .closure-liq-diff-row>span{font-weight:950;letter-spacing:.03em}
+    .closure-liq-diff-row>strong{font-size:clamp(18px,5.5vw,26px)!important}
+
+    /* Lista de gastos detallados */
+    .closure-liq-expense-list{
+      padding:8px 12px 12px;
+      display:grid;
+      gap:9px;
+    }
+    .closure-liq-expense-empty{
+      padding:14px 3px;
+      color:rgba(255,255,255,.38);
+      font-size:12px;
+      font-weight:800;
+      text-align:center;
+    }
+    .closure-liq-expense-card{
+      border:1px solid rgba(255,130,110,.20);
+      border-radius:14px;
+      overflow:hidden;
+      background:rgba(255,255,255,.028);
+    }
+    .closure-liq-expense-head{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:center;
+      gap:10px;
+      padding:10px 13px 9px;
+      background:rgba(255,130,110,.06);
+      border-bottom:1px solid rgba(255,130,110,.14);
+    }
+    .closure-liq-expense-cat{
+      color:#ffb3ab;
+      font-size:12px;
+      font-weight:950;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      overflow-wrap:anywhere;
+    }
+    .closure-liq-expense-total{
+      color:#ff9d9d;
+      font-size:15px;
+      font-weight:950;
+      white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+    .closure-liq-expense-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:center;
+      gap:10px;
+      padding:7px 13px;
+      border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .closure-liq-expense-row:last-child{border-bottom:0}
+    .closure-liq-expense-row>span{
+      color:rgba(255,255,255,.60);
+      font-size:11px;
+      font-weight:780;
+      line-height:1.3;
+    }
+    .closure-liq-expense-row>b{
+      color:#f0f0f4;
+      font-size:12px;
+      font-weight:950;
+      white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+    .closure-liq-expense-reconoce{
+      padding:7px 13px 9px;
+      color:#72eba4;
+      font-size:11px;
+      font-weight:950;
+      line-height:1.35;
+      border-top:1px solid rgba(255,255,255,.055);
+      background:rgba(69,207,119,.045);
+    }
+    .closure-liq-expense-reconoce.is-explora{
+      color:#9ecfff;
+      background:rgba(105,184,255,.045);
+    }
+
+    @media(max-width:390px){
+      .closure-liq-subsection-label{padding:8px 12px 4px;font-size:9px}
+      .closure-simple-row.closure-liq-sub{padding-left:18px}
+      .closure-liq-note{margin:0 11px 4px;padding:8px 10px;font-size:10px}
+      .closure-liq-expense-list{padding:6px 10px 10px;gap:8px}
+      .closure-liq-expense-head,.closure-liq-expense-row,.closure-liq-expense-reconoce{padding-left:11px;padding-right:11px}
+    }

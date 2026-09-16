@@ -1,0 +1,15 @@
+EXPLORA · V4063 Deudas alias copiable
+
+Archivos modificados:
+- index.html
+- css/segments/52-style.css
+- js/segments/52-script.mjs
+- service-worker.js
+
+Cambios:
+1. En la tarjeta de Deudas del chofer se agregó una indicación compacta arriba de Saldo actual pendiente:
+   “Pagá a Explora en efectivo o enviá dinero por alias para reducir tu deuda.”
+2. Se agregó botón premium con alias mp.explora.
+3. Al tocar el alias se copia al portapapeles con fallback compatible iOS/Android.
+4. Se muestra estado visual “Copiado” y se mantiene el diseño compacto del menú Deudas.
+5. Se actualizó la versión/cache-busting del módulo de pagos y del service worker para que el navegador tome los cambios.

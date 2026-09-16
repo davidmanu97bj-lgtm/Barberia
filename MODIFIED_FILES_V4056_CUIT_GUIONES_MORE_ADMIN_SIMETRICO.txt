@@ -1,0 +1,20 @@
+EXPLORA v4056 · CUIT con guiones + Más admin más simétrico
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios aplicados:
+1. El CUIT ahora se muestra con guiones en Mi perfil: XX-XXXXXXXX-X.
+2. Mientras se escribe el CUIT se formatea automáticamente.
+3. Al guardar, se conserva el CUIT con guiones y también cuitRaw con 11 números.
+4. La validación exige CUIT de 11 números.
+5. Los CUIT en cierres, modal y mensajes se muestran con guiones.
+6. No se quitó CUIT del perfil.
+7. El menú Más queda más simétrico: se oculta la tarjeta informativa superior, se oculta la descripción larga, y quedan solo las acciones reales.
+8. Admin mantiene: Mi perfil, Deudas, Salir.
+9. Chofer mantiene: Mi perfil, Salir.
+
+No se tocaron cálculos, cierres, histórico, WhatsApp ni Firestore de movimientos.

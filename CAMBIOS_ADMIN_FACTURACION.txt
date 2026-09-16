@@ -1,0 +1,26 @@
+EXPLORA · ADMIN FACTURACIÓN v66
+Fecha: 25/08/2026
+
+CAMBIOS PRINCIPALES
+- El Admin ya no reutiliza la pantalla financiera del chofer.
+- La pantalla principal Admin muestra únicamente choferes activos y su diferencia de facturación:
+  · Chofer debe a Explora + importe
+  · Explora debe al chofer + importe
+  · Equilibrado
+- Choferes ordenados alfabéticamente, nombre a la izquierda y estado/importe a la derecha.
+- Crear / editar chofer: alta, nombre, clave y activar/inactivar.
+- Agregar deuda: chofer, monto, motivo y comprobante obligatorio.
+  La deuda queda asignada al chofer, suma en su deuda y el comprobante aparece en su pantalla.
+- Registrar pago / ajuste: chofer→Explora, Explora→chofer o pago de deuda.
+- Historial por chofer: deudas, pagos/ajustes y cierres, con acceso a comprobantes.
+- Anulación de deuda con motivo obligatorio y registro de auditoría.
+- Gestión de cierres desde el panel Admin.
+- Botón Salir dentro del panel Admin.
+- Auditoría de acciones administrativas.
+- Nueva Cloud Function adminUpdateDriver.
+
+ARCHIVOS MODIFICADOS
+- app.js
+- index.html
+- styles.css
+- functions/index.js

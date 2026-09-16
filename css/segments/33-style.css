@@ -1,0 +1,12 @@
+
+  .performance-ranking-percent small,
+  .performance-ranking-money small{display:block;font-size:8px;line-height:1.05;letter-spacing:.055em;font-weight:950;color:rgba(255,255,255,.62);white-space:nowrap}
+  .performance-ranking-percent{gap:2px;text-align:center;line-height:1.02}
+  .performance-ranking-money{display:grid;gap:2px;align-content:center;justify-items:end;line-height:1.05}
+  #weeklyClosureOverlay{display:block;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:auto!important;touch-action:pan-y!important}
+  #weeklyClosureOverlay[hidden]{display:none!important}
+  #weeklyClosureOverlay .weekly-closure-modal{display:block!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0 auto!important}
+  #weeklyClosureContent{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;overscroll-behavior:auto!important;touch-action:pan-y!important}
+  @keyframes exploraPendingDerivationPulseV248{0%,100%{border-color:rgba(183,146,255,.44);box-shadow:0 0 0 rgba(183,146,255,0),0 0 0 rgba(245,185,66,0)}50%{border-color:rgba(245,185,66,.82);box-shadow:0 0 24px rgba(183,146,255,.28),0 0 18px rgba(245,185,66,.20)}}
+  .operation-card-real[data-action="derivar-servicio"].has-pending-derivation{animation:exploraPendingDerivationPulseV248 1.35s ease-in-out infinite!important}
+  @media(prefers-reduced-motion:reduce){.operation-card-real[data-action="derivar-servicio"].has-pending-derivation{animation:none!important}}

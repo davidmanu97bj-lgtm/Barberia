@@ -1,0 +1,9 @@
+EXPLORA v4123
+
+- El arranque HTML comienza en modo explora-auth-checking: si Firebase restaura una sesión, el dashboard nunca se pinta antes del splash.
+- El splash circular verde permanece hasta que estén listos perfil, vehículo, motor semanal y Pago Home.
+- Pago Home ahora expone waitUntilReady() y no se considera listo hasta recibir las 6 colecciones: billing_records, gastos, cierres_semanales, deudas_choferes, uber_weekly_closures y deuda_pagos.
+- Se eliminó el estado visual verde “Actualizando…” del dashboard financiero. Durante una resincronización en caliente usa placeholders neutros.
+- Caché PWA actualizado a v4123.
+
+Archivos: index.html, js/segments/11-script.mjs, js/segments/52-script.mjs, css/segments/47-style.css, service-worker.js

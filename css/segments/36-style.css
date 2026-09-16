@@ -1,0 +1,2 @@
+
+.closure-result-card[data-result="calculation-error"],.closure-final-card[data-result="calculation-error"]{background:linear-gradient(135deg,rgba(177,96,20,.30),rgba(90,33,10,.42))!important;border-color:rgba(255,163,77,.58)!important}.closure-result-card[data-result="calculation-error"] strong,.closure-final-card[data-result="calculation-error"] strong{color:#ffb36a!important}.weekly-closure-content[data-calculation-state="error"] #weeklyClosureSubmitBtn,.weekly-closure-content[data-calculation-state="error"] #weeklyDriverReceiptBtn{display:none!important}

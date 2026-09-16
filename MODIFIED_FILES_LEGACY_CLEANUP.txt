@@ -1,0 +1,50 @@
+EXPLORA · Limpieza quirúrgica de módulos legacy
+
+Fecha: 2026-06-29
+
+Objetivo:
+- Desactivar ranking diario/semanal legacy.
+- Desactivar cierre semanal automático/anterior.
+- Desactivar cierre diario/bono diario ligado al ranking anterior.
+- Desactivar control semanal de KM anterior.
+- Mantener activo el Home de pagos, cierres a demanda, comprobantes directos, notificaciones y eficiencia/KM nueva del segmento 52.
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- css/segments/52-style.css
+- js/segments/52-script.mjs
+- js/segments/11-script.mjs
+- js/segments/17-script.js
+- js/segments/18-script.mjs
+- js/segments/26-script.mjs
+- js/segments/28-script.mjs
+- js/segments/31-script.js
+- js/segments/35-script.mjs
+- js/segments/43-script.mjs
+- js/segments/49-script.mjs
+
+Qué queda activo:
+- Registrar cobro.
+- Cargar gasto.
+- Home nuevo Bruto/Caja chica/Gastos/Explora/Chofer.
+- Pedir cierre a demanda.
+- Subida de comprobante por quien paga.
+- Cierre automático al subir comprobante correcto.
+- Notificaciones de cierres.
+- Perfil del chofer y datos de pago.
+- Eficiencia/KM nueva integrada al cierre a demanda.
+
+Qué queda desactivado:
+- js/segments/17-script.js ranking derivaciones visual legacy.
+- js/segments/18-script.mjs ranking/performance legacy.
+- js/segments/26-script.mjs ranking global legacy.
+- js/segments/28-script.mjs ranking derivaciones legacy.
+- js/segments/31-script.js limpieza de ranking legacy.
+- js/segments/35-script.mjs cierre semanal automático/canónico legacy.
+- js/segments/43-script.mjs ranking diario/bono diario/placas semanales legacy.
+- js/segments/49-script.mjs control semanal de kilometraje legacy.
+
+Nota:
+Los archivos legacy se dejaron como stubs/no-op para evitar errores si algún navegador intenta cargarlos desde una versión vieja de index.html.
+El service-worker cambió a v4012-legacy-cleanup para forzar limpieza de caché.

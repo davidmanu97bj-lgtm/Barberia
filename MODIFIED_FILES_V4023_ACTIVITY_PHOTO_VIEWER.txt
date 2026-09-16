@@ -1,0 +1,25 @@
+EXPLORA · v4023 activity-photo-viewer
+
+Cambios aplicados sobre v4022-admin-activity-global:
+
+- js/segments/52-script.mjs
+  * Última actividad ahora agrega botón "ver foto" a todas las tarjetas con comprobante disponible:
+    - Cobros digitales de Explora: transferencia / QR / tarjeta / alias.
+    - Gastos cargados por chofer.
+    - Pendientes con adjunto.
+    - Pagos/reducciones de deuda con comprobante.
+    - Cierres con comprobante de chofer o de Explora.
+  * Los cobros en efectivo no muestran "ver foto" para respetar que no requieren comprobante.
+  * El comportamiento es igual para Chofer y Admin, incluyendo el Admin global por todos los choferes.
+
+- js/segments/14-script.mjs
+  * El visor blanco existente de comprobantes se reutiliza para cualquier actividad con foto.
+  * Se ampliaron los nombres de campos compatibles: receiptUrl, comprobanteUrl, photoUrl, driverReceiptUrl, adminReceiptUrl, etc.
+
+- index.html
+  * Versionado cache-busting actualizado a v4023.
+
+- service-worker.js
+  * Cache actualizado a v4023 para forzar que el teléfono tome los scripts nuevos.
+
+No se tocaron reglas de Firebase ni Cloud Functions.

@@ -1,0 +1,5 @@
+Cambios realizados:
+- index.html: actualización de query-string de 52-style.css y 52-script.mjs para evitar caché viejo.
+- js/segments/52-script.mjs: campana con badge rojo, pantalla de notificaciones, listado de cierres pendientes y apertura del detalle con comprobante.
+- css/segments/52-style.css: estilos de pantalla blanca de notificaciones y badge rojo.
+- service-worker.js: nueva versión de caché para forzar actualización de PWA.

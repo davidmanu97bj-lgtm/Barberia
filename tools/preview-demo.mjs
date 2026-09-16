@@ -1,0 +1,10 @@
+import {statementHtml} from '../period-statement.js';
+const E=globalThis.ExploraPeriodSettlement;
+const date=Date.parse('2026-09-15T12:00:00Z');
+const records=[...[[50000,637],[50000,638],[100000,639],[40000,640],[55000,641],[6000,642]].map(([amount,id])=>({id:String(id),method:'cash',amount,createdAtMs:date})),...[[80000,643],[35000,644],[60000,645]].map(([amount,id])=>({id:String(id),method:'digital',amount,createdAtMs:date}))];
+const expenses=[[4000,'Combustible'],[40000,'Nafta'],[40000,'Controlador'],[40000,'Seguro']].map(([amount,detail],i)=>({id:'gasto-00'+i,amount,detail,expenseLabel:detail,createdAtMs:date,proofUrl:'demo.jpg'}));
+const uberWeeks=[{id:'uber-001',grossAmount:75000,cashAmount:0,transferAmount:75000,createdAtMs:date,proofUrl:'demo.jpg'}];
+const invoices=new Map(records.map(r=>[r.id,{status:'authorized',environment:'homologation',issuer:{pointOfSale:1},number:Number(r.id)}]));
+const model=E.calculate({records,expenses,uberWeeks});
+document.getElementById('periodStatement').innerHTML=statementHtml({model,driverName:'Juan Pérez',invoices,orderedRows:model.rows});
+document.addEventListener('click',event=>{if(event.target.closest('button'))alert('Vista de demostración. Las funciones y los PDF reales están en la aplicación conectada a Firebase.');});

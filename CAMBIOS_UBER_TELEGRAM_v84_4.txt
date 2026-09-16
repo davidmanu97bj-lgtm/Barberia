@@ -1,0 +1,7 @@
+EXPLORA v84.4 — Telegram Uber robusto
+
+1. El pedido semanal de Uber intenta enviar el comprobante a Telegram.
+2. Si Telegram no puede descargar o adjuntar la imagen, el pedido NO se pierde: se envía inmediatamente como mensaje de texto.
+3. La confirmación o rechazo de David se envía como texto y ya no depende de volver a descargar el comprobante.
+4. Se conserva proofUrl/proofURL como fuente válida del comprobante.
+5. telegram_notifications registra si hubo fallback del adjunto para poder diagnosticarlo.

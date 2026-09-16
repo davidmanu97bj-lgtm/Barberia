@@ -1,0 +1,345 @@
+/* EXPLORA v2.4.5 · reorganización visual localizada del Dashboard administrador */
+.admin-command-center{display:none}
+
+body.explora-shared-admin .admin-command-center{
+  display:block;
+  margin:2px 0 4px;
+  padding:14px;
+  border:1px solid rgba(239,190,73,.20);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 94% 0,rgba(240,185,52,.11),transparent 34%),
+    linear-gradient(155deg,rgba(20,23,27,.98),rgba(7,9,11,.99));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 18px 42px rgba(0,0,0,.26);
+  overflow:hidden;
+}
+
+.admin-command-header{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  margin-bottom:12px;
+  padding:0 2px;
+}
+.admin-command-heading{min-width:0}
+.admin-command-heading p{
+  margin:0 0 4px;
+  color:#e7bd58;
+  font-size:8px;
+  font-weight:950;
+  line-height:1;
+  letter-spacing:.16em;
+}
+.admin-command-heading h2{
+  margin:0;
+  color:#fff;
+  font-size:18px;
+  font-weight:950;
+  line-height:1.08;
+  letter-spacing:.035em;
+}
+.admin-command-heading small{
+  display:block;
+  margin-top:5px;
+  color:rgba(235,238,242,.58);
+  font-size:10.5px;
+  line-height:1.35;
+}
+.admin-command-badge{
+  min-width:58px;
+  padding:7px 9px 6px;
+  border:1px solid rgba(243,196,83,.40);
+  border-radius:999px;
+  color:#f4cd70;
+  background:rgba(237,184,53,.08);
+  font-size:8px;
+  font-weight:950;
+  letter-spacing:.12em;
+  text-align:center;
+}
+
+/* El panel deja de vivir en la barra fija inferior. */
+body.explora-shared-admin #mainBottomNav{display:none!important}
+body.explora-shared-admin .dashboard-shell-real{
+  padding-bottom:calc(30px + env(safe-area-inset-bottom))!important;
+}
+body.explora-shared-admin .admin-shared-shell{
+  padding-bottom:calc(30px + env(safe-area-inset-bottom))!important;
+}
+
+body.explora-shared-admin #adminActionTray{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;
+  width:100%!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+body:not(.explora-shared-admin) #adminCommandCenter,
+body:not(.explora-shared-admin) #adminActionTray{display:none!important}
+
+body.explora-shared-admin .admin-action-button{
+  position:relative;
+  min-width:0;
+  min-height:78px;
+  padding:11px;
+  border:1px solid rgba(255,255,255,.085);
+  border-radius:18px;
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr);
+  gap:10px;
+  align-items:center;
+  color:#f6f7f8;
+  background:linear-gradient(150deg,rgba(30,34,39,.96),rgba(12,14,17,.99));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 8px 20px rgba(0,0,0,.20);
+  text-align:left;
+  font:inherit;
+  overflow:hidden;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+body.explora-shared-admin .admin-action-button::after{
+  content:"";
+  position:absolute;
+  inset:auto -18px -24px auto;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:rgba(236,186,65,.055);
+  pointer-events:none;
+}
+body.explora-shared-admin .admin-action-button>svg{
+  width:38px;
+  height:38px;
+  padding:8px;
+  border:1px solid rgba(243,197,91,.22);
+  border-radius:13px;
+  box-sizing:border-box;
+  fill:none;
+  stroke:#f0c55e;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  background:rgba(237,183,51,.075);
+}
+body.explora-shared-admin .admin-action-button>span{
+  min-width:0;
+  display:grid;
+  gap:4px;
+  color:#fff;
+  font-size:10px;
+  font-weight:950;
+  line-height:1.16;
+  letter-spacing:.025em;
+  overflow-wrap:anywhere;
+}
+body.explora-shared-admin .admin-action-button>span b{
+  min-width:0;
+  color:#fff;
+  font-size:10.5px;
+  font-weight:950;
+  line-height:1.13;
+  letter-spacing:.025em;
+  overflow-wrap:anywhere;
+}
+body.explora-shared-admin .admin-action-button>span small{
+  color:rgba(230,234,238,.55);
+  font-size:8px;
+  font-weight:750;
+  line-height:1.25;
+  letter-spacing:0;
+}
+body.explora-shared-admin .admin-action-button:active{
+  opacity:.78;
+  transform:scale(.985);
+}
+body.explora-shared-admin .admin-action-button:focus-visible{
+  outline:2px solid rgba(246,207,110,.92);
+  outline-offset:2px;
+}
+
+/* Orden estable incluso para accesos agregados por módulos existentes. */
+body.explora-shared-admin #adminActionTray [data-action="admin-billing-driver"]{order:1}
+body.explora-shared-admin #adminActionTray [data-action="admin-choferes"]{order:2}
+body.explora-shared-admin #adminActionTray [data-action="admin-create-vehicle"]{order:3}
+body.explora-shared-admin #adminActionTray [data-action="admin-cierres"]{order:4}
+body.explora-shared-admin #adminActionTray [data-action="admin-derivaciones"]{order:5}
+body.explora-shared-admin #adminActionTray [data-action="admin-multas"]{order:6}
+body.explora-shared-admin #adminActionTray [data-action="admin-config-percentages"]{order:7}
+body.explora-shared-admin #adminActionTray [data-action="admin-date-test"]{order:8}
+body.explora-shared-admin #adminActionTray [data-action="admin-simulate-drivers"]{order:9}
+body.explora-shared-admin #adminActionTray [data-action="admin-launch"]{order:10}
+
+body.explora-shared-admin .admin-action-button--billing-driver{
+  border-color:rgba(91,222,145,.25)!important;
+  background:linear-gradient(150deg,rgba(19,52,36,.96),rgba(8,17,12,.99))!important;
+}
+body.explora-shared-admin .admin-action-button--billing-driver>svg,
+body.explora-shared-admin .admin-action-button--vehicle>svg{stroke:#78e7a5;border-color:rgba(101,224,149,.24);background:rgba(62,184,107,.09)}
+body.explora-shared-admin .admin-action-button--danger{
+  border-color:rgba(255,104,112,.20)!important;
+  background:linear-gradient(150deg,rgba(52,22,25,.96),rgba(18,9,11,.99))!important;
+}
+body.explora-shared-admin .admin-action-button--danger>svg{stroke:#ff9da4;border-color:rgba(255,118,126,.24);background:rgba(196,55,65,.09)}
+body.explora-shared-admin .admin-action-button--date>svg{stroke:#8dceff;border-color:rgba(112,190,249,.25);background:rgba(55,143,208,.09)}
+body.explora-shared-admin .admin-action-button--simulation>svg{stroke:#ccb7ff;border-color:rgba(191,159,255,.25);background:rgba(132,89,211,.09)}
+body.explora-shared-admin .admin-action-button--launch{
+  grid-column:1/-1;
+  min-height:68px;
+  border-color:rgba(181,143,255,.23)!important;
+  background:linear-gradient(150deg,rgba(44,32,71,.97),rgba(17,12,27,.99))!important;
+}
+body.explora-shared-admin .admin-action-button--launch>svg{stroke:#cfbaff;border-color:rgba(197,169,255,.27);background:rgba(130,89,211,.10)}
+
+/* Jerarquía y ritmo del dashboard administrativo. */
+body.explora-shared-admin .driver-status-real{margin-bottom:4px}
+body.explora-shared-admin .operations-real,
+body.explora-shared-admin .finance-real,
+body.explora-shared-admin .quick-summary-real{margin-top:3px}
+body.explora-shared-admin .operations-real>h2,
+body.explora-shared-admin .finance-real .section-header-real h2,
+body.explora-shared-admin .quick-summary-real>h2{
+  letter-spacing:.085em;
+}
+body.explora-shared-admin .operations-grid-real{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+}
+body.explora-shared-admin .operations-grid-real .operation-card-real{
+  min-height:112px;
+}
+body.explora-shared-admin .operations-grid-real .operation-card-real:nth-child(3){grid-column:1/-1;min-height:94px}
+body.explora-shared-admin .finance-grid-real{gap:10px}
+body.explora-shared-admin .finance-card-real{min-height:128px}
+body.explora-shared-admin .vehicle-management-grid{gap:10px}
+
+@media(min-width:620px){
+  body.explora-shared-admin #adminActionTray{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  body.explora-shared-admin .admin-action-button--launch{grid-column:auto}
+  body.explora-shared-admin .operations-grid-real{grid-template-columns:repeat(3,minmax(0,1fr))}
+  body.explora-shared-admin .operations-grid-real .operation-card-real:nth-child(3){grid-column:auto;min-height:112px}
+}
+
+@media(max-width:370px){
+  body.explora-shared-admin .admin-command-center{padding:12px;border-radius:21px}
+  body.explora-shared-admin #adminActionTray{gap:7px!important}
+  body.explora-shared-admin .admin-action-button{min-height:74px;padding:9px;grid-template-columns:34px minmax(0,1fr);gap:8px;border-radius:16px}
+  body.explora-shared-admin .admin-action-button>svg{width:34px;height:34px;padding:7px;border-radius:12px}
+  body.explora-shared-admin .admin-action-button>span b{font-size:9.5px}
+  body.explora-shared-admin .admin-action-button>span small{font-size:7.5px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.explora-shared-admin .admin-action-button{transition:none!important}
+}
+
+/* Cierre visual del bloque de herramientas: evita una celda vacía en móvil. */
+body.explora-shared-admin .admin-action-button--simulation{grid-column:1/-1}
+@media(min-width:620px){
+  body.explora-shared-admin .admin-action-button--simulation{grid-column:auto}
+}
+
+/* EXPLORA v2.4.6 · Comprobantes semanales del administrador ordenados por semana, estado y vehículo. */
+.receipt-filter-btn[hidden],.receipts-admin-filters label[hidden],.receipts-closure-overview[hidden]{display:none!important}
+body.explora-shared-admin .receipts-list-view{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+body.explora-shared-admin .receipts-list-head{margin-bottom:12px}
+body.explora-shared-admin .receipts-list-head h2{font-size:clamp(20px,6vw,28px);letter-spacing:.055em}
+body.explora-shared-admin .receipts-list-head p{max-width:390px;line-height:1.4}
+.receipts-closure-overview{
+  margin:0 0 12px;
+  padding:13px;
+  border:1px solid rgba(228,189,100,.25);
+  border-radius:20px;
+  background:radial-gradient(circle at 92% 0%,rgba(228,189,100,.11),transparent 40%),linear-gradient(160deg,rgba(28,25,17,.98),rgba(8,10,12,.99));
+  box-shadow:0 16px 38px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035);
+}
+.receipts-closure-period{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}
+.receipts-closure-period span{color:rgba(255,255,255,.52);font-size:9px;font-weight:950;letter-spacing:.12em}
+.receipts-closure-period strong{max-width:62%;color:#f6cf73;font-size:12px;line-height:1.25;text-align:right;overflow-wrap:anywhere}
+.receipts-closure-counters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.receipts-closure-counters article{min-width:0;min-height:67px;padding:9px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.025);display:flex;flex-direction:column;justify-content:space-between;gap:7px}
+.receipts-closure-counters article span{color:rgba(255,255,255,.62);font-size:8px;font-weight:850;line-height:1.25;overflow-wrap:anywhere}
+.receipts-closure-counters article strong{font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.receipts-closure-counters .is-missing{border-color:rgba(245,185,66,.25);background:rgba(157,105,16,.09)}
+.receipts-closure-counters .is-missing strong{color:#f5c75d}
+.receipts-closure-counters .is-received{border-color:rgba(111,185,255,.25);background:rgba(49,111,176,.09)}
+.receipts-closure-counters .is-received strong{color:#8dceff}
+.receipts-closure-counters .is-confirmed{border-color:rgba(91,222,145,.25);background:rgba(35,139,80,.09)}
+.receipts-closure-counters .is-confirmed strong{color:#78e7a5}
+.receipts-closure-counters .is-rejected{border-color:rgba(255,104,112,.25);background:rgba(177,45,55,.09)}
+.receipts-closure-counters .is-rejected strong{color:#ff9da4}
+.receipts-closure-week-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.receipts-closure-week-actions button{min-width:0;min-height:39px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(255,255,255,.035);color:rgba(255,255,255,.72);font:inherit;font-size:9px;font-weight:950;letter-spacing:.045em;padding:8px;white-space:normal;line-height:1.2}
+.receipts-closure-week-actions button.is-active{border-color:rgba(228,189,100,.34);background:rgba(228,189,100,.10);color:#f6cf73}
+.receipts-closure-week-actions button:disabled{opacity:.38}
+body.explora-shared-admin .receipts-filter-row{margin:10px 0 8px;padding-bottom:3px;gap:7px}
+body.explora-shared-admin .receipt-filter-btn{min-height:36px;padding:8px 11px;white-space:nowrap;font-size:9px;font-weight:900}
+body.explora-shared-admin .receipts-admin-filters.is-closure-mode{grid-template-columns:repeat(3,minmax(0,1fr));margin:8px 0 12px}
+body.explora-shared-admin .receipts-admin-filters.is-closure-mode label{min-width:0}
+body.explora-shared-admin .receipts-admin-filters.is-closure-mode select{height:40px;padding:8px 28px 8px 9px;text-overflow:ellipsis}
+.receipt-week-group{margin:0 0 13px;padding:11px;border:1px solid rgba(228,189,100,.17);border-radius:19px;background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012));overflow:hidden}
+.receipt-week-group>header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:2px 2px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.receipt-week-group>header span{color:rgba(255,255,255,.46);font-size:8px;font-weight:950;letter-spacing:.14em}
+.receipt-week-group>header strong{color:#f6cf73;font-size:12px;text-align:right;overflow-wrap:anywhere}
+.receipt-closure-status-group{margin-top:10px}
+.receipt-closure-status-group>header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;padding:0 3px}
+.receipt-closure-status-group>header span{font-size:9px;font-weight:950;letter-spacing:.075em}
+.receipt-closure-status-group>header b{min-width:25px;height:25px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.06);font-size:11px;font-variant-numeric:tabular-nums}
+.receipt-closure-status-group.is-missing>header span{color:#f5c75d}.receipt-closure-status-group.is-received>header span{color:#8dceff}.receipt-closure-status-group.is-confirmed>header span{color:#78e7a5}.receipt-closure-status-group.is-rejected>header span{color:#ff9da4}.receipt-closure-status-group.is-balanced>header span{color:#b9c1c9}
+.receipt-vehicle-group{margin:0 0 7px;border:1px solid rgba(255,255,255,.085);border-radius:15px;background:rgba(0,0,0,.18);overflow:hidden}
+.receipt-vehicle-group>summary{list-style:none;min-height:54px;padding:10px 11px;display:grid;grid-template-columns:minmax(0,1fr) auto 18px;align-items:center;gap:8px;cursor:pointer}
+.receipt-vehicle-group>summary::-webkit-details-marker{display:none}
+.receipt-vehicle-group>summary span{min-width:0;display:block}
+.receipt-vehicle-group>summary b{display:block;color:#fff;font-size:11px;line-height:1.25;overflow-wrap:anywhere}
+.receipt-vehicle-group>summary small{display:block;margin-top:3px;color:rgba(255,255,255,.47);font-size:9px}
+.receipt-vehicle-group>summary strong{color:#fff;font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.receipt-vehicle-group>summary:after{content:"+";grid-column:3;color:rgba(255,255,255,.45);font-size:17px;line-height:1;text-align:right}
+.receipt-vehicle-group[open]>summary:after{content:"−"}
+.receipt-vehicle-group>summary strong{grid-column:2;grid-row:1}.receipt-vehicle-group>summary:after{grid-row:1}
+.receipt-vehicle-group.is-missing{border-color:rgba(245,185,66,.18)}.receipt-vehicle-group.is-received{border-color:rgba(111,185,255,.18)}.receipt-vehicle-group.is-confirmed{border-color:rgba(91,222,145,.18)}.receipt-vehicle-group.is-rejected{border-color:rgba(255,104,112,.20)}
+.receipt-vehicle-items{display:grid;gap:7px;padding:0 7px 7px}
+.receipt-closure-card{min-width:0;border:1px solid rgba(255,255,255,.075);border-radius:13px;background:linear-gradient(160deg,rgba(22,25,29,.98),rgba(9,11,13,.99));padding:10px;overflow:hidden}
+.receipt-closure-card-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px}
+.receipt-closure-card-head>div{min-width:0}
+.receipt-closure-card-head span{display:block;color:#fff;font-size:12px;font-weight:900;line-height:1.25;overflow-wrap:anywhere}
+.receipt-closure-card-head small{display:block;margin-top:3px;color:rgba(255,255,255,.49);font-size:9px;line-height:1.3;overflow-wrap:anywhere}
+.receipt-closure-card-head strong{color:#fff;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.receipt-closure-result{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.065)}
+.receipt-closure-result span{min-width:0;color:rgba(255,255,255,.82);font-size:10px;font-weight:800;line-height:1.3;overflow-wrap:anywhere}
+.receipt-closure-result small{flex:0 0 auto;max-width:45%;color:rgba(255,255,255,.42);font-size:8px;line-height:1.3;text-align:right;overflow-wrap:anywhere}
+.receipt-closure-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
+.receipt-closure-badge{min-width:0;display:inline-flex;align-items:center;min-height:25px;padding:5px 8px;border:1px solid rgba(255,255,255,.10);border-radius:999px;background:rgba(255,255,255,.035);font-size:7.5px;font-weight:950;letter-spacing:.045em;line-height:1.15;overflow-wrap:anywhere}
+.receipt-closure-badge.is-missing{border-color:rgba(245,185,66,.28);color:#f5c75d;background:rgba(157,105,16,.09)}
+.receipt-closure-badge.is-received{border-color:rgba(111,185,255,.28);color:#8dceff;background:rgba(49,111,176,.09)}
+.receipt-closure-badge.is-confirmed{border-color:rgba(91,222,145,.28);color:#78e7a5;background:rgba(35,139,80,.09)}
+.receipt-closure-badge.is-rejected{border-color:rgba(255,104,112,.28);color:#ff9da4;background:rgba(177,45,55,.09)}
+.receipt-closure-badge.is-balanced{border-color:rgba(185,193,201,.20);color:#c7ced5}
+.receipt-closure-card .receipt-view-photo{flex:0 0 auto;min-height:29px;border:1px solid rgba(228,189,100,.27);border-radius:9px;background:rgba(228,189,100,.08);color:#f6cf73;padding:6px 8px;font:inherit;font-size:8px;font-weight:950}
+.receipt-closure-no-file{flex:0 0 auto;color:rgba(255,255,255,.38);font-size:8px;text-align:right}
+@media(max-width:520px){
+  .receipts-closure-counters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.explora-shared-admin .receipts-admin-filters.is-closure-mode{grid-template-columns:1fr 1fr}
+  body.explora-shared-admin .receipts-admin-filters.is-closure-mode label:first-child{grid-column:1/-1}
+}
+@media(max-width:370px){
+  .receipts-closure-week-actions{grid-template-columns:1fr}
+  .receipt-closure-card-foot{align-items:flex-start;flex-direction:column}
+  .receipt-closure-card .receipt-view-photo{width:100%}
+}
+
+
+/* EXPLORA v2.4.7 · Cierres del administrador sincronizados con el cierre semanal actual. */
+.receipt-closure-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.receipt-open-closure{min-height:29px;border:1px solid rgba(111,185,255,.26);border-radius:9px;background:rgba(49,111,176,.09);color:#9bd5ff;padding:6px 8px;font:inherit;font-size:8px;font-weight:950}
+.admin-closure-overview-v247{margin:0 0 14px;padding:14px;border:1px solid rgba(229,190,93,.23);border-radius:22px;background:radial-gradient(circle at 92% 0,rgba(230,187,76,.11),transparent 38%),linear-gradient(155deg,rgba(24,26,29,.98),rgba(8,10,12,.99));box-shadow:0 16px 36px rgba(0,0,0,.24)}
+.admin-closure-overview-v247>div:first-child{display:grid;gap:4px;margin-bottom:12px}.admin-closure-overview-v247>div:first-child span{color:#e9bf59;font-size:8px;font-weight:950;letter-spacing:.14em}.admin-closure-overview-v247>div:first-child strong{color:#fff;font-size:17px;line-height:1.15}.admin-closure-overview-v247>div:first-child small{color:rgba(255,255,255,.5);font-size:9px;line-height:1.35}
+.admin-closure-counter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.admin-closure-counter-grid article{min-width:0;min-height:65px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.025);display:flex;flex-direction:column;justify-content:space-between;gap:8px}.admin-closure-counter-grid span{color:rgba(255,255,255,.58);font-size:7.5px;font-weight:850;line-height:1.2;overflow-wrap:anywhere}.admin-closure-counter-grid b{font-size:21px;line-height:1}.admin-closure-counter-grid .is-missing b{color:#f4c55b}.admin-closure-counter-grid .is-received b{color:#8dceff}.admin-closure-counter-grid .is-confirmed b{color:#78e7a5}.admin-closure-counter-grid .is-live b{color:#e9bf59}
+.admin-closure-status-v247{margin:0 0 13px}.admin-closure-status-v247>header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 7px}.admin-closure-status-v247>header span{font-size:9px;font-weight:950;letter-spacing:.075em}.admin-closure-status-v247>header b{min-width:25px;height:25px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.06);font-size:11px}.admin-closure-status-v247.is-missing>header span{color:#f4c55b}.admin-closure-status-v247.is-rejected>header span{color:#ff9da4}.admin-closure-status-v247.is-received>header span{color:#8dceff}.admin-closure-status-v247.is-live>header span{color:#e9bf59}.admin-closure-status-v247.is-confirmed>header span{color:#78e7a5}.admin-closure-status-v247.is-balanced>header span{color:#c7ced5}
+.admin-state-pill.is-info{border-color:rgba(111,185,255,.28)!important;background:rgba(49,111,176,.09)!important;color:#9bd5ff!important}.admin-state-pill.is-ok{border-color:rgba(91,222,145,.28)!important;background:rgba(35,139,80,.09)!important;color:#78e7a5!important}
+.admin-closure-detail-v247{display:grid;gap:11px;padding-bottom:calc(28px + env(safe-area-inset-bottom))}.admin-closure-driver-v247{display:grid;grid-template-columns:52px minmax(0,1fr);gap:11px;align-items:center;padding:13px;border:1px solid rgba(229,190,93,.22);border-radius:20px;background:radial-gradient(circle at 90% 0,rgba(229,190,93,.12),transparent 38%),linear-gradient(155deg,rgba(24,26,29,.98),rgba(8,10,12,.99))}.admin-closure-driver-v247 img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:1px solid rgba(229,190,93,.38)}.admin-closure-driver-v247>div{min-width:0}.admin-closure-driver-v247 span{display:block;color:#e9bf59;font-size:8px;font-weight:950;letter-spacing:.12em}.admin-closure-driver-v247 h2{margin:3px 0 2px;color:#fff;font-size:17px;line-height:1.15;overflow-wrap:anywhere}.admin-closure-driver-v247 p{margin:0;color:rgba(255,255,255,.52);font-size:9px;line-height:1.3;overflow-wrap:anywhere}.admin-closure-driver-v247>b{grid-column:1/-1;justify-self:start;padding:6px 9px;border:1px solid rgba(255,255,255,.10);border-radius:999px;color:#e9bf59;background:rgba(229,190,93,.08);font-size:8px;font-weight:950;letter-spacing:.04em}.admin-closure-driver-v247>b.is-missing,.admin-closure-driver-v247>b.is-rejected{color:#ff9da4;border-color:rgba(255,104,112,.25);background:rgba(177,45,55,.09)}.admin-closure-driver-v247>b.is-received{color:#9bd5ff;border-color:rgba(111,185,255,.25);background:rgba(49,111,176,.09)}.admin-closure-driver-v247>b.is-confirmed,.admin-closure-driver-v247>b.is-balanced{color:#78e7a5;border-color:rgba(91,222,145,.25);background:rgba(35,139,80,.09)}
+.admin-closure-section-v247{padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:linear-gradient(160deg,rgba(22,25,29,.98),rgba(9,11,13,.99));overflow:hidden}.admin-closure-section-v247>header{display:flex;align-items:center;gap:9px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.07)}.admin-closure-section-v247>header>span{flex:0 0 27px;width:27px;height:27px;border-radius:9px;display:grid;place-items:center;border:1px solid rgba(229,190,93,.28);background:rgba(229,190,93,.08);color:#e9bf59;font-size:10px;font-weight:950}.admin-closure-section-v247>header small{display:block;color:rgba(255,255,255,.42);font-size:7px;font-weight:900;letter-spacing:.12em}.admin-closure-section-v247>header h3{margin:2px 0 0;color:#fff;font-size:12px;letter-spacing:.045em}
+.admin-closure-line-v247{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;padding:8px 1px;border-bottom:1px solid rgba(255,255,255,.055)}.admin-closure-line-v247:last-child{border-bottom:0}.admin-closure-line-v247>span{min-width:0;color:rgba(255,255,255,.68);font-size:9.5px;line-height:1.35;overflow-wrap:anywhere}.admin-closure-line-v247>span small{display:block;margin-top:2px;color:rgba(255,255,255,.38);font-size:7.5px;line-height:1.3}.admin-closure-line-v247>strong{color:#fff;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}.admin-closure-line-v247.is-positive>strong{color:#78e7a5}.admin-closure-line-v247.is-negative>strong{color:#ff9da4}.admin-closure-line-v247.is-info>strong{color:#9bd5ff}.admin-closure-total-v247{margin-top:5px;padding-top:5px;border-top:1px solid rgba(229,190,93,.22)}.admin-closure-total-v247 .admin-closure-line-v247{border-bottom:0}.admin-closure-total-v247 .admin-closure-line-v247>span{color:#f1d17c;font-weight:900}.admin-closure-total-v247 .admin-closure-line-v247>strong{font-size:13px}
+.admin-closure-empty-v247{padding:9px;border:1px dashed rgba(255,255,255,.10);border-radius:12px;color:rgba(255,255,255,.48);background:rgba(255,255,255,.02);font-size:9px;line-height:1.35}.admin-closure-final-v247{padding:16px;border:1px solid rgba(229,190,93,.34);border-radius:20px;background:radial-gradient(circle at 92% 0,rgba(229,190,93,.14),transparent 42%),linear-gradient(155deg,rgba(29,25,15,.98),rgba(9,10,12,.99));text-align:center}.admin-closure-final-v247 span{display:block;color:#e9bf59;font-size:8px;font-weight:950;letter-spacing:.15em}.admin-closure-final-v247 strong{display:block;margin-top:6px;color:#fff;font-size:14px;line-height:1.2}.admin-closure-final-v247 b{display:block;margin-top:5px;color:#fff;font-size:25px;line-height:1;font-variant-numeric:tabular-nums}.admin-closure-final-v247 small{display:block;margin-top:7px;color:rgba(255,255,255,.48);font-size:8px}.admin-closure-final-v247.is-positive b{color:#78e7a5}.admin-closure-final-v247.is-negative b{color:#ff9da4}.admin-closure-final-v247.is-info b{color:#9bd5ff}.admin-closure-receipt-v247 .admin-card-action{width:100%;margin-top:9px}
+@media(max-width:520px){.admin-closure-counter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.receipt-closure-card-foot{align-items:flex-start}.receipt-closure-actions{width:100%;justify-content:flex-start}.receipt-open-closure,.receipt-closure-card .receipt-view-photo{flex:1 1 auto}.admin-closure-line-v247{grid-template-columns:minmax(0,1fr) auto}.admin-closure-driver-v247{grid-template-columns:46px minmax(0,1fr)}.admin-closure-driver-v247 img{width:46px;height:46px}}

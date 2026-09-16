@@ -1,0 +1,28 @@
+EXPLORA v4015 · Chofer admin limpio
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- js/segments/11-script.mjs
+- js/segments/39-script.mjs
+- js/segments/52-script.mjs
+- css/segments/50-style.css
+- functions/index.js
+
+Cambios principales:
+1. El módulo "Chofer" reemplaza la gestión confusa de choferes.
+2. Crear chofer:
+   - rol fijo Chofer;
+   - nombre obligatorio;
+   - ID obligatorio;
+   - contraseña obligatoria;
+   - correo, teléfono, CUIT y alias opcionales.
+3. Ningún chofer puede abrir como Admin por llamarse David/david7 ni por tener un documento viejo con rol admin.
+4. Admin real limitado al UID oficial de David: 2LziyTTdFcZzSOhK3hLbAKs2U4s2.
+5. Listas y selectores filtran perfiles admin, eliminados, inactivos, huérfanos o sin nombre real.
+6. Eliminar chofer llama a adminDeleteDriverCompletely para borrar Auth, perfil, alias, movimientos, comprobantes, storage y documentos relacionados.
+7. Service worker actualizado a v4015-driver-admin para limpiar caché viejo.
+
+IMPORTANTE:
+- Para que crear/eliminar funcione con seguridad real del servidor hay que desplegar functions/index.js en Firebase Functions.

@@ -1,0 +1,18 @@
+EXPLORA v4077 · CAJA CHICA AUTOMÁTICA CON FACTURACIÓN
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- functions/index.js
+- service-worker.js
+
+Cambios:
+1. Caja chica ya no admite cierre manual.
+2. Conserva el período que ya estaba abierto antes de esta actualización.
+3. Acumula el 5% de todos los cobros en efectivo desde su último corte válido.
+4. Al pedir cierre desde Chofer o Explora, todo el saldo pendiente de Caja chica entra en “quién paga a quién”.
+5. El 5% se descuenta al chofer incluso cuando el chofer ya debía pagar a Explora; en ese caso se suma a su liquidación.
+6. El cierre de Facturación corta y reinicia Chofer, Explora y Caja chica en el mismo instante del pedido.
+7. El botón manual de Caja chica se reemplaza por una tarjeta informativa deshabilitada: “Cierre automático con facturación”.
+8. Se guardan IDs, base, importe incluido y corte de Caja chica dentro del cierre de Facturación para auditoría.
+9. Se ajustó el borrado administrativo para recalcular cierres v4077 sin perder la integración de Caja chica.

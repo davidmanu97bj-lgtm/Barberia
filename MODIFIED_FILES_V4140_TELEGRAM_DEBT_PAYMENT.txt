@@ -1,0 +1,23 @@
+EXPLORA v4140 · REDUCCIÓN DE DEUDA EN TELEGRAM
+
+CAMBIOS
+- Cada entrega de deuda registrada por el administrador genera un aviso automático en Telegram.
+- El mensaje informa chofer, medio, deuda anterior, reducción aplicada y deuda actual.
+- Si queda saldo, indica cuánto continúa debiendo el chofer a Explora.
+- Si el saldo llega a cero, informa que la deuda quedó saldada.
+- Efectivo se envía como mensaje de texto.
+- Transferencia se envía con la foto del comprobante.
+- La deduplicación evita avisos repetidos ante reintentos de Firebase.
+- Los pagos cargados por el chofer no activan este aviso administrativo.
+
+ARCHIVOS MODIFICADOS
+- functions/index.js
+- functions/package.json
+- functions/package-lock.json
+
+ARCHIVOS NUEVOS
+- functions/telegram-debt-payment.js
+- functions/test/telegram-debt-payment.test.js
+
+DESPLIEGUE
+firebase deploy --only functions

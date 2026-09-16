@@ -1,0 +1,7 @@
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+
+Corrección v4105:
+El filtro por módulo ahora también se aplica cuando la sesión es de administrador.

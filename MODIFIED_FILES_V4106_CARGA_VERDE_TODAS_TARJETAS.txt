@@ -1,0 +1,12 @@
+MODIFICACIÓN V4106 — CARGA VERDE EN TODAS LAS TARJETAS DEL MENÚ CHOFER
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Comportamiento:
+- Chofer, Explora, Gastos, Caja chica y Deudas muestran “Actualizando…” en verde.
+- No se muestran 0, datos anteriores ni cifras parciales mientras Firestore confirma las seis fuentes financieras.
+- Los valores reales aparecen únicamente cuando todas las consultas iniciales de Firestore finalizaron.
+- Durante la actualización se bloquea temporalmente el botón de cierre para evitar operar con datos parciales.

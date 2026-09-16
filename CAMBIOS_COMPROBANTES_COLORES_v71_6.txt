@@ -1,0 +1,17 @@
+EXPLORA v71.6 — Comprobantes por color
+
+Cambios visuales únicamente en los comprobantes del chofer:
+- Efectivo: verde transparente.
+- Caja chica: verde transparente.
+- Digital: lila transparente.
+- Uber: amarillo transparente.
+- Gasto: rojo transparente.
+- Otros comprobantes: gris transparente.
+
+También se armonizaron borde, icono, monto y etiqueta de comprobante con el mismo tono.
+No se modificaron cálculos, saldos, Firebase, Telegram ni reglas de negocio.
+
+Archivos modificados:
+- app.js
+- styles.css
+- index.html

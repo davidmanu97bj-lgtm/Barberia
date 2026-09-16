@@ -1,0 +1,19 @@
+EXPLORA v4059 · WhatsApp directo a la app nativa sin api.whatsapp.com
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+
+Corrección aplicada:
+1. iOS ya no usa wa.me ni api.whatsapp.com. Usa directamente whatsapp://send.
+2. Android ya no usa wa.me ni api.whatsapp.com. Usa Intent explícito a package=com.whatsapp.
+3. Se eliminó el fallback web en iOS/Android para que no aparezca la pantalla intermedia de api.whatsapp.com.
+4. El flujo queda Explora -> WhatsApp app, tanto para admin como para chofer.
+5. Escritorio mantiene fallback a web.whatsapp.com solamente fuera de iOS/Android.
+6. Se actualizó cache/versionado para evitar JS viejo.
+
+Importante:
+Para que abra directo, WhatsApp debe estar instalado en el teléfono. Si no está instalado, el sistema no debe abrir api.whatsapp.com; simplemente no podrá resolver la app.
+
+No se tocaron cálculos, cierres, deudas, histórico, perfiles ni Firestore.

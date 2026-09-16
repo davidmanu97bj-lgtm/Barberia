@@ -1,0 +1,17 @@
+EXPLORA v4048 · Menú inferior simétrico tipo dock
+
+Cambios aplicados:
+1. El menú inferior se rearmó visualmente como dock compacto, más parecido al ejemplo enviado.
+2. Los cuatro íconos laterales quedan con la misma altura, tamaño y línea de texto.
+3. El botón central queda más bajo y menos invasivo; ya no ocupa tanto contenido visual hacia arriba.
+4. Se ajustaron grid, padding, radio superior, sombra, iconos y textos para mantener simetría.
+5. Se aplica al menú inferior del chofer, admin y pantallas donde aparece pay-bottom-nav.
+6. Se ajustó también main-bottom-nav/performance-bottom-nav para mantener coherencia global.
+7. Compatible con iOS y Android usando safe-area.
+
+Archivos modificados:
+- css/segments/52-style.css
+- index.html
+- service-worker.js
+
+No se tocaron WhatsApp, Firestore, cierres, deudas, cálculos ni lógica de negocio.

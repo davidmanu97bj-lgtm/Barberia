@@ -1,0 +1,8 @@
+EXPLORA v4093 — Uber + Caja chica
+
+- Cierre Uber distribuye: 45% neto chofer, 50% a Deudas y 5% a Caja chica.
+- El 5% Uber aparece en la tarjeta Caja chica.
+- La deuda Uber conserva el 50% y guarda el importe de caja chica relacionado.
+- Los comprobantes de reducción de deuda identifican la caja chica Uber proporcional vinculada.
+- Notificaciones y comprobantes guardan uberCashboxAmount / uberCashboxReferenced.
+- Reglas completas de Firestore y Storage se incluyen sin recortes.

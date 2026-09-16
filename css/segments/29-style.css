@@ -1,0 +1,11 @@
+
+    .weekly-closure-overlay{display:grid!important;place-items:center!important;overflow:hidden!important;padding:calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px)!important;touch-action:none!important}
+    .weekly-closure-overlay[hidden]{display:none!important}
+    .weekly-closure-modal{width:min(100%,540px)!important;height:auto!important;max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px)!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;margin:0!important}
+    .weekly-closure-header{position:relative!important;top:auto!important;z-index:2!important;flex:0 0 auto!important}
+    .weekly-closure-content{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;padding-bottom:calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 28px)!important}
+    body.weekly-closure-open{overflow:hidden!important;touch-action:none!important}
+    .weekly-closure-back-dashboard{width:100%;min-height:54px;margin:2px 0 0;border-color:rgba(245,185,66,.34)!important;background:rgba(245,185,66,.09)!important;color:#f4ca68!important;scroll-margin-bottom:calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 26px)}
+    #weeklyClosureAcknowledgementBtn:disabled,#weeklyClosureSubmitBtn:disabled{pointer-events:none}
+    @media(max-width:390px){.weekly-closure-modal{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 14px)!important}.weekly-closure-content{padding-left:11px!important;padding-right:11px!important}}
+  

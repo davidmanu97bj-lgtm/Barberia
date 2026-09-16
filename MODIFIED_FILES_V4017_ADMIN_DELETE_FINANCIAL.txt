@@ -1,0 +1,22 @@
+EXPLORA v4017 · Borrado manual financiero para Admin
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- functions/index.js
+
+Qué agrega:
+- En Más > Administración aparece "Borrar movimientos".
+- El Admin selecciona un chofer desde Inicio y luego puede borrar:
+  1) Cobros: elimina el documento en billing_records y sus comprobantes vinculados.
+  2) Caja chica: mantiene el cobro efectivo pero lo excluye de caja chica.
+  3) Gastos: elimina el documento en gastos y sus comprobantes vinculados.
+- La Cloud Function adminDeleteFinancialMovement ajusta cierres en cierres_semanales que incluyan el movimiento borrado.
+- El cálculo local excluye movimientos borrados/anulados y cobros marcados como caja chica eliminada.
+
+Importante:
+- Para que el borrado real y el ajuste de cierres funcione, desplegar functions/index.js.
+- Si solo se sube Hosting, aparece la interfaz pero no podrá ejecutar el borrado servidor.

@@ -1,0 +1,33 @@
+
+    .admin-loan-title{margin:0;font-size:20px;font-weight:900;letter-spacing:.025em}
+    .admin-loan-copy{margin:0;color:var(--ex-muted);font-size:13px;line-height:1.45}
+    .admin-loan-form{display:grid;gap:12px;padding:15px;border:1px solid var(--ex-border);border-radius:var(--ex-card-radius);background:var(--ex-panel-soft);box-shadow:var(--ex-shadow)}
+    .admin-loan-form label{display:grid;gap:7px;color:rgba(255,255,255,.72);font-size:12px;font-weight:800}
+    .admin-loan-form input,.admin-loan-form select,.admin-loan-form textarea{width:100%;min-width:0;min-height:var(--ex-control-height);box-sizing:border-box;border:1px solid var(--ex-border);border-radius:var(--ex-control-radius);background:rgba(0,0,0,.24);color:#fff;padding:12px 14px;outline:none;font-size:16px}
+    .admin-loan-form textarea{min-height:92px;resize:vertical}
+    .admin-loan-form select option{color:#111}
+    .operational-loan-screen input,
+    .operational-loan-screen textarea,
+    .operational-loan-screen select,
+    #operationalLoanReceiptInput{font-size:16px!important}
+    .operational-loan-screen,
+    .operational-loan-screen .receipt-upload-field,
+    .operational-loan-screen .receipt-preview,
+    .operational-loan-screen .receipt-upload-trigger{transform:none!important;scale:none!important}
+    .operational-loan-screen .admin-primary-action[aria-busy="true"]{opacity:.68;cursor:wait}
+    .operational-loan-status.is-error{width:100%;max-width:100%;box-sizing:border-box;margin:2px 0 0;padding:13px 14px;border:1px solid rgba(255,112,112,.34);border-radius:15px;background:rgba(90,20,24,.25);color:#ffc4c4;line-height:1.35;overflow-wrap:anywhere}
+    .operational-loan-diagnostic{width:100%;max-width:100%;box-sizing:border-box;border:1px solid rgba(255,104,104,.48);border-radius:18px;background:linear-gradient(180deg,rgba(72,15,20,.52),rgba(24,7,10,.96));overflow:hidden;color:#fff}
+    .operational-loan-diagnostic[hidden]{display:none!important}
+    .operational-loan-diagnostic-head{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:10px;align-items:start;padding:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .operational-loan-diagnostic-head strong{color:#ffb7b7;font-size:14px;line-height:1.3;letter-spacing:.035em}
+    .operational-loan-diagnostic-close{width:36px;height:36px;border:1px solid rgba(255,255,255,.14);border-radius:50%;background:rgba(255,255,255,.05);color:#fff;font-size:20px;display:grid;place-items:center;padding:0}
+    .operational-loan-diagnostic-grid{display:grid;grid-template-columns:minmax(118px,.8fr) minmax(0,1.2fr);padding:8px 14px}
+    .operational-loan-diagnostic-grid span,.operational-loan-diagnostic-grid b{min-width:0;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.055);overflow-wrap:anywhere;word-break:break-word;line-height:1.35}
+    .operational-loan-diagnostic-grid span{padding-right:10px;color:rgba(255,255,255,.57);font-size:11px;font-weight:850;letter-spacing:.025em}
+    .operational-loan-diagnostic-grid b{font-size:12px;font-weight:720;color:#fff}
+    .operational-loan-diagnostic-stack{white-space:pre-wrap;max-height:180px;overflow:auto}
+    .operational-loan-diagnostic-copy{width:calc(100% - 28px);min-height:48px;margin:12px 14px 14px;border:1px solid rgba(245,185,66,.48);border-radius:14px;background:rgba(245,185,66,.10);color:#f3c45d;font-size:13px;font-weight:950;letter-spacing:.035em}
+    @media(max-width:390px){.operational-loan-diagnostic-grid{grid-template-columns:1fr}.operational-loan-diagnostic-grid span{padding-bottom:2px;border-bottom:0}.operational-loan-diagnostic-grid b{padding-top:2px}}
+    .weekly-closure-content .closure-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media(max-width:390px){.weekly-closure-content .closure-detail-grid{grid-template-columns:1fr}}
+  

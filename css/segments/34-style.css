@@ -1,0 +1,71 @@
+
+  .dashboard-benefit-real{display:none!important}
+  .summary-grid-real{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(122px,auto);
+    gap:10px!important;
+    margin-top:10px;
+    width:100%;
+    min-width:0;
+  }
+  .summary-card-real{
+    width:100%;
+    min-width:0;
+    min-height:122px!important;
+    height:100%;
+    padding:12px 11px!important;
+    justify-content:flex-start!important;
+    align-items:flex-start!important;
+    overflow:hidden;
+    box-sizing:border-box;
+  }
+  .summary-card-real svg{flex:0 0 auto}
+  .summary-card-real span{
+    display:block;
+    width:100%;
+    min-width:0;
+    color:var(--explora-muted);
+    font-size:10.5px!important;
+    font-weight:850;
+    line-height:1.15;
+    letter-spacing:.025em;
+    text-transform:uppercase;
+    overflow-wrap:anywhere;
+  }
+  .summary-card-real strong{
+    display:block;
+    width:100%;
+    min-width:0;
+    margin-top:2px;
+    font-size:clamp(21px,6vw,30px)!important;
+    line-height:1.05;
+    font-variant-numeric:tabular-nums;
+    overflow-wrap:anywhere;
+  }
+  .summary-card-real small{
+    display:block;
+    width:100%;
+    min-width:0;
+    margin-top:auto;
+    color:rgba(255,255,255,.62);
+    font-size:10.5px;
+    line-height:1.28;
+    overflow-wrap:anywhere;
+  }
+  .summary-card-goal strong{color:#f7cf71}
+  .summary-card-benefit strong{color:#72eba4}
+  .finance-grid-real{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+  }
+  .finance-card-real{min-height:138px!important}
+  .performance-ranking-card .performance-card-kicker{white-space:nowrap}
+  .dashboard-shell-real{padding-bottom:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom) + 34px)!important}
+  @media(max-width:340px){
+    .dashboard-shell-real{padding-left:10px!important;padding-right:10px!important}
+    .summary-grid-real{gap:8px!important;grid-auto-rows:minmax(116px,auto)}
+    .summary-card-real{min-height:116px!important;padding:10px 9px!important}
+    .summary-card-real span,.summary-card-real small{font-size:9.5px!important}
+  }

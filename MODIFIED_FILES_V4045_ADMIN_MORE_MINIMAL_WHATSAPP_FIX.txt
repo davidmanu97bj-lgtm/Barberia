@@ -1,0 +1,26 @@
+EXPLORA v4045 · Admin Más minimal + WhatsApp Android fix
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/11-script.mjs
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios solicitados en Más/Admin:
+1. En el perfil/menú Más de admin quedan solo:
+   - Mi perfil
+   - Deudas
+   - Salir
+2. Se oculta completamente el bloque Administración para admin.
+3. El botón Deudas del admin abre el módulo admin de Deudas, no el módulo del chofer.
+4. El menú Más de chofer no se modifica.
+
+Correcciones preservadas:
+1. WhatsApp Android usa Intent explícito con package=com.whatsapp para evitar net::ERR_UNKNOWN_URL_SCHEME.
+2. iOS usa whatsapp://send.
+3. Explora pide cierre y manda comprobante al número guardado por el chofer en su perfil.
+4. Perfil admin/chofer conserva selector obligatorio de país con Argentina +54 9 prefijado.
+5. Se conserva el refuerzo responsive de Deudas admin para iOS/Android.
+
+No se tocaron reglas financieras, Firestore, Storage ni cálculos de cierres/deudas.

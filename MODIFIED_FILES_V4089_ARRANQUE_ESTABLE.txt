@@ -1,0 +1,15 @@
+EXPLORA v4089 — ARRANQUE ESTABLE SIN $0 NI PARPADEOS
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/37-script.js
+
+Cambios:
+1. Antes de cerrar o minimizar, guarda una copia visual válida del tablero.
+2. Al volver a abrir, muestra inmediatamente esa última vista estable.
+3. La sincronización con Firebase ocurre detrás de esa vista, sin mostrar $0, estados de carga ni datos parciales.
+4. Cuando Firebase termina, cambia directamente de la última vista válida a la información actual.
+5. La copia queda asociada al UID para evitar mostrar datos de otro usuario.
+6. La copia expira automáticamente y nunca se guarda si contiene textos transitorios como Cargando o Sincronizando.
+7. Caché PWA actualizada a v4089.

@@ -1,0 +1,7 @@
+EXPLORA v71.8 — Recuperación del logo del login
+
+- Recuperado assets/explora-logo-login.png original del proyecto.
+- La imagen del login ahora usa una versión de caché nueva para evitar que iPhone/Safari conserve una respuesta rota anterior.
+- Se agregaron width/height reales para conservar la proporción del logo incluso durante la carga.
+- Se agregó fallback automático a icon-512.png para que nunca vuelva a mostrarse el ícono de imagen rota si el recurso principal no está disponible.
+- No se modificaron cálculos, Firebase, autenticación ni lógica operativa.

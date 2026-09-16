@@ -1,0 +1,23 @@
+V4025 · Admin Cierres Snap por Chofer
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios:
+- Admin > Cierres ahora funciona como pantalla completa por chofer con scroll vertical tipo Instagram/TikTok.
+- Cada tarjeta de chofer ocupa la altura disponible del iPhone y usa scroll-snap para saltar al siguiente/anterior chofer.
+- La información interna de Chofer, Explora, Gastos, Caja chica y Pendientes se compactó en formato horizontal: labels arriba, valores abajo y botón debajo.
+- Se reforzó la separación visual entre choferes: contador CHOFER X / TOTAL, nombre grande, total abierto y barra superior premium.
+- Pedir cierre desde el tablero usa el resumen exacto del chofer seleccionado, no el resumen global del admin.
+- Pedir cierre muestra únicamente los datos de la tarjeta solicitada:
+  * Chofer: Efectivo chofer / Parte chofer / Debe liquidar.
+  * Explora: Digital Explora / Parte Explora / Explora liquida.
+  * Gastos: Gastos cargados / Parte chofer / Parte Explora / Explora liquida.
+  * Caja chica: Efectivo base / Caja chica 5% / En poder del chofer / Chofer liquida.
+- El comprobante sigue correspondiendo a quien debe pagar:
+  * Si debe pagar Explora/admin, el admin carga comprobante.
+  * Si debe pagar chofer, el chofer carga comprobante.
+- Chofer + Explora siguen cerrando facturación juntos a nivel de corte, pero la vista/modal del pedido queda limitada a la tarjeta tocada.

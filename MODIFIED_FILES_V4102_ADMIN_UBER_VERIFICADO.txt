@@ -1,0 +1,9 @@
+EXPLORA v4102 — ADMIN UBER VERIFICADO
+
+- Más → Comprobantes Uber.
+- Bandeja global de cierres pendientes.
+- Ver foto del comprobante.
+- Revisar por ID exacto, incluso si es de una semana anterior.
+- Aceptar o rechazar.
+- Vuelve a la lista luego de decidir.
+- Caché actualizado.

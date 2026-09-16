@@ -1,0 +1,25 @@
+EXPLORA v79 · SH COMPLETO PARA CLOUD SHELL
+
+Archivo principal:
+- DESPLEGAR_EXPLORA_COMPLETO.sh
+
+El SH ahora realiza automáticamente:
+1. Detecta la carpeta correcta del proyecto.
+2. Verifica todos los archivos obligatorios.
+3. Comprueba Node.js, npm, Git y Firebase CLI.
+4. Usa Firebase CLI de Cloud Shell o la instala mediante npx si falta.
+5. Instala las dependencias exactas de Functions con reintentos.
+6. Valida sintaxis, cierre directo y las pruebas de Telegram.
+7. Confirma que la cuenta tenga acceso a explora-control-operativo.
+8. Crea el commit y actualiza Git sin usar force; conserva el historial remoto.
+9. Despliega Firestore Rules y Storage Rules.
+10. Despliega todas las Functions de Telegram.
+11. Despliega Hosting.
+12. Confirma las Functions críticas de Telegram y muestra un resumen final.
+
+Ejecución normal:
+chmod +x DESPLEGAR_EXPLORA_COMPLETO.sh
+./DESPLEGAR_EXPLORA_COMPLETO.sh
+
+El script es repetible: si una etapa temporal falla, reintenta; si se vuelve a
+ejecutar, no duplica commits cuando no existen cambios.

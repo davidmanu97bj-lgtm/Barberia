@@ -1,0 +1,15 @@
+EXPLORA v4122
+
+Cambio solicitado:
+- En sesión persistente del chofer ya no se abre el dashboard con importes en “Actualizando…”.
+- Se muestra el splash EXPLORA mientras se cargan perfil, vehículo, saldos, actividad y cierre semanal.
+- Indicador circular verde; el arco avanza hasta completar 360°.
+- Sin porcentaje numérico.
+- Al llegar al 100%/360°, se abre la app con la sincronización previa terminada.
+- No se usa la restauración visual rápida del dashboard en un arranque frío.
+
+Archivos modificados:
+- index.html
+- js/segments/11-script.mjs
+- css/segments/47-style.css
+- service-worker.js

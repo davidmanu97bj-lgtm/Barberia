@@ -1,0 +1,55 @@
+/* EXPLORA v2.4.52 · Récord personal horizontal de ancho completo en dashboard. */
+.personal-record-host{width:100%;min-width:0;margin-top:12px}
+.personal-record-host.is-detail{margin:16px 0 0}
+.personal-record-card{position:relative;box-sizing:border-box;width:100%;min-width:0;overflow:hidden;border-radius:22px;padding:18px;border:1px solid rgba(238,194,94,.24);background:linear-gradient(145deg,rgba(26,22,15,.98),rgba(9,9,9,.98));box-shadow:0 14px 34px rgba(0,0,0,.22);display:grid;gap:13px;text-align:left}
+.personal-record-card.is-neutral{min-height:112px;align-content:center;border-color:rgba(255,255,255,.09);background:linear-gradient(145deg,rgba(18,18,18,.96),rgba(8,8,8,.98));box-shadow:none}
+.personal-record-kicker{display:block;font-size:10px;line-height:1.2;font-weight:900;letter-spacing:.17em;color:#d9ad52}
+.personal-record-card>strong{font-size:18px;line-height:1.18;color:#fff}
+.personal-record-card>small{font-size:12px;line-height:1.35;color:rgba(255,255,255,.63)}
+.personal-record-winner{display:flex;align-items:center;gap:12px;min-width:0}
+.personal-record-avatar{flex:0 0 48px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;overflow:hidden;border:2px solid rgba(239,195,96,.75);background:#18130b;color:#f2ca72;font-weight:900;font-size:14px}
+.personal-record-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.personal-record-copy{display:grid;gap:3px;min-width:0}
+.personal-record-copy b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:17px;color:#fff}
+.personal-record-copy span{font-size:12px;color:rgba(255,255,255,.65)}
+.personal-record-values{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.personal-record-value{min-width:0;border-radius:15px;padding:11px 10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);display:grid;gap:5px}
+.personal-record-value span,.personal-record-bonus span{font-size:8px;line-height:1.2;font-weight:900;letter-spacing:.11em;color:rgba(255,255,255,.55)}
+.personal-record-value b{font-size:15px;line-height:1.15;color:#fff;overflow-wrap:anywhere}
+.personal-record-bonus{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:15px;padding:12px 13px;background:rgba(35,118,71,.2);border:1px solid rgba(91,214,139,.28)}
+.personal-record-bonus b{font-size:18px;color:#71e49d;white-space:nowrap}
+.personal-record-card.is-loading:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.035) 50%,transparent 65%);animation:personalRecordLoading 1.5s ease-in-out infinite}
+.personal-record-card.is-celebrating{animation:personalRecordCelebrate .7s ease-out both}
+@keyframes personalRecordCelebrate{0%{transform:scale(.985);box-shadow:0 0 0 rgba(220,170,65,0)}55%{transform:scale(1.01);box-shadow:0 0 34px rgba(220,170,65,.22)}100%{transform:scale(1);box-shadow:0 14px 34px rgba(0,0,0,.22)}}
+@keyframes personalRecordLoading{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@media (max-width:390px){.personal-record-card{padding:15px;border-radius:19px;gap:11px}.personal-record-values{gap:8px}.personal-record-value{padding:10px 8px}.personal-record-value b{font-size:14px}.personal-record-avatar{width:44px;height:44px;flex-basis:44px}}
+@media (max-width:340px){.personal-record-values{grid-template-columns:1fr}.personal-record-bonus{align-items:flex-start;flex-direction:column}.personal-record-bonus b{font-size:17px}}
+@media (prefers-reduced-motion:reduce){.personal-record-card.is-celebrating,.personal-record-card.is-loading:after{animation:none!important}}
+/* Dashboard: tarjeta horizontal a todo el ancho, debajo de ambos rankings. */
+.personal-record-host.is-dashboard{grid-column:1/-1;margin-top:14px}
+.personal-record-host.is-dashboard .personal-record-card{min-height:108px;grid-template-columns:minmax(108px,.72fr) minmax(0,2.28fr);column-gap:18px;row-gap:8px;align-items:center;padding:16px 18px}
+.personal-record-host.is-dashboard .personal-record-kicker{grid-column:1;grid-row:1/-1;align-self:center;max-width:120px;font-size:10px;line-height:1.35}
+.personal-record-host.is-dashboard .personal-record-card>strong,
+.personal-record-host.is-dashboard .personal-record-card>small,
+.personal-record-host.is-dashboard .personal-record-winner,
+.personal-record-host.is-dashboard .personal-record-values,
+.personal-record-host.is-dashboard .personal-record-bonus{grid-column:2;min-width:0}
+.personal-record-host.is-dashboard .personal-record-card>strong{font-size:20px}
+.personal-record-host.is-dashboard .personal-record-card>small{font-size:13px}
+.personal-record-host.is-dashboard .personal-record-values{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:420px){
+  .personal-record-host.is-dashboard{margin-top:12px}
+  .personal-record-host.is-dashboard .personal-record-card{grid-template-columns:minmax(92px,.72fr) minmax(0,2.28fr);column-gap:13px;min-height:104px;padding:14px 15px}
+  .personal-record-host.is-dashboard .personal-record-kicker{max-width:96px;font-size:9px;letter-spacing:.14em}
+  .personal-record-host.is-dashboard .personal-record-card>strong{font-size:18px}
+  .personal-record-host.is-dashboard .personal-record-card>small{font-size:12px}
+}
+@media (max-width:340px){
+  .personal-record-host.is-dashboard .personal-record-card{grid-template-columns:84px minmax(0,1fr);column-gap:11px}
+  .personal-record-host.is-dashboard .personal-record-values{grid-template-columns:1fr}
+}
+
+/* v2.4.55 · primera marca visible, sin bono */
+.personal-record-card.is-baseline{background:linear-gradient(135deg,rgba(24,22,18,.98),rgba(8,9,10,.99));border-color:rgba(216,171,73,.46)}
+.personal-record-card.is-baseline .personal-record-kicker{color:#e8bd63}
+.personal-record-card.is-baseline .is-baseline-value{background:rgba(216,171,73,.08);border:1px solid rgba(216,171,73,.24)}

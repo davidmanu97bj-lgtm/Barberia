@@ -1,0 +1,10 @@
+
+    .weekly-closure-human-status{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin-top:10px;padding:7px 11px;border-radius:999px;font-size:11px;font-weight:950;letter-spacing:.06em}
+    .weekly-closure-human-status[data-state="ok"]{color:#8ff0b2;background:rgba(91,220,137,.12);border:1px solid rgba(91,220,137,.32)}
+    .weekly-closure-human-status[data-state="upcoming"]{color:#ffd37b;background:rgba(245,185,66,.12);border:1px solid rgba(245,185,66,.34)}
+    .weekly-closure-human-status[data-state="pending"]{color:#ffb4b4;background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.34)}
+    .weekly-closure-human-status[data-state="david-pending"]{color:#a8d8ff;background:rgba(80,140,255,.12);border:1px solid rgba(80,140,255,.34)}
+    .weekly-closure-acknowledgement{display:grid;gap:10px;padding:14px;border:1px solid rgba(245,185,66,.32);border-radius:18px;background:rgba(245,185,66,.08)}
+    .weekly-closure-acknowledgement[hidden]{display:none!important}.weekly-closure-acknowledgement strong{color:#ffd37b;font-size:14px;letter-spacing:.04em}.weekly-closure-acknowledgement p{margin:0;color:rgba(255,255,255,.76);font-size:13px;line-height:1.4}.weekly-closure-acknowledgement button{min-height:52px;border:0;border-radius:15px;background:linear-gradient(180deg,#ffd36a,#d99b25);color:#111;font-weight:950}
+    .profile-pending-closure-card[data-status="pending"]{border-color:rgba(255,80,80,.34);background:linear-gradient(180deg,rgba(128,26,36,.24),rgba(40,10,15,.94))}.profile-pending-closure-card[data-status="david-pending"]{border-color:rgba(80,140,255,.34);background:linear-gradient(180deg,rgba(30,76,135,.24),rgba(9,24,46,.94))}.profile-pending-closure-card[data-status="upcoming"]{border-color:rgba(245,185,66,.34)}
+  

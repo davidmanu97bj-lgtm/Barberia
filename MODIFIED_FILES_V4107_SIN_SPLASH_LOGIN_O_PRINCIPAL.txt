@@ -1,0 +1,12 @@
+V4107 · SIN SPLASH DE ACTUALIZACIÓN
+
+Archivos modificados:
+- index.html
+- js/segments/11-script.mjs
+
+Cambios:
+- Eliminada completamente la pantalla bloqueante “Actualizando EXPLORA”.
+- Sin sesión confirmada: se muestra directamente el login.
+- Con sesión persistente: se abre directamente la pantalla principal usando el perfil visual guardado.
+- Firestore actualiza en segundo plano; los valores de las tarjetas permanecen en “Actualizando…” hasta confirmarse.
+- No se muestran barra, porcentaje, spinner ni pantalla intermedia.

@@ -1,0 +1,27 @@
+EXPLORA v4014 · role guard chofer/admin
+
+Problema corregido:
+- Un chofer nuevo como david7 podía abrir o quedar visualmente como administrador si el perfil legacy resolvía un documento viejo por username o si el perfil tenía rol admin incorrecto.
+
+Cambios:
+- js/segments/11-script.mjs
+  * El acceso admin queda bloqueado por UID whitelisted: solo el UID oficial de David puede abrir Admin.
+  * El perfil legacy ahora busca primero por UID/AuthUID/ProfileID real antes de choferes/{username}.
+  * Si existe un documento viejo con rol admin para un usuario no autorizado, la sesión se fuerza como chofer y no como admin.
+  * La sesión normaliza profile.role/profile.rol según el rol seguro resuelto para evitar que otros módulos lean admin desde un perfil sucio.
+  * Cache de perfil renovada a v4014 para no reutilizar referencias legacy anteriores.
+- index.html
+  * Cache bust de js/segments/11-script.mjs a v4014-role-guard.
+  * Cache bust de pwa-register a v4014-role-guard.
+- js/pwa-register.js
+  * Registra service-worker.js?build=v4014-role-guard.
+- service-worker.js
+  * Cache bump explora-pwa-v4014-role-guard.
+
+Validación local:
+- node --check js/segments/11-script.mjs
+- node --check js/pwa-register.js
+- node --check service-worker.js
+
+Nota:
+- No se tocaron los flujos nuevos de cobros, gastos ni cierres a demanda.

@@ -1,0 +1,24 @@
+EXPLORA v4062 · Login sin autocompletar y restauración de sesión
+
+Archivos modificados:
+- index.html
+- css/segments/01-style.css
+- js/segments/11-script.mjs
+- js/pwa-register.js
+- service-worker.js
+
+Corrección 1 · iOS / Android sin Face ID ni autorrelleno:
+1. El login dejó de ser un form real para no activar la heurística de contraseñas de Safari/Chrome.
+2. El campo de clave dejó de usar input type=password y usa type=text enmascarado por CSS.
+3. Se eliminaron autocomplete=username/current-password del login.
+4. Se agregaron flags anti password managers: autocomplete off, autocorrect off, spellcheck false, data-lpignore, data-1p-ignore y data-bwignore.
+5. El botón Ver/Ocultar ahora trabaja sobre máscara visual, no sobre type=password.
+6. Crear chofer también deja de usar type=password para que no aparezcan hojas de llavero/autorrelleno.
+
+Corrección 2 · no pedir login si ya hay sesión:
+1. El listener de Firebase Auth ahora arranca después de confirmar persistence local.
+2. Se mantiene browserLocalPersistence para recuperar la sesión en iOS/Android.
+3. Se agregó margen de restauración para no mostrar login antes de que Firebase devuelva el usuario guardado.
+4. Se actualizó cache/versionado y service worker para evitar HTML/JS/CSS viejo.
+
+No se tocaron cálculos, cierres, WhatsApp, deudas, Firestore ni reglas financieras.

@@ -1,0 +1,64 @@
+/* EXPLORA v4084 · corrección de valor de servicios desde comprobantes (admin) */
+.receipt-row-actions{display:flex;flex-direction:column;align-items:stretch;gap:7px;margin-top:5px}
+.receipt-row-manage{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.receipt-edit-amount{border:1px solid rgba(120,192,255,.48);border-radius:10px;background:rgba(30,117,210,.16);color:#dcefff;font:800 10px/1.1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.055em;padding:9px 8px;cursor:pointer;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.receipt-edit-amount:active{transform:scale(.985);background:rgba(30,117,210,.28)}
+.receipt-delete-financial{border:1px solid rgba(255,113,128,.5);border-radius:10px;background:rgba(197,43,62,.18);color:#ffdce1;font:800 10px/1.1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.045em;padding:9px 7px;cursor:pointer;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.receipt-delete-financial:active{transform:scale(.985);background:rgba(197,43,62,.3)}
+.receipt-edit-amount:disabled,.receipt-delete-financial:disabled{opacity:.52;cursor:wait}
+.receipt-row-card.is-busy{opacity:.76;pointer-events:none}
+.receipt-amount-edit-backdrop{position:fixed;inset:0;z-index:100090;display:none;place-items:center;padding:18px;background:rgba(3,8,18,.84);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.receipt-amount-edit-backdrop.is-open{display:grid}
+.receipt-amount-edit-modal{width:min(430px,100%);max-height:min(92dvh,720px);overflow:auto;border:1px solid rgba(130,182,255,.25);border-radius:24px;background:linear-gradient(165deg,#111d31 0%,#09111f 100%);box-shadow:0 28px 80px rgba(0,0,0,.55);padding:23px;color:#f7fbff}
+.receipt-amount-edit-kicker{margin:0 0 7px;color:#81bfff;font:800 11px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.11em}
+.receipt-amount-edit-modal h2{margin:0;font:900 25px/1.08 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.025em}
+.receipt-amount-edit-description{margin:10px 0 18px;color:#aebbd0;font:600 13px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.receipt-amount-edit-summary{display:grid;grid-template-columns:1fr auto;gap:7px 14px;margin-bottom:17px;padding:14px;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:rgba(255,255,255,.035)}
+.receipt-amount-edit-summary span{color:#8290a8;font:800 10px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.075em}
+.receipt-amount-edit-summary strong{color:#fff;font:850 13px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:right}
+.receipt-amount-edit-field{display:grid;gap:8px;color:#9fb0c9;font:850 11px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.07em}
+.receipt-amount-edit-field input{width:100%;box-sizing:border-box;border:1px solid rgba(137,181,244,.34);border-radius:15px;background:#07101e;color:#fff;font:900 27px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:15px 16px;outline:none}
+.receipt-amount-edit-field input:focus{border-color:#65adff;box-shadow:0 0 0 3px rgba(68,153,255,.16)}
+.receipt-amount-edit-message{min-height:20px;margin:10px 1px 0;color:#a9b8cd;font:700 12px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.receipt-amount-edit-message.is-error{color:#ff8f9f}
+.receipt-amount-edit-message.is-success{color:#78e7ad}
+.receipt-amount-edit-actions{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin-top:10px}
+.receipt-amount-edit-actions button{min-height:48px;border-radius:14px;font:900 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.035em;cursor:pointer}
+.receipt-amount-edit-cancel{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.055);color:#d9e2ef}
+.receipt-amount-edit-save{border:1px solid #4da5ff;background:linear-gradient(180deg,#258ef5,#1268c4);color:#fff;box-shadow:0 9px 24px rgba(25,119,215,.26)}
+.receipt-amount-edit-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:480px){.receipt-row-card{grid-template-columns:42px minmax(0,1fr) minmax(118px,auto) 14px}.receipt-row-side{min-width:118px}.receipt-row-manage{grid-template-columns:1fr}.receipt-edit-amount,.receipt-delete-financial{white-space:normal}.receipt-amount-edit-modal{border-radius:21px;padding:20px}.receipt-amount-edit-actions{grid-template-columns:1fr}}
+
+/* v4085: confirma visualmente la ruta administrativa real */
+#receiptsScreen[data-admin-mode="true"][data-view="list"] .receipts-list-head::after{content:"ADMIN · EDICIÓN Y ELIMINACIÓN ACTIVAS";display:inline-flex;margin-top:8px;padding:6px 9px;border-radius:999px;border:1px solid rgba(120,192,255,.45);background:rgba(30,117,210,.14);color:#dcefff;font:800 9px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.055em}
+
+/* v4145 · edición y eliminación directa desde Últimas actividades del administrador */
+.pay-activity-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:94px}
+.pay-activity-financial-actions{width:100%;display:grid;grid-template-columns:1fr;gap:6px}
+.pay-activity-financial-actions button{min-height:32px;border-radius:10px;padding:7px 8px;font:900 9px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.035em;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:none}
+.pay-activity-financial-edit{border:1px solid rgba(78,80,230,.24);background:#f2f4ff;color:#4e50e6}
+.pay-activity-financial-delete{border:1px solid rgba(196,42,59,.24);background:#fff0f1;color:#b42335}
+.pay-activity-financial-actions button:active{transform:scale(.97)}
+.pay-activity-financial-actions button:disabled{opacity:.52;cursor:wait}
+.pay-admin-amount-edit-backdrop{position:fixed;inset:0;z-index:100120;display:none;place-items:center;padding:18px;background:rgba(4,8,17,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.pay-admin-amount-edit-backdrop.is-open{display:grid}
+.pay-admin-amount-edit-modal{width:min(430px,100%);max-height:min(92dvh,720px);overflow:auto;border:1px solid rgba(99,118,255,.24);border-radius:24px;background:#fff;box-shadow:0 28px 80px rgba(0,0,0,.38);padding:22px;color:#202437}
+.pay-admin-amount-edit-kicker{margin:0 0 7px;color:#4e50e6;font:900 11px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.1em}
+.pay-admin-amount-edit-modal h2{margin:0 0 17px;font:950 25px/1.05 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.02em}
+.pay-admin-amount-edit-context{display:grid;grid-template-columns:minmax(82px,auto) 1fr;gap:8px 12px;margin-bottom:14px;padding:14px;border:1px solid rgba(214,218,234,.9);border-radius:16px;background:#f8f9fd}
+.pay-admin-amount-edit-context span,.pay-admin-amount-edit-values span{color:#7d8498;font:900 10px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.07em}
+.pay-admin-amount-edit-context strong{font:850 13px/1.3 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:right;overflow-wrap:anywhere}
+.pay-admin-amount-edit-values{display:grid;gap:10px}
+.pay-admin-amount-edit-values article,.pay-admin-amount-edit-values label{display:grid;gap:8px;margin:0;padding:14px;border:1px solid rgba(214,218,234,.9);border-radius:16px;background:#fff}
+.pay-admin-amount-edit-values article strong{font:950 25px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#2d3142}
+.pay-admin-amount-edit-values input{width:100%;box-sizing:border-box;border:1px solid rgba(78,80,230,.28);border-radius:14px;background:#f7f8ff;color:#202437;font:950 27px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:14px 15px;outline:none}
+.pay-admin-amount-edit-values input:focus{border-color:#4e50e6;box-shadow:0 0 0 3px rgba(78,80,230,.12)}
+.pay-admin-amount-edit-message{min-height:20px;margin:10px 2px 0;color:#777f93;font:750 12px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.pay-admin-amount-edit-message.is-error{color:#b42335}
+.pay-admin-amount-edit-message.is-success{color:#16834a}
+.pay-admin-amount-edit-actions{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin-top:10px}
+.pay-admin-amount-edit-actions button{min-height:49px;border-radius:15px;font:950 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.025em;cursor:pointer}
+.pay-admin-amount-edit-cancel{border:1px solid rgba(200,204,219,.9);background:#f3f4f8;color:#474c5f}
+.pay-admin-amount-edit-save{border:1px solid #4e50e6;background:#4e50e6;color:#fff;box-shadow:0 10px 24px rgba(78,80,230,.22)}
+.pay-admin-amount-edit-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:480px){.pay-activity{grid-template-columns:42px minmax(0,1fr) minmax(88px,auto);gap:10px}.pay-activity-side{gap:7px;min-width:88px}.pay-activity-financial-actions button{min-height:31px;padding:7px 6px;font-size:8.5px}.pay-admin-amount-edit-modal{padding:19px;border-radius:21px}.pay-admin-amount-edit-actions{grid-template-columns:1fr}}

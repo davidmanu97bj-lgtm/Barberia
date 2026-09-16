@@ -1,0 +1,30 @@
+EXPLORA v4145 - PAQUETE ACUMULATIVO LISTO PARA GIT
+Fecha: 20 de agosto de 2026
+
+Este paquete corrige la visual de Ultimas actividades e incluye el motor completo
+de edición y eliminación de comprobantes agregado en v4144.
+
+ARCHIVOS
+- ARCHIVOS_MODIFICADOS_V4145_PARA_GIT.txt
+- MODIFIED_FILES_V4145_ACTIVITY_RECEIPT_ACTIONS.txt
+- css/segments/53-style.css
+- functions/index.js
+- functions/package.json
+- functions/package-lock.json
+- index.html
+- js/core/financial-receipt-actions-core.mjs
+- js/pwa-register.js
+- js/segments/09-script.js
+- js/segments/11-script.mjs
+- js/segments/13-script.mjs
+- js/segments/52-script.mjs
+- package.json
+- service-worker.js
+- tests/admin-activity-financial-actions.test.mjs
+- tests/admin-debt-menu-release.test.mjs
+- tests/financial-receipt-actions.test.mjs
+
+PUBLICACION
+firebase deploy --project explora-control-operativo --only functions,hosting
+
+No cambiaron firestore.rules ni storage.rules.

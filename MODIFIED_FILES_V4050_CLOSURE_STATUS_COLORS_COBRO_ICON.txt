@@ -1,0 +1,17 @@
+EXPLORA v4050 · Cierres rojo/verde + icono agregar cobro sin brillo
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios aplicados:
+1. En Última actividad, todos los cierres abiertos se muestran en rojo.
+2. En Última actividad, todos los cierres cerrados se muestran en verde.
+3. La lógica ya no colorea cierres según quién paga; ahora colorea según estado ABIERTO/CERRADO.
+4. El icono central del menú inferior deja de usar brillo/estrella.
+5. El icono central queda como documento con +, identificando agregar cobro.
+6. Se conserva el dock inferior simétrico/compacto para iOS y Android.
+
+No se tocaron cálculos financieros, Firestore, Storage ni reglas de cierre.

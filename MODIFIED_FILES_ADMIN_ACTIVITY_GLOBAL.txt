@@ -1,0 +1,40 @@
+EXPLORA · Admin simplificado: últimas actividades globales
+Versión: v4022-admin-activity-global
+
+Archivos modificados:
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- index.html
+- service-worker.js
+
+Cambios principales:
+1) Modo Admin simplificado al ingresar:
+   - Oculta las tarjetas financieras del chofer y deja visible el panel de Últimas actividades.
+   - El encabezado indica: "Admin · últimas actividades".
+
+2) Últimas actividades globales en tiempo real:
+   - Admin sin chofer seleccionado escucha todos los movimientos de:
+     billing_records, gastos, cierres_semanales, deudas_choferes y deuda_pagos.
+   - Se muestran tarjetas mezcladas de todos los choferes, de más nuevo a más antiguo.
+   - Cada tarjeta muestra primero el nombre del chofer.
+
+3) Filtros rápidos:
+   - Filtrar por chofer.
+   - Filtrar por tipo:
+     Todos los tipos, Comprobante Explora digital, Comprobante chofer, Gastos, Caja chica, Pendientes y Cierres.
+   - Se pueden combinar chofer + tipo.
+
+4) Menú inferior Admin:
+   - Inicio pasa a "Pendientes".
+   - Cobrar pasa a "Cierres".
+   - Actividad pasa a "+ Chofer".
+   - Cierre pasa a "Futuro".
+   - Más se mantiene como "Más".
+
+5) Salir:
+   - El botón "Salir" queda disponible en Más.
+   - Reutiliza la acción existente window.ExploraActions.salir para cerrar sesión y volver al login.
+
+Validación realizada:
+- node --check js/segments/52-script.mjs
+- node --check service-worker.js

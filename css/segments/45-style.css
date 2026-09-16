@@ -1,0 +1,131 @@
+/* v2.4.36 · selector semanal: futuro circular bordó final */
+html[data-performance-nav-mode="daily-winners"]{
+  --explora-bottom-nav-height:136px;
+  --weekly-selector-lift:8px;
+}
+html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-viewport{
+  --weekly-plaque-gap:8px;
+  --weekly-plaque-width:112px;
+  width:100%;
+  overflow:hidden!important;
+  padding:6px 0 12px!important;
+  transform:translateY(calc(var(--weekly-selector-lift,8px) * -1))!important;
+  scrollbar-width:none;
+  overscroll-behavior:contain!important;
+  touch-action:pan-y pinch-zoom;
+  container-type:inline-size;
+}
+html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-viewport::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-track{
+  --weekly-plaque-gap:8px;
+  --weekly-plaque-width:calc((100% - (var(--weekly-plaque-gap) * 2)) / 3);
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:var(--weekly-plaque-gap)!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  padding:0!important;
+  margin:0!important;
+  align-items:stretch!important;
+  direction:ltr!important;
+  user-select:none;
+  -webkit-user-select:none;
+}
+/*
+  En el modo `daily-winners` las burbujas de metas semanales se ocultaban por completo,
+  lo que provocaba que los usuarios no pudieran ver el ranking cuando cambiaban a esa
+  vista. Para permitir que las burbujas sigan visibles también en este modo, se
+  eliminó la regla que las ponía en `display:none`.
+*/
+/* html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-track>.performance-goal-bubble,
+html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-track>.goal-bubble{display:none!important} */
+.weekly-winner-plaque{
+  --plaque-gold:180,186,196;
+  position:relative;
+  isolation:isolate;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:112px!important;
+  min-height:112px!important;
+  max-height:112px!important;
+  padding:7px 5px 6px!important;
+  border:1px solid rgba(154,164,178,.28);
+  border-radius:18px!important;
+  appearance:none;
+  -webkit-appearance:none;
+  display:grid!important;
+  grid-template-rows:8px 15px minmax(22px,1fr) 8px 17px 8px 8px!important;
+  align-items:center!important;
+  justify-items:center!important;
+  align-content:stretch!important;
+  gap:1px!important;
+  overflow:hidden!important;
+  color:#f2f5f7;
+  text-align:center;
+  font:inherit;
+  background:radial-gradient(circle at 20% 0%,rgba(255,255,255,.055),transparent 34%),linear-gradient(145deg,rgba(22,24,27,.99),rgba(6,7,9,.99));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 9px 22px rgba(0,0,0,.28);
+  touch-action:pan-y pinch-zoom;
+  -webkit-tap-highlight-color:transparent;
+  transform:scale(.92)!important;
+  opacity:.76;
+  filter:saturate(.82) brightness(.88);
+  transition:opacity .22s ease,filter .22s ease,border-color .22s ease,box-shadow .22s ease,background .22s ease,transform .22s ease;
+}
+.weekly-winner-plaque::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(116deg,transparent 18%,rgba(255,255,255,.06) 39%,transparent 59%);transform:translateX(-125%)}
+.weekly-winner-plaque.is-current::before{animation:weeklyPlaqueSheen 5.2s ease-in-out infinite}
+.weekly-winner-plaque:focus-visible{outline:2px solid rgba(238,244,255,.88);outline-offset:2px}
+.weekly-winner-plaque:active{transform:translateY(1px) scale(.94)!important}
+.weekly-winner-plaque.is-carousel-selected{
+  z-index:5;opacity:1!important;filter:none!important;transform:scale(.98)!important;
+}
+.weekly-winner-plaque.is-carousel-selected::after{content:"";position:absolute;inset:3px;border:1px solid rgba(255,255,255,.10);border-radius:15px;pointer-events:none;box-shadow:inset 0 0 14px rgba(255,255,255,.035)}
+.weekly-winner-plaque.is-carousel-selected::before{transform:translateX(125%);opacity:.58}
+.weekly-winner-plaque.is-current.is-carousel-selected{--plaque-gold:229,185,71;border-color:rgba(255,222,126,.98)!important;background:radial-gradient(circle at 50% -8%,rgba(255,241,177,.40),transparent 37%),radial-gradient(circle at 88% 100%,rgba(207,148,26,.24),transparent 45%),linear-gradient(150deg,rgba(55,42,16,.998),rgba(7,8,8,.998) 68%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 0 0 1px rgba(255,229,146,.13),0 0 36px rgba(235,188,66,.36),0 14px 32px rgba(0,0,0,.44)!important;animation:none!important}
+.weekly-winner-plaque.is-current.is-carousel-selected .weekly-plaque-day,.weekly-winner-plaque.is-current.is-carousel-selected .weekly-plaque-total{color:#ffe28b!important;text-shadow:0 1px 10px rgba(255,205,79,.24)}
+.weekly-winner-plaque.is-carousel-left,.weekly-winner-plaque.is-carousel-right{cursor:pointer}
+.weekly-winner-plaque.is-carousel-left{transform:translateX(1px) scale(.92)!important}
+.weekly-winner-plaque.is-carousel-right{transform:translateX(-1px) scale(.92)!important}
+.weekly-winner-plaque.is-current:not(.is-carousel-selected){animation:none!important}
+.weekly-plaque-day,.weekly-plaque-badge,.weekly-plaque-name,.weekly-plaque-primary,.weekly-plaque-total-label,.weekly-plaque-total,.weekly-plaque-reason,.weekly-plaque-note,.weekly-plaque-breakdown{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;align-self:center!important;text-align:center!important}
+.weekly-plaque-day{color:#c7ccd3;font-size:7.2px!important;line-height:9px!important;font-weight:950;letter-spacing:.12em!important;white-space:nowrap}
+.weekly-plaque-badge{width:auto!important;max-width:calc(100% - 10px)!important;min-height:15px!important;padding:3px 6px 2px!important;border:1px solid rgba(206,214,224,.22);border-radius:999px;color:#dfe4eb;background:rgba(210,220,235,.08);font-size:6px!important;line-height:9px!important;font-weight:950;letter-spacing:.07em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.weekly-plaque-name,.weekly-plaque-primary{max-height:24px!important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:#fff;font-size:9.2px!important;line-height:1.1!important;font-weight:950;overflow-wrap:anywhere;text-wrap:balance}
+.weekly-plaque-total-label{color:#aeb6c0;font-size:5.4px!important;line-height:8px!important;font-weight:950;letter-spacing:.06em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.weekly-plaque-total{color:#f1f4f7;font-size:13.4px!important;line-height:18px!important;font-weight:950;letter-spacing:-.035em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.weekly-plaque-reason,.weekly-plaque-note,.weekly-plaque-breakdown{color:#d5d2c8;font-size:5.2px!important;line-height:8px!important;font-weight:850;letter-spacing:0;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.weekly-plaque-breakdown{color:#b8c0c9}
+.weekly-winner-plaque.is-winner,.weekly-winner-plaque.is-no-activity,.weekly-winner-plaque.is-no-data{--plaque-gold:180,186,196;border-color:rgba(154,164,178,.28)!important;background:radial-gradient(circle at 20% 0%,rgba(255,255,255,.06),transparent 34%),linear-gradient(145deg,rgba(21,23,26,.99),rgba(5,6,8,.99))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 9px 23px rgba(0,0,0,.32)!important;color:#eceff3}
+.weekly-winner-plaque.is-winner .weekly-plaque-badge,.weekly-winner-plaque.is-no-activity .weekly-plaque-badge,.weekly-winner-plaque.is-no-data .weekly-plaque-badge{color:#e8edf3;background:rgba(205,214,224,.10);border-color:rgba(205,214,224,.22);box-shadow:none}
+.weekly-winner-plaque.is-winner .weekly-plaque-day,.weekly-winner-plaque.is-winner .weekly-plaque-total,.weekly-winner-plaque.is-no-activity .weekly-plaque-day,.weekly-winner-plaque.is-no-activity .weekly-plaque-total,.weekly-winner-plaque.is-no-data .weekly-plaque-day,.weekly-winner-plaque.is-no-data .weekly-plaque-total{color:#f1f4f7!important;text-shadow:none!important}
+.weekly-winner-plaque.is-current{--plaque-gold:229,185,71;border-color:rgba(255,222,126,.96)!important;background:radial-gradient(circle at 50% -8%,rgba(255,241,177,.38),transparent 37%),radial-gradient(circle at 88% 100%,rgba(207,148,26,.24),transparent 45%),linear-gradient(150deg,rgba(52,40,17,.998),rgba(7,12,9,.998) 68%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,229,146,.12),0 0 34px rgba(235,188,66,.34),0 14px 32px rgba(0,0,0,.44)!important;animation:weeklyCurrentPulse 3s ease-in-out infinite}
+.weekly-winner-plaque.is-current .weekly-plaque-day,.weekly-winner-plaque.is-current .weekly-plaque-total{color:#ffe28b!important;text-shadow:0 1px 10px rgba(255,205,79,.24)}
+.weekly-winner-plaque.is-current .weekly-plaque-total-label{color:#f0d58a!important}
+.weekly-winner-plaque.is-current .weekly-plaque-breakdown{color:#b8e9c6!important}
+.weekly-winner-plaque.is-current .weekly-plaque-badge{color:#1b1405!important;background:linear-gradient(180deg,#ffe69a,#c9952b)!important;border-color:rgba(255,239,180,.94)!important;box-shadow:0 0 16px rgba(229,181,64,.24)!important}
+.weekly-winner-plaque.is-locked,.weekly-winner-plaque.is-unreached-future{--plaque-gold:150,39,59;opacity:.84;border-color:rgba(170,48,73,.50)!important;background:radial-gradient(circle at 22% 0%,rgba(116,21,38,.34),transparent 38%),linear-gradient(145deg,rgba(39,8,16,.995),rgba(9,5,8,.995))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 8px 20px rgba(0,0,0,.24)!important}
+.weekly-winner-plaque.is-locked .weekly-plaque-day,.weekly-winner-plaque.is-locked .weekly-plaque-total,.weekly-winner-plaque.is-unreached-future .weekly-plaque-day,.weekly-winner-plaque.is-unreached-future .weekly-plaque-total{color:#d86b80!important;text-shadow:none!important}
+.weekly-winner-plaque.is-locked .weekly-plaque-badge,.weekly-winner-plaque.is-unreached-future .weekly-plaque-badge{color:#e9a8b5!important;background:rgba(126,30,49,.18)!important;border-color:rgba(169,55,77,.36)!important;box-shadow:none!important}
+.weekly-winner-plaque.is-future-day:not(.is-current),.weekly-winner-plaque.is-unreached-future:not(.is-current){--plaque-gold:150,39,59!important;opacity:.84;border-color:rgba(170,48,73,.52)!important;background:radial-gradient(circle at 22% 0%,rgba(116,21,38,.36),transparent 38%),linear-gradient(145deg,rgba(39,8,16,.995),rgba(9,5,8,.995))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 8px 19px rgba(0,0,0,.24)!important;color:#ead0d6!important}
+.weekly-winner-plaque.is-future-day:not(.is-current) .weekly-plaque-day,.weekly-winner-plaque.is-future-day:not(.is-current) .weekly-plaque-total,.weekly-winner-plaque.is-unreached-future:not(.is-current) .weekly-plaque-day,.weekly-winner-plaque.is-unreached-future:not(.is-current) .weekly-plaque-total{color:#d86b80!important;text-shadow:none!important}
+.weekly-winner-plaque.is-future-day:not(.is-current) .weekly-plaque-badge,.weekly-winner-plaque.is-unreached-future:not(.is-current) .weekly-plaque-badge{color:#e9a8b5!important;background:rgba(126,30,49,.18)!important;border-color:rgba(169,55,77,.36)!important;box-shadow:none!important}
+.weekly-winner-plaque.is-pending,.weekly-winner-plaque.is-error{--plaque-gold:235,139,94;border-color:rgba(241,144,98,.55);background:linear-gradient(145deg,rgba(50,27,18,.98),rgba(13,8,7,.99))}
+.weekly-winner-plaque.is-pending .weekly-plaque-day,.weekly-winner-plaque.is-error .weekly-plaque-day,.weekly-winner-plaque.is-pending .weekly-plaque-total,.weekly-winner-plaque.is-error .weekly-plaque-total{color:#ffb28b}
+.weekly-winner-plaque.is-loading{justify-content:center;min-width:var(--weekly-plaque-width,148px)}
+.weekly-plaque-lock{position:absolute;top:8px!important;right:8px!important;width:13px;height:11px;border:1.4px solid rgba(255,130,148,.72);border-radius:3px;background:rgba(28,7,11,.68)}
+.weekly-plaque-lock::before{content:"";position:absolute;left:2px;right:2px;top:-7px;height:7px;border:1.4px solid rgba(255,130,148,.72);border-bottom:0;border-radius:7px 7px 0 0}
+@keyframes weeklyPlaqueSheen{0%,64%{transform:translateX(-125%)}84%,100%{transform:translateX(125%)}}
+@keyframes weeklyCurrentPulse{0%,100%{border-color:rgba(255,222,126,.88);box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 0 24px rgba(235,188,66,.24),0 9px 23px rgba(0,0,0,.32)}50%{border-color:rgba(255,236,164,.98);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 0 36px rgba(235,188,66,.38),0 9px 23px rgba(0,0,0,.34)}}
+@media(max-width:390px){
+  html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-track,html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-viewport{--weekly-plaque-gap:6px}
+  .weekly-winner-plaque{height:110px!important;min-height:110px!important;max-height:110px!important;padding:6px 4px 5px!important}
+  .weekly-plaque-name,.weekly-plaque-primary{font-size:8.1px!important}.weekly-plaque-total{font-size:11.7px!important}.weekly-plaque-day{font-size:6.2px!important}.weekly-plaque-badge{font-size:5.2px!important;padding-inline:4px!important}.weekly-plaque-reason,.weekly-plaque-note,.weekly-plaque-breakdown{font-size:4.7px!important}
+}
+@media(max-width:350px){
+  html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-track,html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-viewport{--weekly-plaque-gap:5px}
+  .weekly-winner-plaque{padding-inline:3px!important}.weekly-plaque-name,.weekly-plaque-primary{font-size:7.5px!important}.weekly-plaque-total{font-size:10.9px!important}
+}
+@media(prefers-reduced-motion:reduce){.weekly-winner-plaque{transition:none!important}.weekly-winner-plaque.is-current::before,.weekly-winner-plaque.is-current{animation:none!important}html[data-performance-nav-mode="daily-winners"] .weekly-winner-plaque-viewport{scroll-behavior:auto!important}}

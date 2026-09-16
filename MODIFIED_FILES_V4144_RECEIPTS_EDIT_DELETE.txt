@@ -1,0 +1,43 @@
+EXPLORA v4144 - EDITAR Y ELIMINAR COMPROBANTES FINANCIEROS
+Fecha: 20 de agosto de 2026
+
+CAMBIO FUNCIONAL
+- El administrador puede editar el importe de todos los cobros digitales.
+- El administrador puede editar el importe de todos los cobros en efectivo.
+- El administrador puede editar el importe de todos los gastos.
+- Cada uno de esos movimientos ahora muestra las acciones EDITAR y ELIMINAR dentro de Comprobantes.
+- Los choferes conservan acceso de solo lectura: las acciones administrativas no se muestran en sus sesiones.
+
+RECALCULO CONTABLE
+- Al editar o eliminar efectivo se recalculan Facturación, parte Chofer/Explora y Caja Chica 5 %.
+- Al editar o eliminar un cobro digital se recalcula quién paga a quién.
+- Al editar o eliminar un gasto se recalculan el cierre de Gastos, el 50/50 y el ajuste de deuda ya aplicado.
+- Los pagos del chofer registrados en Facturación se tratan como liquidaciones y no como servicios: no aumentan la facturación bruta ni generan Caja Chica.
+- Los cierres que ya incluyeron el movimiento se corrigen de forma automática.
+
+ELIMINACION COMPLETA
+- Se elimina el documento financiero principal.
+- Se eliminan sus índices de comprobante asociados.
+- Se elimina la foto o PDF de Firebase Storage cuando existe.
+- Se registra auditoría administrativa.
+- También se pueden limpiar índices huérfanos cuyo movimiento principal ya no existe.
+
+ARCHIVOS PRINCIPALES MODIFICADOS
+- index.html
+- service-worker.js
+- css/segments/53-style.css
+- js/pwa-register.js
+- js/core/financial-receipt-actions-core.mjs (nuevo)
+- js/segments/09-script.js
+- js/segments/11-script.mjs
+- js/segments/13-script.mjs
+- js/segments/52-script.mjs
+- functions/index.js
+- functions/package.json
+- functions/package-lock.json
+- package.json
+- tests/financial-receipt-actions.test.mjs (nuevo)
+- tests/admin-debt-menu-release.test.mjs
+
+PUBLICACION
+firebase deploy --project explora-control-operativo --only functions,hosting

@@ -1,0 +1,18 @@
+EXPLORA v4133 · WhatsApp automático en Android APK/PWA
+
+Archivos modificados:
+- js/segments/52-script.mjs
+- index.html
+- service-worker.js
+- js/pwa-register.js
+
+Cambio:
+- Android deja de mostrar el modal manual “Mensaje listo / Abrir WhatsApp”.
+- Después de una acción confirmada, Explora navega automáticamente a https://wa.me/<numero>?text=<mensaje>.
+- Android puede delegar ese enlace HTTPS a la app WhatsApp instalada y abrir el chat con el mensaje precargado.
+- Se usa la misma ventana para evitar pestañas/pantallas extra.
+- iOS conserva el comportamiento existente.
+- Telegram no fue modificado.
+
+Nota técnica:
+- Desde una PWA/WebView no es posible enviar el mensaje sin intervención del usuario usando WhatsApp personal. La corrección abre automáticamente el chat y deja el texto listo; el envío final sigue requiriendo tocar Enviar, salvo que se use la API oficial de WhatsApp Business.

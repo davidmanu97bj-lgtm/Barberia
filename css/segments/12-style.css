@@ -1,0 +1,15 @@
+
+    .profile-admin-note{
+      margin:0;padding:11px 13px;border:1px solid rgba(245,185,66,.16);border-radius:14px;
+      background:rgba(245,185,66,.055);color:#c9b77f;font-size:12px;line-height:1.35;text-align:center;
+    }
+    .profile-field input[readonly]{cursor:default;caret-color:transparent;box-shadow:none!important}
+    .profile-save:disabled{opacity:.48;cursor:not-allowed;box-shadow:none}
+    .performance-derivator-avatar.is-empty{color:transparent;background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.08),transparent 34%),linear-gradient(145deg,#171c20,#07090b)}
+    .performance-derivator-percent-ring strong{display:grid;place-items:center;width:100%;height:100%;font-variant-numeric:tabular-nums}
+    .closure-administrative-status{display:grid;gap:5px;padding:12px 13px;border:1px solid rgba(245,185,66,.25);border-radius:16px;background:rgba(245,185,66,.07)}
+    .closure-administrative-status strong{color:#f4ca68;font-size:13px;line-height:1.25;text-transform:uppercase;letter-spacing:.035em}
+    .closure-administrative-status span{color:rgba(255,255,255,.7);font-size:12px;line-height:1.35}
+    .closure-administrative-status[data-state="completed"]{border-color:rgba(92,226,142,.3);background:rgba(26,126,70,.13)}
+    .closure-administrative-status[data-state="completed"] strong{color:#8ef0b1}
+  

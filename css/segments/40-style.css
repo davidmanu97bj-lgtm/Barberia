@@ -1,0 +1,11 @@
+
+[id*="diagnostic" i],
+[class*="diagnostic" i],
+#performanceDiagnosticBackdrop,
+#adminUiDiagnostic,
+#exploraWeeklyClosureDiagnosticV283,
+#exploreLoanDiagnostic {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

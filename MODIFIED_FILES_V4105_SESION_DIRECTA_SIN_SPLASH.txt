@@ -1,0 +1,39 @@
+EXPLORA v4.105 · SESIÓN DIRECTA SIN SPLASH
+Fecha: 2026-08-02
+
+ARCHIVOS MODIFICADOS
+1. index.html
+   - Eliminado por completo el HTML de #exploraSplash y #exploraSyncPanel.
+   - Eliminada la carga del parche de emergencia js/segments/12-script.js.
+   - Estado inicial neutro: explora-auth-pending.
+   - Actualizados versionado del proyecto y parámetros de caché.
+
+2. js/segments/11-script.mjs
+   - Neutralizadas las funciones globales del splash para compatibilidad con módulos antiguos.
+   - Eliminadas las transiciones a explora-auth-checking durante login, restauración y reintentos.
+   - El menú abre al confirmar Firebase Auth, perfil y rol.
+   - La precarga pesada del dashboard continúa en segundo plano sin bloquear la interfaz.
+   - ExploraDataSyncGate quedó como interfaz no bloqueante.
+   - La restauración del mismo UID evita reconstrucciones duplicadas.
+
+3. css/segments/01-style.css
+   - Agregado estado inicial invisible explora-auth-pending, sin texto, spinner ni barra.
+   - Login o dashboard pasan a ser la primera interfaz visible cuando Auth resuelve.
+
+4. service-worker.js
+   - Caché actualizado a explora-pwa-v4105-sesion-directa-sin-splash.
+   - Eliminada del APP_SHELL la versión antigua del parche de splash.
+   - Actualizados parámetros de versión para JS y CSS modificados.
+   - Activate elimina cachés anteriores de EXPLORA.
+
+VALIDACIONES ESTÁTICAS REALIZADAS
+- Sintaxis ECMAScript comprobada con node --check.
+- Confirmado que index.html no contiene #exploraSplash, #exploraSyncPanel,
+  barra, porcentaje, spinner ni textos “Actualizando EXPLORA”.
+- Confirmado que no quedan llamadas que cambien el body a explora-auth-checking.
+- Confirmado que login conserva “Ingresando…” mediante setLoginLoading().
+- Confirmado que Firestore/Firebase y reglas financieras no fueron modificados.
+
+NOTA DE PRUEBA
+Las pruebas reales de autenticación, pérdida de conexión, segundo dispositivo y
+reanudar PWA requieren desplegar esta versión contra el proyecto Firebase real.

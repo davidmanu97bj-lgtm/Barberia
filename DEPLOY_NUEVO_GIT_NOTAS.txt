@@ -1,0 +1,7 @@
+Para subir a un Git nuevo:
+1. Usar el ZIP runtime/limpio entregado.
+2. Subir el contenido de la carpeta raíz del ZIP al nuevo repositorio.
+3. No hace falta subir auditorías, tests históricos ni zips anteriores.
+4. Si deployás en Firebase Hosting, este paquete ya incluye firebase.json con hosting public "." y rewrite a index.html.
+5. Si usás el mismo Firebase/Firestore, no necesitás migrar datos.
+6. Si usás un Firebase nuevo desde cero, vas a necesitar crear usuarios/choferes y revisar reglas de Firestore/Storage.

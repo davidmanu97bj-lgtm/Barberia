@@ -1,0 +1,14 @@
+EXPLORA v69.2 · SALDO DE FACTURACIÓN ANCLADO A TELEGRAM
+
+Problema corregido
+- La app sumaba todas las compensaciones históricas ($414.200 para Marcelo).
+- El sistema anterior no había aplicado esas compensaciones de forma acumulativa al saldo de Facturación.
+- Por eso Telegram mostraba correctamente el último saldo restante ($455.565), mientras la app mostraba $106.365.
+
+Nueva regla de compatibilidad
+1. Si existe una compensación histórica con settlementAfter, la más reciente se toma como fotografía autoritativa del saldo.
+2. Para Marcelo, la última fotografía es el saldo que Telegram informó después de aplicar $65.000: $455.565.
+3. Solo los cobros, Uber, caja chica, pagos de liquidación y gastos automáticos posteriores a esa fotografía modifican el saldo.
+4. Ya no se suman retroactivamente todas las compensaciones históricas.
+5. Admin usa exactamente el mismo cálculo que el chofer.
+6. Telegram/Functions no se modifica.

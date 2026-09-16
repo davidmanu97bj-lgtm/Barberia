@@ -1,0 +1,26 @@
+
+    /* Producción: ningún diagnóstico técnico debe ocupar la interfaz. */
+    [id*="diagnostic" i],
+    [class*="diagnostic" i],
+    .performance-diagnostic-backdrop,
+    .explora-weekly-diagnostic-backdrop,
+    .admin-ui-diagnostic,
+    .admin-driver-simulation-diagnostic,
+    #performanceDiagnosticBackdrop,
+    #adminUiDiagnostic,
+    #exploraWeeklyClosureDiagnosticV283,
+    #exploreLoanDiagnostic {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      position: fixed !important;
+      width: 0 !important;
+      height: 0 !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+      inset: auto !important;
+      z-index: -1 !important;
+    }
+  

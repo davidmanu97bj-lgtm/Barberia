@@ -1,0 +1,16 @@
+V4032 — WhatsApp con link de comprobante en cierres
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+
+Cambios quirúrgicos:
+1. Al cargar comprobante de Explora y cerrar un módulo donde Explora debe pagar al chofer, se abre WhatsApp al número cargado por el chofer en su perfil.
+2. El mensaje incluye monto, tipo de cierre y link directo al comprobante subido a Firebase Storage bajo el texto "Ver foto del comprobante:".
+3. Cuando el chofer sube su comprobante para cerrar un módulo donde debe pagar a Explora, se abre WhatsApp a David/Explora avisando que el chofer ya cargó el comprobante.
+4. El link no se oculta como botón porque el esquema wa.me/whatsapp:// solo permite texto; se envía como URL visible luego de "Ver foto del comprobante:".
+5. Se agregó normalización defensiva de teléfono para WhatsApp.
+6. Se actualizó cache/versionado PWA a v4032-whatsapp-receipt-link.
+
+No se tocaron cálculos financieros, bottom nav ni reglas de cierres.

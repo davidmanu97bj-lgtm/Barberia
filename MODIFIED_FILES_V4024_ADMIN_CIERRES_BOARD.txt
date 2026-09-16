@@ -1,0 +1,19 @@
+MODIFICACIÓN V4024 · ADMIN CIERRES BOARD
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios principales:
+1. Se agregó una pantalla nueva de Admin > Cierres con una tarjeta grande por chofer activo.
+2. Cada tarjeta de chofer muestra Chofer, Explora, Gastos, Caja chica y Pendientes sin entrar a cada chofer.
+3. Chofer: muestra valor 50% y botón Pedir cierre.
+4. Explora: muestra valor 50% y botón rojo cuando el chofer pidió cierre / requiere cargar comprobante.
+5. Gastos: muestra gasto compartido 50/50 y botón rojo para cargar comprobante cuando el chofer pidió cierre.
+6. Caja chica: queda 100% a cargo del chofer y tiene botón Pedir cierre.
+7. Pendientes: muestra deuda 100% chofer y botón rojo Chofer redujo deuda / aceptar.
+8. Se conecta el botón admin Cierres al nuevo tablero en vez de abrir la pantalla vieja de comprobantes.
+9. Se mantiene el cálculo existente de cierres y reseteo por corte operativo para no duplicar fórmulas financieras.
+10. Se actualizó el cache-buster y el service worker a v4024-admin-closures-board.

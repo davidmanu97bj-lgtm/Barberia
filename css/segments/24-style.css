@@ -1,0 +1,165 @@
+
+    #performanceDerivatorCard[data-stable-derivation-card="true"]{
+      container-type:inline-size;
+    }
+    #performanceDerivatorBody{
+      width:100%;
+      min-width:0;
+    }
+    .performance-derivator-winner{
+      width:100%;
+      min-width:0;
+      min-height:154px;
+      display:grid;
+      align-content:center;
+      justify-items:center;
+      gap:9px;
+      text-align:center;
+    }
+    .performance-derivator-winner[hidden],
+    #performanceDerivatorEmpty[hidden]{
+      display:none!important;
+    }
+    .performance-derivator-initials{
+      display:grid;
+      place-items:center;
+      width:100%;
+      height:100%;
+      color:#f7d476;
+      font-size:19px;
+      font-weight:950;
+      letter-spacing:.02em;
+    }
+    #performanceDerivatorAvatarImage[hidden],
+    #performanceDerivatorAvatarInitials[hidden]{
+      display:none!important;
+    }
+    #performanceDerivatorName,
+    #performanceDerivatorDerived,
+    #performanceDerivatorBonus{
+      max-width:100%;
+      min-width:0;
+    }
+    #performanceDerivatorName{
+      display:block;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    #performanceDerivatorDerived{
+      display:block;
+      color:#f3c45d!important;
+      font-size:clamp(9px,7.1cqw,12px)!important;
+      line-height:1.2;
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    #performanceDerivatorBonusBlock{
+      width:min(100%,180px);
+      min-width:0;
+      margin:5px auto 0;
+      padding:6px 8px 7px;
+      border:1px solid rgba(103,230,155,.28);
+      border-radius:12px;
+      background:rgba(42,190,100,.075);
+      display:grid!important;
+      place-items:center;
+      gap:1px;
+      line-height:1;
+      overflow:hidden;
+    }
+    #performanceDerivatorBonusBlock small{
+      display:block;
+      color:#9ddbb3;
+      font-size:clamp(8px,5.8cqw,10px);
+      font-weight:950;
+      letter-spacing:.09em;
+      white-space:nowrap;
+    }
+    #performanceDerivatorBonus{
+      display:block;
+      color:#67e69b;
+      font-size:clamp(14px,12cqw,21px);
+      font-weight:950;
+      letter-spacing:-.035em;
+      line-height:1.05;
+      white-space:nowrap;
+      overflow:visible;
+      font-variant-numeric:tabular-nums;
+    }
+    #performanceDerivatorBonus[data-fit="compact"]{font-size:clamp(12px,10.2cqw,18px)}
+    #performanceDerivatorBonus[data-fit="tight"]{font-size:clamp(10px,8.7cqw,15px);letter-spacing:-.05em}
+    #performanceDerivatorEmpty{
+      min-height:154px;
+      align-content:center;
+      justify-items:center;
+      text-align:center;
+    }
+    #performanceDerivatorEmpty b{
+      font-size:clamp(13px,9.5cqw,18px);
+      line-height:1.15;
+      text-wrap:balance;
+    }
+    #performanceDerivatorEmpty small{
+      max-width:210px;
+      font-size:clamp(10px,7.2cqw,13px);
+      text-wrap:balance;
+    }
+    @media(max-width:390px){
+      .performance-derivator-winner,#performanceDerivatorEmpty{min-height:132px}
+    }
+  
+    /* Ranking de derivaciones · estado semanal estable */
+    #performanceDerivatorPosition{
+      display:block;
+      margin-top:2px;
+      color:rgba(255,231,171,.72);
+      font-size:clamp(8px,5.5cqw,10px);
+      font-weight:950;
+      letter-spacing:.13em;
+      line-height:1;
+      white-space:nowrap;
+    }
+    #performanceDerivatorEmpty.performance-derivator-empty{
+      width:100%;
+      min-width:0;
+      display:grid;
+      grid-template-rows:auto auto auto;
+      align-content:center;
+      justify-items:center;
+      gap:7px;
+      padding:5px 8px 2px;
+      overflow:hidden;
+    }
+    #performanceDerivatorEmpty.performance-derivator-empty[hidden]{display:none!important}
+    .performance-derivator-empty-art{
+      display:block;
+      width:min(100%,154px);
+      height:88px;
+      margin:-4px auto -2px;
+      filter:drop-shadow(0 10px 20px rgba(0,0,0,.26));
+    }
+    #performanceDerivatorEmptyTitle{
+      display:block;
+      max-width:220px;
+      color:#f5d47f;
+      font-size:clamp(13px,9cqw,17px);
+      font-weight:950;
+      letter-spacing:-.015em;
+      line-height:1.12;
+      text-transform:none;
+      text-wrap:balance;
+    }
+    #performanceDerivatorEmptyCopy{
+      display:block;
+      max-width:220px;
+      color:rgba(255,255,255,.62);
+      font-size:clamp(9px,6.5cqw,12px);
+      font-weight:700;
+      line-height:1.25;
+      text-wrap:balance;
+    }
+    #performanceDerivatorCard[data-ranking-state="loading"] .performance-derivator-empty-art{opacity:.68}
+    #performanceDerivatorCard[data-ranking-state="error"] .performance-derivator-empty-art{opacity:.48}

@@ -1,0 +1,15 @@
+EXPLORA v4037 · Cierre contable revertido + icono central uniforme
+
+Archivos modificados:
+- css/segments/52-style.css
+  - Se eliminó la sobreescritura visual v4036 que convertía Cierre contable en pantalla amarilla/estilo Últimas actividades.
+  - Cierre contable vuelve al diseño anterior compacto por chofer, con scroll-snap y tarjetas ajustadas a la pantalla.
+  - Se reforzó el icono central del bottom nav para que en Cierre contable sea el mismo comprobante/documento con check que se ve en Últimas actividades.
+
+- index.html
+  - Cache bust actualizado a v4037-cierre-revert-icon para forzar carga del CSS/JS corregido.
+
+- service-worker.js
+  - Cache PWA actualizado a v4037-cierre-revert-icon.
+
+No se modificaron cálculos financieros, Firestore, reglas de cierre ni acciones de comprobantes.

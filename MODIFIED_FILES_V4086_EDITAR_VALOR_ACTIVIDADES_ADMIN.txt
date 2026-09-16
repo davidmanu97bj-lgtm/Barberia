@@ -1,0 +1,29 @@
+EXPLORA v4086 · EDITAR VALOR DESDE ACTIVIDADES DEL ADMINISTRADOR
+
+OBJETIVO
+- En Administrador → Últimas actividades, cada servicio/cobro muestra un ícono de lápiz.
+- Al tocarlo se abre un menú compacto con chofer, servicio, valor anterior y nuevo valor.
+- Al aceptar, se actualiza el valor visual, billing_records, receipt_index y los cierres que incluyeron ese servicio.
+
+ARCHIVOS MODIFICADOS
+- index.html
+- css/segments/53-style.css
+- js/segments/13-script.mjs
+- js/segments/52-script.mjs
+- js/pwa-register.js
+- service-worker.js
+
+COMPORTAMIENTO FINANCIERO
+- Actualiza amount, monto, valor y finalPrice del servicio original.
+- Sincroniza el índice del comprobante.
+- Recalcula en la misma transacción los cierres de facturación/caja chica relacionados.
+- Recalcula efectivo, digital, total facturado, 50 %, caja chica 5 % y quién debe liquidar a quién.
+- Guarda auditoría con valor anterior, nuevo, diferencia y cierres ajustados.
+- Si no se pueden consultar o actualizar los cierres, no se modifica el servicio para evitar valores inconsistentes.
+
+VALIDACIONES REALIZADAS
+- Sintaxis validada en todos los archivos JS/MJS del proyecto.
+- Sin IDs HTML duplicados.
+- Sin referencias locales faltantes en index.html.
+- Pruebas de cálculo realizadas para servicio efectivo, digital y caja chica.
+- Caché PWA actualizado a v4086-editar-valor-actividades-admin.

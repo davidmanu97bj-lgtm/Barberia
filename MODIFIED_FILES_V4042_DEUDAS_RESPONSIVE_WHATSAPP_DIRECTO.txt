@@ -1,0 +1,25 @@
+EXPLORA v4042 · Deudas admin responsive + WhatsApp nativo directo
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/11-script.mjs
+- js/segments/15-script.mjs
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios visuales Deudas Admin:
+1. Se corrigió el ancho real del adminSharedScreen/adminSharedShell para que no haya corte lateral en iOS ni Android.
+2. Se encerró el contenido de Deudas dentro de 100vw/max-width y se bloqueó overflow-x.
+3. Se ajustaron padding, radios, gaps, inputs, selects, textarea y botones para mantener simetría visual.
+4. La grilla TIPO queda en 2 columnas responsivas, compacta y sin desbordes; solo baja a 1 columna en pantallas extremadamente chicas.
+5. Se protegieron selector de registros, resumen, adjuntos y notas para que no rompan el ancho.
+6. Al cerrar el panel compartido también se quita la clase visual de Deudas para no contaminar otros menús admin.
+
+Cambios WhatsApp preservados:
+1. El flujo de cierres abre WhatsApp nativo directo, no WhatsApp Web.
+2. Android usa intent://send.
+3. iOS usa whatsapp://send.
+4. Se actualizó cache/versionado de 11/15/52 + CSS para evitar que quede cargado JS/CSS viejo.
+
+No se tocaron reglas financieras, Firestore, Storage ni cálculos de cierres/deudas.

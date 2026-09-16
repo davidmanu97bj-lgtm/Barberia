@@ -1,0 +1,16 @@
+V4026 ADMIN CIERRES SNAP FIX
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Correcciones:
+- La vista Admin > Cierres queda como una pantalla real por chofer.
+- Se oculta el encabezado/leyenda en esa vista para que entren las 5 tarjetas en el iPhone.
+- El scroll vertical usa snap obligatorio sin mostrar parte del siguiente chofer hasta deslizar.
+- Se respeta safe-area superior e inferior para que no se pise con la barra del iPhone ni con la navegación inferior.
+- Los botones del tablero tienen delegación táctil reforzada para iOS/PWA.
+- Pedir cierre desde CHOFER permite iniciar facturación aunque el resultado sea que Explora debe liquidar.
+- Cada botón sigue trabajando solo sobre su módulo: Chofer/Explora, Gastos, Caja chica o Pendientes.

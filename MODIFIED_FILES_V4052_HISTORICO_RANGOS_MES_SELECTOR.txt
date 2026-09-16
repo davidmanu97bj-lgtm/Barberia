@@ -1,0 +1,28 @@
+EXPLORA v4052 · Histórico con rangos correctos y selector mensual
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Corrección principal:
+1. El histórico ya no queda indefinidamente en "Calculando histórico".
+2. Las consultas de histórico ahora son paralelas y tienen timeout para que la pantalla siempre responda.
+3. Si no hay datos, muestra $0 y la estructura del informe, no queda cargando.
+
+Rangos corregidos:
+1. Histórico total: desde la creación del chofer o desde su primer movimiento disponible hasta ahora.
+2. Histórico mensual: mes calendario completo, del día 1 al último día del mes seleccionado.
+3. Histórico semanal: últimos 7 días corridos.
+4. Histórico diario: últimas 24 horas.
+
+Selector mensual:
+1. Al elegir Histórico mensual aparece un selector extra de Mes.
+2. Ese selector muestra meses desde la creación del chofer o primer movimiento hasta el mes actual.
+3. Al cambiar de chofer se recalculan los meses disponibles.
+
+Fórmula preservada:
+Total facturado - parte chofer 50% + caja chica + deuda cobrada - gastos.
+
+No se tocaron WhatsApp, cierres, deudas, Firestore de escritura, Storage ni cálculos existentes fuera del histórico.

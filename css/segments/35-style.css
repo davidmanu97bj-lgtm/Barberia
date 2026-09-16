@@ -1,0 +1,9 @@
+
+  .vehicle-management-real{min-height:0!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;visibility:visible!important;opacity:1!important}
+  .vehicle-management-real>h2{display:block!important;margin:0 0 10px!important}
+  .vehicle-management-real .vehicle-management-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:168px!important;gap:12px!important;margin:0!important;min-height:168px!important;height:auto!important;overflow:visible!important;visibility:visible!important;opacity:1!important}
+  .vehicle-management-real .vehicle-management-card{display:flex!important;width:100%!important;min-width:0!important;height:168px!important;min-height:168px!important;visibility:visible!important;opacity:1!important;position:relative!important;inset:auto!important;transform:none!important}
+  .vehicle-management-real .vehicle-management-title{display:block!important;color:#fff!important;visibility:visible!important;opacity:1!important}
+  .vehicle-management-real .vehicle-management-icon,.vehicle-management-real small{display:block!important;visibility:visible!important;opacity:1!important}
+  .vehicle-management-real .vehicle-management-icon{display:grid!important}
+  @media(max-width:340px){.vehicle-management-real .vehicle-management-grid{gap:8px!important}.vehicle-management-real .vehicle-management-card{height:158px!important;min-height:158px!important;padding:12px 9px!important}}

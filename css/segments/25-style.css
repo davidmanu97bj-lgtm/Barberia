@@ -1,0 +1,25 @@
+
+    /* Ajuste final: baja de forma uniforme el bloque superior sin alterar altura, snap ni lógica. */
+    .performance-goal-bubble .goal-bubble-content,
+    .goal-bubble .goal-bubble-content{
+      box-sizing:border-box!important;
+      padding-top:8px!important;
+      grid-template-rows:minmax(8px,auto) minmax(21px,auto) minmax(16px,auto) minmax(26px,1fr)!important;
+      align-content:center!important;
+    }
+    .goal-bubble-lock-icon{
+      top:14px!important;
+    }
+    .goal-bubble--unlocked::after{
+      top:13px!important;
+    }
+    @media(max-width:340px){
+      .performance-goal-bubble .goal-bubble-content,
+      .goal-bubble .goal-bubble-content{
+        padding-top:7px!important;
+        grid-template-rows:7px 19px 15px minmax(25px,1fr)!important;
+      }
+      .goal-bubble-lock-icon{top:12px!important}
+      .goal-bubble--unlocked::after{top:11px!important}
+    }
+  

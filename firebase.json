@@ -1,18 +1,32 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": ".",
+    "public": "dist",
     "ignore": [
       "firebase.json",
-      ".firebaserc",
       "**/.*",
-      "**/node_modules/**",
-      "functions/**",
-      "tests/**",
-      "*.md",
-      "*.zip"
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      },
+      {
+        "source": "/index.html",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      },
+      {
+        "source": "/service-worker.js",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      },
+      {
+        "source": "/release.json",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      }
     ],
     "rewrites": [
       {
@@ -24,11 +38,10 @@
   "functions": [
     {
       "source": "functions",
-      "codebase": "barberia"
+      "codebase": "default"
     }
   ],
   "storage": {
     "rules": "storage.rules"
   }
 }
-

@@ -1,0 +1,39 @@
+EXPLORA v77 · CIERRE DIRECTO Y TELEGRAM COMPLETO
+Fecha: 1 de septiembre de 2026
+
+FLUJO DEL CHOFER
+- "Pedir cierre" ya no pregunta si el chofer paga o cobra.
+- Si el chofer debe a Explora, abre directamente el formulario para achicar la deuda.
+- El importe se formatea automáticamente con separadores de miles.
+- Antes de aceptar muestra deuda actual, dinero entregado y nuevo saldo proyectado.
+- El chofer elige Efectivo o Transferencia.
+- Efectivo indica que debe entregar el dinero en mano a David y no exige comprobante.
+- Transferencia muestra alias MP.explora, CUIT 20-40411688-7 y exige comprobante.
+- Ningún pago modifica el saldo hasta que el administrador lo confirme.
+
+COBRO DEL CHOFER
+- Si Explora debe pagar al chofer, aparece directamente el total completo a cobrar.
+- El chofer completa CUIT y alias.
+- La vista previa muestra que, después de la confirmación, el saldo será $0 y quedará equilibrado.
+- La solicitud aparece en el panel Admin con monto, alias y CUIT.
+- El saldo cambia recién cuando el administrador realiza y confirma el pago.
+
+TELEGRAM
+- La solicitud de pago del chofer se informa inmediatamente.
+- Una transferencia del chofer llega con la foto o PDF del comprobante.
+- Una entrega en efectivo llega como aviso de efectivo pendiente de confirmación.
+- La solicitud de cobro llega como "SOLICITUD DE COBRO DEL CHOFER" e incluye monto, alias y CUIT.
+- Las confirmaciones o rechazos del administrador continúan notificándose por Telegram.
+
+ARCHIVOS FUNCIONALES MODIFICADOS
+- app.js
+- index.html
+- styles.css
+- functions/index.js
+- functions/tests/team-realtime-contract.test.js
+- tests/closure-direct-flow.test.mjs
+- DESPLEGAR_EXPLORA_COMPLETO.sh
+
+DESPLIEGUE
+- Requiere Hosting y Functions.
+- El SH completo valida frontend, flujo de cierre, Functions y Telegram antes de desplegar.

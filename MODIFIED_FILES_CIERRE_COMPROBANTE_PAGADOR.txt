@@ -1,0 +1,15 @@
+Corrección aplicada: 2026-06-29
+
+Archivos modificados:
+- css/segments/52-style.css
+- service-worker.js
+
+Objetivo:
+- En el modal de "Pedir cierre", el selector de comprobante no debe aparecer cuando el usuario que pide el cierre no es quien paga.
+- El comprobante lo sube siempre quien debe pagar, desde el detalle/notificación correspondiente.
+- Se agregó regla CSS fuerte para ocultar correctamente el campo de archivo cuando está marcado como hidden.
+- Se actualizó service-worker/cache para evitar versión vieja.
+
+Validación:
+- node --check js/segments/52-script.mjs
+- node --check service-worker.js

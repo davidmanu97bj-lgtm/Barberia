@@ -1,0 +1,30 @@
+V4070 — FIRESTORE: COMPENSACIÓN DE DEUDA CON SALDO DE GASTOS
+
+ARCHIVOS MODIFICADOS / AGREGADOS
+- firestore.rules (nuevo): reglas completas proporcionadas por el usuario, con permisos seguros para la compensación.
+- firebase.json: ahora referencia firestore.rules para permitir despliegue con Firebase CLI.
+- MODIFIED_FILES_V4070_FIRESTORE_DEBT_EXPENSE_OFFSET_RULES.txt (nuevo).
+- DEPLOY_FIRESTORE_RULES_V4070.txt (nuevo).
+
+CORRECCIONES DE PERMISOS
+1. deudas_choferes
+   - Permite que el chofer agregue lastPaymentMethod="expense_offset" durante una reducción válida.
+   - Mantiene prohibidos aumentos de deuda, cambios de identidad y campos administrativos.
+
+2. deuda_pagos
+   - Mantiene el pago tradicional con comprobante.
+   - Agrega el método gastos_deuda sin comprobante, validando monto, saldos y propiedad del chofer.
+
+3. deuda_movimientos
+   - Permite registrar type="expense_offset" / sourceModule="gastos_deuda".
+   - Valida que la reducción de deuda y la reducción de Gastos coincidan exactamente con el monto.
+
+4. notificaciones
+   - Permite type="debt_expense_offset" / category="gastos" solamente para el propio chofer.
+
+SEGURIDAD
+- No se habilitó escritura general para usuarios autenticados.
+- El chofer solo puede operar documentos asociados a su UID.
+- El monto debe ser positivo y no puede aumentar la deuda.
+- No se permite editar ni borrar pagos, movimientos o notificaciones.
+- El administrador conserva permisos completos.

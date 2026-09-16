@@ -1,0 +1,13 @@
+EXPLORA · reparación V4063 Deudas alias copiable
+
+Archivos incluidos para reparar la versión rota:
+- index.html
+- service-worker.js
+- css/segments/52-style.css
+- js/segments/52-script.mjs
+
+index.html y service-worker.js fueron restaurados a la base original santander-main (34) para eliminar el cambio de cache/version que podía dejar el home sin estilos en iOS/PWA.
+
+El cambio del alias queda aplicado solamente en el módulo 52:
+- Aviso arriba de “Saldo actual pendiente” en Deudas del chofer.
+- Alias mp.explora con botón copiar compatible iOS/Android.

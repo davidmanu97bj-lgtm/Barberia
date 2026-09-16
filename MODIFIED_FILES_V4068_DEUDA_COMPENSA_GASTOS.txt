@@ -1,0 +1,16 @@
+EXPLORA v4068 · DEUDA COMPENSA GASTOS
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- service-worker.js
+
+Cambios:
+- Alarma roja persistente mientras exista deuda activa.
+- Deudas: selector entre compensación con saldo de Gastos y pago con comprobante.
+- Compensación atómica: reduce deuda y saldo a liquidar de Gastos sin comprobante.
+- Registro visible del ajuste dentro de Gastos y Últimas actividades.
+- Bloqueo de cierre de Gastos mientras exista deuda activa, con aviso rojo.
+- Unión curva entre pestaña Deudas activa y tarjeta principal.
+- Cache PWA actualizado.

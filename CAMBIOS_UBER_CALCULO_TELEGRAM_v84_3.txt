@@ -1,0 +1,13 @@
+EXPLORA v84.3 — Cálculo Uber + Telegram
+
+1. El modal Admin de confirmación de Uber ya no se abre con datos parciales.
+   Espera a que estén cargados choferes, cobros, gastos, Uber, cierres, deudas, pagos de deuda y adelantos.
+2. Si un listener termina de sincronizar mientras el modal está abierto, el cálculo se refresca automáticamente.
+3. David no puede confirmar un cierre mientras el saldo todavía está sincronizando.
+4. Se mantiene la regla correcta: Uber se contabiliza como efectivo a cargo del chofer; 50% Explora + 5% caja chica = 55%.
+   Ejemplo: si Explora debe $45 y Uber es $50.000, el impacto es +$27.500 y el resultado es chofer debe $27.455.
+5. Telegram ahora reconoce proofUrl, que es el campo usado por el comprobante semanal de Uber. Antes el trigger exigía foto pero no encontraba proofUrl y podía fallar sin enviar el mensaje.
+6. Se agregó prueba de contrato para Telegram y protección contra cálculo Admin con snapshots incompletos.
+7. Se actualizó el cache-buster de app.js/styles.css.
+
+IMPORTANTE: para el arreglo de Telegram hay que desplegar Functions, no solo Hosting.

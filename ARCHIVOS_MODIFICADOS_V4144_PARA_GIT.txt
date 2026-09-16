@@ -1,0 +1,38 @@
+EXPLORA v4144 - PAQUETE INCREMENTAL LISTO PARA GIT
+Fecha: 20 de agosto de 2026
+
+USO
+1. Trabajar sobre una copia limpia del repositorio.
+2. Descomprimir este ZIP directamente en la raiz del repositorio.
+3. Conservar la estructura de carpetas y reemplazar los archivos existentes.
+4. Seguir SUBIR_GIT_Y_DESPLEGAR_V4144.md.
+5. No agregar el ZIP al repositorio.
+
+ARCHIVOS NUEVOS O MODIFICADOS EN v4144
+- MODIFIED_FILES_V4144_RECEIPTS_EDIT_DELETE.txt
+- ARCHIVOS_MODIFICADOS_V4144_PARA_GIT.txt
+- index.html
+- service-worker.js
+- css/segments/53-style.css
+- js/pwa-register.js
+- js/core/financial-receipt-actions-core.mjs
+- js/segments/09-script.js
+- js/segments/11-script.mjs
+- js/segments/13-script.mjs
+- js/segments/52-script.mjs
+- functions/index.js
+- functions/package.json
+- functions/package-lock.json
+- package.json
+- tests/financial-receipt-actions.test.mjs
+- tests/admin-debt-menu-release.test.mjs
+
+ARCHIVOS AUXILIARES DEL PAQUETE
+- SUBIR_GIT_Y_DESPLEGAR_V4144.md
+- tools/deploy-v4144-cloud-shell.sh
+
+PUBLICACION FIREBASE
+Esta versión modifica Hosting y Functions:
+firebase deploy --project explora-control-operativo --only functions,hosting
+
+No cambiaron firestore.rules ni storage.rules.

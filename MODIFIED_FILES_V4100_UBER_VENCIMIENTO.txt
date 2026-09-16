@@ -1,0 +1,10 @@
+EXPLORA v4100 — VENCIMIENTO DEL CIERRE UBER
+
+Regla aplicada:
+- El período de Uber finaliza el domingo a las 04:00.
+- El chofer puede cargar el comprobante hasta el miércoles siguiente a las 23:59.
+- Desde el jueves a las 00:00 la carga queda bloqueada.
+- La pantalla muestra claramente la fecha límite.
+- Después del vencimiento, el botón muestra “Plazo vencido”.
+- Los cierres cargados antes del vencimiento siguen disponibles para que
+  Explora los apruebe o rechace desde administrador.

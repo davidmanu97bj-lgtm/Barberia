@@ -1,0 +1,54 @@
+
+    /* Carrusel inferior: cinco metas completas por viewport, resto mediante scroll táctil. */
+    html,body,.driver-dashboard,.dashboard-shell-real{max-width:100%;overflow-x:hidden!important}
+    .main-bottom-nav.performance-bottom-nav{overflow:hidden!important}
+    .performance-goal-viewport{
+      --goal-bubble-gap:clamp(3px,.9vw,5px);
+      width:100%!important;
+      min-width:0!important;
+      max-width:100%!important;
+      overflow-x:auto!important;
+      overflow-y:hidden!important;
+      -webkit-overflow-scrolling:touch!important;
+      overscroll-behavior-x:contain!important;
+      touch-action:pan-x!important;
+      scrollbar-width:none!important;
+      scroll-snap-type:x proximity!important;
+      scroll-padding-inline:1px!important;
+      container-type:inline-size!important;
+    }
+    .performance-goal-viewport::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+    .performance-goal-track{
+      --goal-bubble-width:calc((100cqw - 2px - (var(--goal-bubble-gap) * 4)) / 5);
+      display:flex!important;
+      flex-flow:row nowrap!important;
+      align-items:stretch!important;
+      gap:var(--goal-bubble-gap)!important;
+      width:max-content!important;
+      min-width:max-content!important;
+      max-width:none!important;
+      height:100%!important;
+      padding:1px!important;
+      margin:0!important;
+      overflow:visible!important;
+    }
+    .performance-goal-bubble,.goal-bubble{
+      flex:0 0 var(--goal-bubble-width)!important;
+      width:var(--goal-bubble-width)!important;
+      min-width:var(--goal-bubble-width)!important;
+      max-width:var(--goal-bubble-width)!important;
+      box-sizing:border-box!important;
+      scroll-snap-align:start!important;
+      scroll-snap-stop:normal!important;
+      touch-action:pan-x!important;
+    }
+    .goal-bubble-content{min-width:0!important;width:100%!important}
+    .goal-bubble-status,.goal-bubble-details,.goal-bubble-current-row{max-width:100%!important;min-width:0!important}
+    .goal-bubble-value,.goal-bubble-current-row>b{white-space:nowrap!important;text-overflow:clip!important;overflow:visible!important}
+    @media(max-width:340px){
+      .performance-goal-track{--goal-bubble-width:calc((100cqw - 2px - (var(--goal-bubble-gap) * 4)) / 5)!important}
+    }
+    @media(min-width:421px){
+      .performance-goal-track{--goal-bubble-width:calc((100cqw - 2px - (var(--goal-bubble-gap) * 4)) / 5)!important}
+    }
+  

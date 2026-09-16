@@ -1,0 +1,32 @@
+EXPLORA v4043 · Android WhatsApp directo + perfil con país obligatorio
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/11-script.mjs
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Corrección Android WhatsApp:
+1. Se eliminó el uso de intent:// para Android porque en PWA/WebView puede dejar la app en net::ERR_UNKNOWN_URL_SCHEME.
+2. Android e iOS abren con whatsapp://send?phone=...&text=... directo a la app nativa.
+3. Se mantiene wa.me únicamente como último recurso en escritorio/no móvil, no en Android/iOS.
+4. El enlace se abre en Android en una navegación externa para no romper la pantalla actual de Explora si el sistema no puede resolver el esquema.
+
+Destino correcto de mensajes:
+1. Cuando el chofer pide cierre, se avisa a Explora.
+2. Cuando el chofer carga comprobante pedido por admin, se avisa a Explora.
+3. Cuando Explora/admin pide cierre, se manda al WhatsApp que el chofer tenga guardado en su perfil.
+4. Cuando Explora/admin carga comprobante, se manda al WhatsApp que el chofer tenga guardado en su perfil.
+
+Perfil admin/chofer:
+1. Mi perfil ahora tiene selector obligatorio de código de país.
+2. Argentina queda prefijado como 🇦🇷 +54 9.
+3. También se agregaron Paraguay +595, Brasil +55 y Uruguay +598.
+4. El teléfono se guarda normalizado en Firestore como whatsappNormalized/whatsappFull, además de mantener compatibilidad con telefono, numeroTelefono y whatsapp.
+5. Para chofer, WhatsApp + CUIT + alias siguen siendo obligatorios.
+6. Para admin, WhatsApp es obligatorio; CUIT y alias no bloquean el guardado.
+
+Se conserva el refuerzo responsive de Deudas admin para iOS/Android y se quita su clase visual al cerrar el panel.
+
+No se tocaron reglas financieras, cierres, deudas, Firestore de movimientos ni cálculos.

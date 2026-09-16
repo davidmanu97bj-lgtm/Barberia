@@ -1,0 +1,17 @@
+V4066 · Admin +Chofer y Actividades arriba
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- js/pwa-register.js
+- service-worker.js
+
+Cambios:
+1. Admin · botón inferior "+ Chofer": ahora abre directamente Crear chofer mediante admin-agregar-chofer.
+2. Admin · botón inferior "Actividades": ahora limpia filtros y sube al inicio real de Últimas actividades, evitando quedar a mitad de la tabla.
+3. Cache/PWA: build actualizado a v4066-admin-chofer-actividad-nav para forzar actualización en Android/iOS.
+
+Verificación:
+- node --check js/segments/52-script.mjs
+- node --check js/pwa-register.js
+- node --check service-worker.js

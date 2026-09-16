@@ -1,0 +1,54 @@
+
+  body.explora-global-test-active .driver-dashboard,
+  body.explora-global-test-active .admin-shared-screen,
+  body.explora-global-test-active .profile-screen,
+  body.explora-global-test-active .new-service-screen,
+  body.explora-global-test-active .expense-screen,
+  body.explora-global-test-active .receipts-screen{
+    padding-top:max(92px,calc(env(safe-area-inset-top) + 78px)) !important;
+  }
+  #adminDateModeBanner[data-role="driver"] button{display:none !important}
+  #adminDateModeBanner[data-role="driver"]{justify-content:flex-start}
+
+/* v2.1.2 — cierre semanal: viewport seguro y scroll exclusivamente interno */
+.weekly-closure-overlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:2147481000 !important;
+  display:grid !important;
+  place-items:center !important;
+  overflow:hidden !important;
+  padding:max(10px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left)) !important;
+  touch-action:none !important;
+}
+.weekly-closure-overlay[hidden]{display:none !important}
+.weekly-closure-modal{
+  width:min(100%,540px) !important;
+  max-width:540px !important;
+  max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px) !important;
+  height:auto !important;
+  min-height:0 !important;
+  margin:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+  overscroll-behavior:contain !important;
+}
+.weekly-closure-header{
+  position:relative !important;
+  inset:auto !important;
+  flex:0 0 auto !important;
+}
+.weekly-closure-content{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+  overscroll-behavior:contain !important;
+  touch-action:pan-y !important;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom)) !important;
+}
+@supports not (height:100dvh){
+  .weekly-closure-modal{max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px) !important}
+}

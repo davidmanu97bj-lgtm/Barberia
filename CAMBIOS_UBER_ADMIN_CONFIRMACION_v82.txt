@@ -1,0 +1,56 @@
+EXPLORA · CIERRE SEMANAL DE UBER v82
+
+FLUJO IMPLEMENTADO
+
+1. El chofer ya no carga importes ni comprobantes de Uber.
+   En la semana habilitada solo presiona:
+   "Pedir a David el cierre de Uber".
+
+2. El pedido se registra sin alterar el saldo y Telegram avisa:
+   "CHOFER PIDIÓ SU CIERRE SEMANAL DE UBER", junto con el chofer y
+   la semana correspondiente.
+
+3. David recibe el pedido en el panel de Administrador. Desde allí carga:
+   - Importe cobrado en efectivo.
+   - Importe cobrado por transferencia/digital.
+   - Un único comprobante semanal.
+
+4. El cálculo que ve David aplica las mismas reglas del sistema:
+   - Efectivo: 50% para Explora más 5% de caja chica.
+   - Transferencia/digital: 50% a favor del chofer, sin caja chica.
+
+5. Cuando David envía el detalle, todavía no cambia ningún saldo. Telegram
+   informa la propuesta y el chofer recibe una confirmación dentro de la app.
+
+6. La confirmación del chofer muestra en detalle:
+   - Semana y fecha de cierre.
+   - Efectivo, transferencia y caja chica.
+   - Saldo anterior y quién debía pagar.
+   - Variación calculada.
+   - Saldo resultante y quién deberá pagar.
+
+7. El saldo cambia una sola vez, únicamente cuando el chofer presiona
+   "Confirmar resultado y aplicar saldo". En ese momento:
+   - Se aplica la diferencia.
+   - Telegram informa la confirmación final.
+   - El comprobante queda visible en la lista de comprobantes.
+
+8. Los recordatorios de 2 días, 1 día y hoy continúan apareciendo, pero ahora
+   indican cuándo el chofer puede pedirle a David el cierre semanal.
+
+SEGURIDAD Y COMPATIBILIDAD
+
+- Los estados "pedido" y "preparado por David" se excluyen de todos los
+  cálculos de saldo, tanto en la app como en Telegram.
+- La confirmación usa una transacción para impedir una aplicación duplicada.
+- El comprobante semanal solo puede subirlo el administrador en este flujo.
+- Los cierres históricos anteriores mantienen su cálculo original.
+
+VALIDACIONES
+
+- Sintaxis de app.js y Functions: OK.
+- Pruebas del proyecto: 43/43 OK.
+- Prueba específica del flujo Uber semanal: OK.
+- Script Cloud Shell: sintaxis OK.
+- IDs HTML únicos: OK.
+

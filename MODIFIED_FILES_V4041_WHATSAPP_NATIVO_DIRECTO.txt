@@ -1,0 +1,16 @@
+EXPLORA v4041 · WhatsApp nativo directo para cierres
+
+Cambios aplicados:
+1. Se eliminó el uso de https://wa.me en el flujo de cierres para que no aparezca la pantalla intermedia WhatsApp Web.
+2. Se agregó detección iOS/Android/PWA desde userAgent/display-mode.
+3. Android abre con intent://send?...#Intent;scheme=whatsapp;end para delegar directo a la app nativa.
+4. iOS y otros entornos abren con whatsapp://send?phone=...&text=... directo a WhatsApp.
+5. Se mantiene la lógica existente de mensajes: chofer pide cierre -> WhatsApp a Explora; admin pide cierre -> WhatsApp al chofer; admin carga comprobante -> WhatsApp al chofer; chofer carga comprobante -> WhatsApp a Explora.
+6. Se actualizó el versionado de index.html y service-worker.js para evitar caché viejo en iOS/Android.
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+
+No se tocaron cálculos financieros, reglas de cierres, Firestore, Storage ni UI visual.

@@ -1,0 +1,9 @@
+Cambios aplicados:
+- Se oculta el cartel amarillo del home cuando un cierre ya tiene comprobante cargado.
+- Los cierres aparecen en Última actividad solo cuando están completos/confirmados.
+- El detalle de cierre solo permite subir comprobante al usuario que debe pagar.
+- El otro usuario solo puede ver, revisar o confirmar según corresponda.
+- Comprobantes/cierres finales tienen estilos diferenciados: azul suave si pagó Explora, dorado suave si pagó chofer.
+- La pestaña Caja chica se ajustó para no encimarse al seleccionarla.
+- Se mantiene el corte inmediato de cada cierre para que lo nuevo arranque desde cero.
+- Se actualizó versión/cache del service-worker.

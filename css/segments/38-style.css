@@ -1,0 +1,69 @@
+
+  body.finance-screen-open #performanceGoalViewport,
+  body.finance-screen-open #weeklyRankingLive,
+  body.finance-screen-open #mainBottomNav,
+  body.finance-screen-open .main-bottom-nav,
+  body.explora-internal-screen-open #performanceGoalViewport,
+  body.explora-internal-screen-open #weeklyRankingLive,
+  body.explora-internal-screen-open #mainBottomNav,
+  body.explora-internal-screen-open .main-bottom-nav,
+  body.expense-open #performanceGoalViewport,
+  body.expense-open #weeklyRankingLive,
+  body.expense-open #mainBottomNav,
+  body.expense-open .main-bottom-nav,
+  body.billing-form-open #performanceGoalViewport,
+  body.billing-form-open #weeklyRankingLive,
+  body.billing-form-open #mainBottomNav,
+  body.billing-form-open .main-bottom-nav,
+  body.new-service-open #performanceGoalViewport,
+  body.new-service-open #weeklyRankingLive,
+  body.new-service-open #mainBottomNav,
+  body.new-service-open .main-bottom-nav,
+  body.weekly-closure-open #performanceGoalViewport,
+  body.weekly-closure-open #weeklyRankingLive,
+  body.weekly-closure-open #mainBottomNav,
+  body.weekly-closure-open .main-bottom-nav{
+    display:none!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+
+  #weeklyClosureOverlay{
+    display:block!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-y:contain!important;
+    touch-action:pan-y!important;
+    padding:calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 22px)!important;
+    align-items:initial!important;
+    justify-content:initial!important;
+    place-items:unset!important;
+  }
+  #weeklyClosureOverlay[hidden]{display:none!important}
+  #weeklyClosureOverlay .weekly-closure-modal{
+    display:block!important;
+    width:min(100%,540px)!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    margin:0 auto!important;
+  }
+  #weeklyClosureOverlay .weekly-closure-header{
+    position:sticky!important;
+    top:calc(-1 * env(safe-area-inset-top))!important;
+    z-index:8!important;
+    background:linear-gradient(180deg,#151a1f 0%,#101419 100%)!important;
+  }
+  #weeklyClosureContent{
+    display:flex!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    overscroll-behavior:auto!important;
+    touch-action:pan-y!important;
+    padding-bottom:calc(30px + env(safe-area-inset-bottom))!important;
+  }
+  body.weekly-closure-open{touch-action:pan-y!important}

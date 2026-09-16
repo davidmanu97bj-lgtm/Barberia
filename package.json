@@ -1,0 +1,23 @@
+{
+  "name": "explora-periodo-barberia",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tools/check.mjs",
+    "validate": "node tools/validate-project.mjs",
+    "syntax": "node tools/check-syntax.mjs",
+    "test:unit": "node tools/run-tests.mjs",
+    "test:release": "node tools/check.mjs",
+    "test:receipts": "node tests/financial-receipt-actions.test.mjs",
+    "test:activity-receipts": "node tests/admin-activity-financial-actions.test.mjs",
+    "build": "node tools/build-hosting.mjs",
+    "deploy": "node tools/deploy.mjs",
+    "serve": "python3 -m http.server 8080",
+    "test:offline": "node tools/run-tests.mjs --offline",
+    "manage": "bash explora.sh"
+  },
+  "engines": {
+    "node": "22"
+  }
+}

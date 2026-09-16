@@ -1,4 +1,6 @@
 "use strict";
+const expensePolicy = require('./expense-policy');
+const periodSettlement = require('./period-settlement');
 
 const AMOUNT_FIELDS = [
   "amount", "monto", "valor", "finalPrice", "total", "importe", "price", "precio",
@@ -96,6 +98,24 @@ function isSimulated(data = {}) {
 function cashboxIsExcluded(data = {}) {
   return data.excludeFromCashbox === true || data.cashboxExcluded === true ||
     data.cajaChicaEliminada === true || data.ignoreCashbox === true || data.noCashbox === true;
+}
+
+// Versioned per receipt: never reinterpret pre-existing digital payments.
+function digitalCashboxAmount(records = []) {
+  return records
+    .filter(item => item && !movementIsDeleted(item) && !isSimulated(item))
+    .filter(item => !billingSettlementDirection(item) && !teamIsReimbursementCompensation(item))
+    .filter(item => ["card", "qr", "transfer", "digital"].includes(paymentMethodOf(item)) && !cashboxIsExcluded(item))
+    .filter(item => item.settlementRuleVersion === "gross_cash_digital_cashbox_5_v1")
+    .reduce((sum, item) => sum + amountOf(item) * 0.05, 0);
+}
+function grossFlowPrincipalDelta(records = []) {
+  return records
+    .filter(item => item && !movementIsDeleted(item) && !isSimulated(item))
+    .filter(item => !billingSettlementDirection(item) && !teamIsReimbursementCompensation(item))
+    .filter(item => item.settlementRuleVersion === "gross_cash_digital_cashbox_5_v1")
+    .filter(item => ["cash", "card", "qr", "transfer", "digital"].includes(paymentMethodOf(item)))
+    .reduce((sum, item) => sum + amountOf(item) * (paymentMethodOf(item) === "cash" ? 0.50 : -0.50), 0);
 }
 
 function isDriverBillingSettlementPayment(data = {}) {
@@ -242,115 +262,158 @@ function uberGrossAmount(data = {}) {
   return moneyNumber(data.grossAmount ?? data.totalAmount ?? data.amount ?? data.monto ?? 0);
 }
 
+function uberHasSplitAmounts(data = {}) {
+  return Object.prototype.hasOwnProperty.call(data, "cashAmount") ||
+    Object.prototype.hasOwnProperty.call(data, "uberCashAmount") ||
+    Object.prototype.hasOwnProperty.call(data, "transferAmount") ||
+    Object.prototype.hasOwnProperty.call(data, "uberTransferAmount");
+}
+
+function uberCashAmount(data = {}) {
+  return uberHasSplitAmounts(data)
+    ? moneyNumber(data.cashAmount ?? data.uberCashAmount ?? 0)
+    : uberGrossAmount(data);
+}
+
+function uberTransferAmount(data = {}) {
+  return uberHasSplitAmounts(data)
+    ? moneyNumber(data.transferAmount ?? data.uberTransferAmount ?? data.digitalAmount ?? 0)
+    : 0;
+}
+
+function uberGrossPrincipalDelta(records = []) {
+  return records.filter(item => item.settlementRuleVersion === "uber_gross_cash_cashbox_5_v1").reduce((sum, item) => sum + uberCashAmount(item) * 0.50, 0);
+}
 function uberCashboxAmount(data = {}) {
   const explicit = moneyNumber(data.cashboxAmount ?? data.uberCashboxAmount ?? 0);
   if (explicit > 0) return explicit;
-  return uberGrossAmount(data) * 0.05;
+  return uberCashAmount(data) * 0.05;
 }
 
-function calculateOpenBillingBalance({ records = [], closures = [], uberWeeks = [] } = {}) {
-  // La facturación nunca se corta por un cierre: efectivo y digital son históricos
-  // acumulados. Los pagos de cierre quedan como ajustes y son los que llevan el
-  // saldo a cero sin borrar la facturación.
-  const cutoffMs = 0;
-  const cashboxResetMs = latestCashboxResetMs(closures);
-  let cash = 0;
-  let digital = 0;
-  let includedCount = 0;
-  let driverSettlementTotal = 0;
-  let exploraSettlementTotal = 0;
-  let settlementPaymentCount = 0;
-
-  for (const record of records) {
-    if (!record || movementIsDeleted(record) || isSimulated(record)) continue;
-    const amount = amountOf(record);
-    const settlementDirection = billingSettlementDirection(record);
-    if (settlementDirection) {
-      const paidToAdvance = settlementDirection === "driver_to_explora"
-        ? moneyNumber(record.advanceRepaymentAmount || 0)
-        : 0;
-      const settlementAmount = Math.max(0, amount - paidToAdvance);
-      if (settlementAmount > 0) {
-        if (settlementDirection === "driver_to_explora") driverSettlementTotal += settlementAmount;
-        else exploraSettlementTotal += settlementAmount;
-        settlementPaymentCount += 1;
-      }
-      continue;
-    }
-    if (record.excludeFromBillingSettlement === true || record.internalSettlementAdjustment === true) continue;
-    const method = paymentMethodOf(record);
-    if (!(amount > 0) || !["cash", "card", "qr", "transfer", "digital"].includes(method)) continue;
-    if (method === "cash") cash += amount;
-    else digital += amount;
-    includedCount += 1;
+function uberImpactsSettlement(data = {}) {
+  const workflow = safeText(data.settlementWorkflowVersion || data.workflowVersion).toLowerCase();
+  const status = safeText(data.reviewStatus || data.status).toLowerCase();
+  if (workflow === "v85_verified_direct") return data.verifiedAutomatically === true && status === "completed";
+  if (workflow === "v84_driver_submission_admin_review") {
+    return data.adminConfirmed === true && /approved|confirmed|completed/.test(status);
   }
-
-  let regularCashboxGenerated = 0;
-  for (const record of records) {
-    if (!record || movementIsDeleted(record) || isSimulated(record) || rowMs(record) <= cashboxResetMs) continue;
-    if (billingSettlementDirection(record)) continue;
-    if (record.excludeFromBillingSettlement === true || record.internalSettlementAdjustment === true) continue;
-    if (cashboxIsExcluded(record) || paymentMethodOf(record) !== "cash") continue;
-    const amount = amountOf(record);
-    if (amount > 0) regularCashboxGenerated += amount * 0.05;
+  if (workflow === "v82_admin_driver_confirmation") {
+    return data.driverConfirmed === true && /approved|confirmed|completed/.test(status);
   }
+  return !/reject|rechaz|cancel|anulad/.test(status);
+}
 
-  let uberCashboxGenerated = 0;
-  for (const week of uberWeeks || []) {
-    if (!week || movementIsDeleted(week) || isSimulated(week) || rowMs(week) <= cashboxResetMs) continue;
-    const review = safeText(week.reviewStatus || week.status).toLowerCase();
-    if (review === "rejected") continue;
-    const grossAmount = uberGrossAmount(week);
-    if (!(grossAmount > 0)) continue;
-    uberCashboxGenerated += uberCashboxAmount(week);
-  }
+function isAdminSettlementDebt(data = {}) {
+  const type = safeText(data.type || data.debtType).toLowerCase();
+  const role = safeText(data.createdByRole || data.registeredByRole).toLowerCase();
+  const source = safeText(data.sourceModule || data.registrationOrigin || data.origin).toLowerCase();
+  if (source === "uber_weekly" || type === "uber_weekly") return false;
+  return periodSettlement.isSelfDeclaredDebt(data) || type === "admin_debt" || role === "admin" || role === "administrador" ||
+    data.registeredByAdmin === true || source === "admin_debt_menu";
+}
 
-  cash = roundMoney(cash);
-  digital = roundMoney(digital);
-  const gross = roundMoney(cash + digital);
-  const shareEach = roundMoney(gross * 0.5);
-  const netBeforeCashboxToDriver = roundMoney(shareEach - cash);
+function debtImpactsSettlement(data = {}) {
+  if (!isAdminSettlementDebt(data)) return false;
+  return data.driverConfirmationRequired !== true || data.acknowledgedByDriver === true;
+}
 
-  const cashboxGeneratedTotal = roundMoney(regularCashboxGenerated + uberCashboxGenerated);
-  const cashboxOffsetPreviouslyApplied = Math.min(
-    cashboxGeneratedTotal,
-    billingCashboxOffsetsAfter(closures, cashboxResetMs)
-  );
-  const cashboxTotal = roundMoney(Math.max(0, cashboxGeneratedTotal - cashboxOffsetPreviouslyApplied));
-  const netBeforePayments = roundMoney(netBeforeCashboxToDriver - cashboxTotal);
+function debtRemainingAmount(data = {}) {
+  const status = safeText(data.status || data.debtStatus || data.estado).toLowerCase();
+  if (/paid|pagad|closed|cerrad|cancel|anulad|deleted|eliminad/.test(status)) return 0;
+  const remaining = moneyNumber(data.remainingAmount ?? data.saldoPendiente ?? data.amount ?? data.totalAmount ?? 0);
+  return Math.max(0, remaining);
+}
 
-  driverSettlementTotal = roundMoney(driverSettlementTotal);
-  exploraSettlementTotal = roundMoney(exploraSettlementTotal);
-  const settlementPaymentTotal = roundMoney(driverSettlementTotal - exploraSettlementTotal);
-  const netToDriver = roundMoney(netBeforePayments + driverSettlementTotal - exploraSettlementTotal);
+function calculateOpenBillingBalance(input = {}) {
+  return periodSettlement.calculate(input);
+}
 
+function teamIsReimbursementCompensation(data = {}) {
+  const type = safeText(data.type || data.operationType || data.movementType).toLowerCase();
+  return type === "reimbursement_compensation" || type === "debt_compensation";
+}
+
+function teamExpenseUsesAutomaticBilling50(data = {}) {
+  if (data.receiptFlowVersion === expensePolicy.version) return true;
+  if (data.autoApplyToBilling === true || data.gastoAuto50 === true) return true;
+  if (safeText(data.billingImpactMode).toLowerCase() === "auto_50") return true;
+  return Object.prototype.hasOwnProperty.call(data, "telegramSettlementBeforeBalance") ||
+    Object.prototype.hasOwnProperty.call(data, "telegramSettlementAfterBalance") ||
+    Object.prototype.hasOwnProperty.call(data, "telegramExpenseRecognizedAmount");
+}
+
+function teamAutomaticExpenseImpact(expenses = [], cutoffMs = 0) {
+  return roundMoney(expenses
+    .filter(item => item && !movementIsDeleted(item) && !isSimulated(item))
+    .filter(item => rowMs(item) > cutoffMs)
+    .filter(teamExpenseUsesAutomaticBilling50)
+    .reduce((sum, item) => sum - amountOf(item) * expensePolicy.netDriverRate(item), 0));
+}
+
+function latestTeamReimbursementAnchor(records = [], baseline = 0) {
+  const anchors = records
+    .filter(item => item && !movementIsDeleted(item) && !isSimulated(item))
+    .filter(teamIsReimbursementCompensation)
+    .map(item => ({
+      timestamp:rowMs(item),
+      settlementAfter:Number(item.settlementAfter)
+    }))
+    .filter(item => item.timestamp > baseline && Number.isFinite(item.settlementAfter))
+    .sort((a, b) => b.timestamp - a.timestamp);
+  if (!anchors.length) return null;
   return {
-    cutoffMs,
-    cashboxResetMs,
-    includedCount,
-    cash,
-    digital,
-    gross,
-    shareEach,
-    settlementPaymentCount,
-    settlementPaymentTotal,
-    driverSettlementTotal,
-    exploraSettlementTotal,
-    regularCashboxGenerated:roundMoney(regularCashboxGenerated),
-    uberCashboxGenerated:roundMoney(uberCashboxGenerated),
-    cashboxGeneratedTotal,
-    cashboxOffsetPreviouslyApplied:roundMoney(cashboxOffsetPreviouslyApplied),
-    cashboxTotal,
-    netBeforeCashboxToDriver,
-    netBeforePayments,
-    netToDriver,
-    amountFromDriver:roundMoney(Math.max(0, -netToDriver)),
-    amountToDriver:roundMoney(Math.max(0, netToDriver))
+    timestamp:anchors[0].timestamp,
+    balance:Math.abs(anchors[0].settlementAfter) > 0.5 ? anchors[0].settlementAfter : 0
   };
+}
+
+function teamSettlementDeltaSince(cutoffMs, records = [], uberWeeks = [], expenses = []) {
+  const scopedRecords = records
+    .filter(item => item && !movementIsDeleted(item) && !isSimulated(item))
+    .filter(item => rowMs(item) > cutoffMs)
+    .filter(item => !teamIsReimbursementCompensation(item));
+
+  const cash = scopedRecords
+    .filter(item => !billingSettlementDirection(item) && paymentMethodOf(item) === "cash")
+    .reduce((sum, item) => sum + amountOf(item), 0);
+  const cashboxEligibleCash = scopedRecords
+    .filter(item => !billingSettlementDirection(item) && paymentMethodOf(item) === "cash")
+    .filter(item => !cashboxIsExcluded(item))
+    .reduce((sum, item) => sum + amountOf(item), 0);
+  const digital = scopedRecords
+    .filter(item => !billingSettlementDirection(item) && ["card", "qr", "transfer", "digital"].includes(paymentMethodOf(item)))
+    .reduce((sum, item) => sum + amountOf(item), 0);
+  const driverPaid = scopedRecords
+    .filter(item => billingSettlementDirection(item) === "driver_to_explora")
+    .reduce((sum, item) => sum + Math.max(0, amountOf(item) - moneyNumber(item.advanceRepaymentAmount || 0)), 0);
+  const exploraPaid = scopedRecords
+    .filter(item => billingSettlementDirection(item) === "explora_to_driver")
+    .reduce((sum, item) => sum + amountOf(item), 0);
+  const scopedUber = uberWeeks
+    .filter(item => item && !movementIsDeleted(item) && !isSimulated(item) && rowMs(item) > cutoffMs)
+    .filter(uberImpactsSettlement);
+  const uberCash = scopedUber.reduce((sum, item) => sum + uberCashAmount(item), 0);
+  const uberTransfer = scopedUber.reduce((sum, item) => sum + uberTransferAmount(item), 0);
+  const cashbox = (cashboxEligibleCash + uberCash) * 0.05 + digitalCashboxAmount(scopedRecords);
+  const automaticExpenseImpact = teamAutomaticExpenseImpact(expenses, cutoffMs);
+
+  return roundMoney(
+    (cash * 0.50) + (uberCash * 0.50 + uberGrossPrincipalDelta(scopedUber)) + cashbox -
+    (digital * 0.50) - (uberTransfer * 0.50) -
+    automaticExpenseImpact - driverPaid + exploraPaid + grossFlowPrincipalDelta(scopedRecords)
+  );
+}
+
+// Replica la calculadora central que ve cada chofer en el Main. A diferencia del
+// cálculo histórico de Telegram, respeta la base heredada de Santander y las
+// fotografías de compensación usadas durante la migración.
+function calculateTeamRealtimeSettlementBalance(input = {}) {
+  return periodSettlement.calculate(input);
 }
 
 module.exports = {
   calculateOpenBillingBalance,
+  calculateTeamRealtimeSettlementBalance,
   isDriverBillingSettlementPayment,
   latestBillingCutoffMs,
   latestCashboxResetMs

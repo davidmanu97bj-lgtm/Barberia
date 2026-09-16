@@ -1,0 +1,13 @@
+MODIFICACIÓN V4109
+
+- La opción “Sin datos” aparece únicamente durante las primeras 7 semanas del chofer.
+- Desde la semana 8 en adelante se oculta completamente.
+- Se agregó validación en el guardado para impedir el cierre “Sin datos” fuera del período permitido.
+- El cálculo usa la fecha de alta/creación del perfil del chofer.
+- Se actualizó la versión de caché PWA.
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- service-worker.js
+- css/segments/52-style.css

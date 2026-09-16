@@ -1,0 +1,15 @@
+
+  .explora-weekly-diagnostic-backdrop{position:fixed;inset:0;z-index:10050;display:none;place-items:center;padding:16px;background:rgba(0,0,0,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  .explora-weekly-diagnostic-backdrop.is-open{display:grid}
+  .explora-weekly-diagnostic-card{width:min(100%,560px);max-height:calc(100dvh - 32px);overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(255,112,112,.48);border-radius:22px;background:linear-gradient(180deg,#2a1116,#0b080a);color:#fff;box-shadow:0 28px 90px rgba(0,0,0,.68)}
+  .explora-weekly-diagnostic-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .explora-weekly-diagnostic-card header strong{color:#ffb4b4;font-size:14px;line-height:1.35;letter-spacing:.035em}
+  .explora-weekly-diagnostic-card header button{width:38px;height:38px;border:1px solid rgba(255,255,255,.15);border-radius:50%;background:rgba(255,255,255,.05);color:#fff;font-size:22px}
+  .explora-weekly-diagnostic-card pre{margin:0;padding:14px;color:#f6f7f8;font:650 11px/1.48 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+  .explora-weekly-diagnostic-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:0 14px 14px}
+  .explora-weekly-diagnostic-actions button{min-height:46px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.06);color:#fff;font-weight:900}
+  .explora-weekly-diagnostic-actions button:first-child{border-color:rgba(245,185,66,.42);background:rgba(245,185,66,.10);color:#f5cf75}
+  .explora-weekly-diagnostic-actions button:nth-child(2){border-color:rgba(105,184,255,.42);background:rgba(105,184,255,.10);color:#a8d8ff}
+  .closure-result-card[data-result="invalid-snapshot"],.closure-final-card[data-result="invalid-snapshot"]{background:linear-gradient(135deg,rgba(177,96,20,.30),rgba(90,33,10,.42))!important;border-color:rgba(255,163,77,.58)!important}
+  .weekly-closure-content[data-calculation-state="invalid"] #weeklyClosureSubmitBtn,.weekly-closure-content[data-calculation-state="invalid"] #weeklyDriverReceiptBtn{display:none!important}
+  @media(max-width:420px){.explora-weekly-diagnostic-actions{grid-template-columns:1fr}}

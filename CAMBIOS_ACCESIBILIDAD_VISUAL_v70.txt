@@ -1,0 +1,23 @@
+CAMBIOS v70 · ACCESIBILIDAD VISUAL PARA CHOFERES
+
+1. ESTRUCTURA CONSERVADA
+- Se mantienen las dos columnas Chofer / Explora.
+- No se cambian cálculos, acciones, datos ni orden de la pantalla.
+- Se conserva la identidad azul oscuro, dorada, verde, violeta y roja de Explora.
+
+2. LECTURA MEJORADA
+- Textos pequeños y montos secundarios más grandes.
+- Grises reemplazados por tonos más oscuros y contrastantes.
+- Montos con números tabulares para facilitar la comparación.
+- Separadores más visibles y filas con mayor altura.
+- Estados de liquidación más grandes, centrados y contrastantes.
+
+3. BOTONES MÁS CLAROS
+- Mayor altura táctil y textos más grandes.
+- Bordes y fondos reforzados sin cambiar el color de cada operación.
+- Símbolos + más grandes y visibles.
+
+4. COMPATIBILIDAD
+- Ajustes específicos para iPhone y Android de pantalla angosta.
+- Se mantiene la simetría entre ambas columnas.
+- Se respeta la preferencia del dispositivo por mayor contraste.

@@ -1,0 +1,13 @@
+EXPLORA v69 · RESUMEN SUPERIOR COMPACTO
+
+- La tarjeta izquierda muestra únicamente:
+  TOTAL FACTURADO
+  $ total facturado
+
+- La tarjeta derecha muestra únicamente:
+  TOTAL GASTADO
+  $ total acumulado de gastos
+
+- Se eliminó del resumen superior el texto "Explora reconoce (50%)", su explicación y el recuadro interno de gasto total.
+- La lógica del 50% de gastos que afecta "quién paga a quién" NO cambia.
+- Se redujo el alto de ambas tarjetas superiores manteniendo la misma altura entre ellas.

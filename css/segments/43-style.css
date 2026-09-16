@@ -1,0 +1,240 @@
+/* EXPLORA 2.2.3 · Multas y choques · reparación visual aislada */
+.vehicle-management-card--alerts{
+  transition:border-color .25s ease,box-shadow .25s ease,background .25s ease;
+}
+.vehicle-management-debt-status{
+  display:block;
+  color:rgba(255,255,255,.66);
+  font-size:11px;
+  font-weight:850;
+  line-height:1.25;
+}
+.vehicle-management-card--alerts[data-debt-state="ok"] .vehicle-management-debt-status{color:#8ff0b2}
+.vehicle-management-card--alerts[data-debt-state="installment"]{
+  border-color:rgba(246,190,59,.38);
+  box-shadow:0 0 0 1px rgba(246,190,59,.08),0 14px 30px rgba(0,0,0,.22);
+}
+.vehicle-management-card--alerts[data-debt-state="installment"] .vehicle-management-debt-status{color:#f5cf75}
+.vehicle-management-card--alerts[data-debt-state="pending"]{
+  border-color:rgba(255,92,104,.62);
+  animation:driverDebtAlertPulse 1.8s ease-in-out infinite;
+}
+.vehicle-management-card--alerts[data-debt-state="pending"] .vehicle-management-debt-status{color:#ffabb3}
+@keyframes driverDebtAlertPulse{
+  0%,100%{border-color:rgba(255,84,99,.48);box-shadow:0 0 0 1px rgba(255,84,99,.08),0 14px 30px rgba(0,0,0,.22)}
+  50%{border-color:rgba(246,190,59,.72);box-shadow:0 0 0 1px rgba(246,190,59,.16),0 0 22px rgba(255,84,99,.20),0 14px 30px rgba(0,0,0,.22)}
+}
+
+/* Todo el contenido de Multas y choques queda aislado dentro de su pantalla. */
+#driverIncidentsScreen [hidden]{display:none!important}
+#driverIncidentsScreen .vehicle-detail-shell{
+  padding-bottom:max(26px,env(safe-area-inset-bottom));
+}
+#driverIncidentsScreen .vehicle-detail-header{
+  position:sticky;
+  top:calc(env(safe-area-inset-top) * -1);
+  z-index:5;
+  padding:8px 0 10px;
+  background:linear-gradient(180deg,rgba(5,8,10,.98) 72%,rgba(5,8,10,0));
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+}
+#driverIncidentsScreen .driver-incidents-summary{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  padding:14px;
+  border:1px solid rgba(246,190,59,.23);
+  border-radius:20px;
+  background:radial-gradient(circle at 100% 0%,rgba(246,190,59,.10),transparent 36%),linear-gradient(180deg,rgba(18,24,29,.98),rgba(8,12,15,.99));
+  box-shadow:0 16px 36px rgba(0,0,0,.24);
+}
+#driverIncidentsScreen .driver-incidents-summary>div{
+  min-width:0;
+  padding:11px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;
+  background:rgba(255,255,255,.025);
+}
+#driverIncidentsScreen .driver-incidents-summary span{
+  display:block;
+  color:rgba(255,255,255,.54);
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.04em;
+}
+#driverIncidentsScreen .driver-incidents-summary strong{
+  display:block;
+  margin-top:5px;
+  color:#fff;
+  font-size:15px;
+  overflow-wrap:anywhere;
+}
+#driverIncidentsScreen .driver-incidents-general{
+  grid-column:1/-1;
+  margin:0;
+  padding:10px 12px;
+  border-radius:13px;
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
+}
+#driverIncidentsScreen .driver-incidents-general[data-state="ok"]{background:rgba(98,223,145,.09);color:#8ff0b2}
+#driverIncidentsScreen .driver-incidents-general[data-state="installment"]{background:rgba(246,190,59,.10);color:#f5cf75}
+#driverIncidentsScreen .driver-incidents-general[data-state="pending"]{background:rgba(255,92,104,.10);color:#ffabb3}
+#driverIncidentsScreen .driver-debt-list{display:grid;gap:11px}
+#driverIncidentsScreen .driver-debt-card{
+  display:grid;
+  gap:10px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:20px;
+  background:linear-gradient(180deg,rgba(18,24,29,.97),rgba(8,12,15,.98));
+  box-shadow:0 14px 32px rgba(0,0,0,.22);
+}
+#driverIncidentsScreen .driver-debt-card[data-state="pending"]{border-color:rgba(255,92,104,.28)}
+#driverIncidentsScreen .driver-debt-card[data-state="installment"]{border-color:rgba(246,190,59,.22)}
+#driverIncidentsScreen .driver-debt-card[data-state="paid"]{border-color:rgba(98,223,145,.20)}
+#driverIncidentsScreen .driver-debt-card>header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+#driverIncidentsScreen .driver-debt-card>header strong{font-size:14px;line-height:1.25}
+#driverIncidentsScreen .driver-debt-card>header span{max-width:54%;color:#ffabb3;font-size:11px;font-weight:900;text-align:right;line-height:1.3}
+#driverIncidentsScreen .driver-debt-card[data-state="installment"]>header span{color:#f5cf75}
+#driverIncidentsScreen .driver-debt-card[data-state="paid"]>header span{color:#8ff0b2}
+#driverIncidentsScreen .driver-debt-card-meta{display:flex;flex-wrap:wrap;gap:7px 12px;color:rgba(255,255,255,.65);font-size:11px}
+#driverIncidentsScreen .driver-debt-card-meta b{color:#fff}
+#driverIncidentsScreen .driver-debt-attachment-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:9px 10px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(255,255,255,.025);
+}
+#driverIncidentsScreen .driver-debt-attachment-row span{font-size:12px;color:rgba(255,255,255,.72)}
+#driverIncidentsScreen .driver-debt-attachment-row button,
+#driverIncidentsScreen .driver-debt-detail-toggle,
+#driverIncidentsScreen .driver-debt-collapse{
+  min-height:38px;
+  border:1px solid rgba(246,190,59,.28);
+  border-radius:11px;
+  background:rgba(246,190,59,.08);
+  color:#f5cf75;
+  font-size:11px;
+  font-weight:900;
+  touch-action:manipulation;
+}
+#driverIncidentsScreen .driver-debt-attachment-row button{padding:7px 13px}
+#driverIncidentsScreen .driver-debt-detail-toggle,
+#driverIncidentsScreen .driver-debt-collapse{width:100%;padding:9px 12px}
+#driverIncidentsScreen .driver-debt-detail{display:grid;gap:12px;padding-top:3px;border-top:1px solid rgba(255,255,255,.07)}
+#driverIncidentsScreen .driver-debt-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#driverIncidentsScreen .driver-debt-detail-grid>div{padding:10px;border-radius:12px;background:rgba(255,255,255,.025);min-width:0}
+#driverIncidentsScreen .driver-debt-detail-grid span,
+#driverIncidentsScreen .driver-debt-copy>span{display:block;color:rgba(255,255,255,.50);font-size:10px;font-weight:850}
+#driverIncidentsScreen .driver-debt-detail-grid strong{display:block;margin-top:4px;color:#fff;font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+#driverIncidentsScreen .driver-debt-copy{padding:11px;border:1px solid rgba(255,255,255,.07);border-radius:13px}
+#driverIncidentsScreen .driver-debt-copy p{margin:6px 0 0;color:rgba(255,255,255,.77);font-size:12px;line-height:1.45}
+#driverIncidentsScreen .driver-debt-history-wrap h3{margin:0 0 8px;color:#f6be3b;font-size:11px;letter-spacing:.08em}
+#driverIncidentsScreen .driver-debt-history{display:grid;gap:7px}
+#driverIncidentsScreen .driver-debt-history article{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.02)}
+#driverIncidentsScreen .driver-debt-history strong{grid-column:1/-1;color:#fff;font-size:11px}
+#driverIncidentsScreen .driver-debt-history span,
+#driverIncidentsScreen .driver-debt-history small{color:rgba(255,255,255,.60);font-size:10px}
+#driverIncidentsScreen .driver-debt-history small{grid-column:1/-1}
+#driverIncidentsScreen .driver-debt-history-empty{margin:0;padding:10px;border-radius:12px;background:rgba(255,255,255,.025);color:rgba(255,255,255,.56);font-size:11px;text-align:center}
+#driverIncidentsScreen .driver-debt-empty{display:grid;justify-items:center;gap:5px;padding:28px 14px;border:1px solid rgba(98,223,145,.16);border-radius:20px;background:rgba(98,223,145,.035)}
+#driverIncidentsScreen .driver-debt-empty strong{font-size:18px}
+#driverIncidentsScreen .driver-debt-empty span{color:rgba(255,255,255,.58);font-size:12px;text-align:center}
+
+/* Visor: oculto por HTML y CSS hasta una apertura explícita dentro de la pantalla. */
+#driverIncidentsScreen #driverDebtAttachmentViewer{
+  position:fixed;
+  inset:0;
+  z-index:3900;
+  display:none;
+  visibility:hidden;
+  pointer-events:none;
+  align-items:center;
+  justify-content:center;
+  padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));
+  background:rgba(0,0,0,.82);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+}
+#driverIncidentsScreen #driverDebtAttachmentViewer[hidden],
+#driverIncidentsScreen #driverDebtAttachmentViewer[aria-hidden="true"]{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#driverIncidentsScreen #driverDebtAttachmentViewer.is-open:not([hidden])[aria-hidden="false"]{
+  display:flex;
+  visibility:visible;
+  pointer-events:auto;
+}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card{
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  width:min(100%,720px);
+  height:min(90dvh,760px);
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:22px;
+  background:#080c0f;
+  box-shadow:0 28px 70px rgba(0,0,0,.55);
+}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card>header{display:flex;justify-content:space-between;gap:12px;padding:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card header p{margin:0 0 3px;color:#f6be3b;font-size:9px;font-weight:900;letter-spacing:.12em}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card h2{margin:0;color:#fff;font-size:16px;overflow-wrap:anywhere}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card header small{display:block;margin-top:4px;color:rgba(255,255,255,.52);font-size:10px}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card header button{flex:0 0 40px;height:40px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.04);color:#fff;font-size:24px}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-body{min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;display:grid;place-items:center;padding:12px;background:#020304}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-body img{display:block;max-width:100%;height:auto;object-fit:contain}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-body iframe{width:100%;height:100%;min-height:55dvh;border:0;background:#fff}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card>footer{display:flex;gap:9px;padding:12px;border-top:1px solid rgba(255,255,255,.08)}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card footer a,
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card footer button{flex:1;display:grid;place-items:center;min-height:42px;border:1px solid rgba(246,190,59,.28);border-radius:12px;background:rgba(246,190,59,.08);color:#f5cf75;text-decoration:none;font-size:12px;font-weight:900}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card footer button{border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-nav{display:flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-nav button{flex:0 0 38px!important;min-height:38px!important;font-size:22px!important}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-nav span{min-width:48px;color:rgba(255,255,255,.68);font-size:10px;font-weight:850;text-align:center}
+#driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-nav button:disabled{opacity:.4}
+
+.debt-form .debt-field input[type="date"],
+.debt-form .debt-field input[type="number"],
+.debt-form .debt-field input[readonly]{width:100%;min-height:46px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.035);color:#fff;padding:10px 12px;font-size:16px}
+.debt-vehicle-readonly{padding:11px 12px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:rgba(255,255,255,.025);color:rgba(255,255,255,.75);font-size:12px}
+.debt-attachment-optional{color:rgba(255,255,255,.48);font-size:10px;font-weight:800}
+
+@media(max-width:390px){
+  #driverIncidentsScreen .driver-debt-card>header{display:grid}
+  #driverIncidentsScreen .driver-debt-card>header span{max-width:none;text-align:left}
+  #driverIncidentsScreen .driver-incidents-summary,
+  #driverIncidentsScreen .driver-debt-detail-grid{grid-template-columns:1fr 1fr}
+  #driverIncidentsScreen #driverDebtAttachmentViewer{padding-left:8px;padding-right:8px}
+  #driverIncidentsScreen #driverDebtAttachmentViewer .driver-debt-viewer-card{border-radius:18px}
+}
+@media(prefers-reduced-motion:reduce){
+  .vehicle-management-card--alerts[data-debt-state="pending"]{animation:none!important}
+  #driverIncidentsScreen #driverDebtAttachmentViewer,
+  #driverIncidentsScreen .driver-debt-card{scroll-behavior:auto!important}
+}
+
+/* EXPLORA 2.2.4 · Multas y choques aislado y solo lectura para chofer */
+#driverIncidentsScreen[hidden]{display:none!important}
+#driverIncidentsScreen.is-open{z-index:2300}
+#driverIncidentsScreen .driver-incidents-summary:only-child{margin-bottom:0}
+#driverIncidentsScreen .driver-debt-empty:last-child{margin-bottom:0}
+.admin-debt-existing{display:grid;gap:10px;margin-top:16px}
+.admin-debt-existing-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.admin-debt-existing-head h3{margin:0;color:#f6be3b;font-size:12px;letter-spacing:.07em}
+.admin-debt-existing-list{display:grid;gap:9px}
+.admin-debt-existing-card{display:grid;gap:8px;padding:12px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(255,255,255,.025)}
+.admin-debt-existing-card header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.admin-debt-existing-card strong{color:#fff;font-size:13px}
+.admin-debt-existing-card span{color:rgba(255,255,255,.62);font-size:11px}
+.admin-debt-existing-card button{min-height:38px;border:1px solid rgba(246,190,59,.30);border-radius:11px;background:rgba(246,190,59,.08);color:#f5cf75;font-weight:900}
+.admin-debt-edit-banner{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 12px;border:1px solid rgba(246,190,59,.26);border-radius:13px;background:rgba(246,190,59,.07);color:#f5cf75;font-size:11px;font-weight:850}
+.admin-debt-edit-banner button{border:0;background:transparent;color:#fff;text-decoration:underline;font-weight:850}

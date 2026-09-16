@@ -1,0 +1,636 @@
+/* v2.3.1 · corrección visual localizada de líder diario y bonos del cierre */
+.performance-ranking-card-wrap{align-items:stretch}
+.performance-ranking-card-wrap .daily-ranking-trigger{
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  text-align:initial!important;
+}
+.daily-ranking-trigger{appearance:none;-webkit-appearance:none;color:inherit;font:inherit;touch-action:manipulation}
+.daily-ranking-trigger:focus-visible{outline:2px solid rgba(217,183,96,.82);outline-offset:4px;border-radius:24px!important}
+.performance-daily-leader-host{
+  display:block!important;
+  width:100%!important;
+  min-height:0!important;
+  height:auto!important;
+  padding:0!important;
+  margin:0!important;
+}
+.performance-ranking-list:has(.daily-leader-card){display:block!important}
+.performance-ranking-list .daily-leader-card{width:100%}
+
+.daily-leader-card{
+  position:relative;
+  width:100%;
+  min-width:0;
+  min-height:246px;
+  padding:22px 20px 20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(217,183,96,.40);
+  border-radius:25px;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(217,183,96,.20),transparent 46%),
+    linear-gradient(145deg,rgba(21,20,18,.99),rgba(5,5,6,.99));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.075),0 18px 44px rgba(0,0,0,.30);
+  overflow:hidden;
+  text-align:center;
+  color:#fff;
+}
+.daily-leader-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(115deg,transparent 23%,rgba(255,255,255,.06) 44%,transparent 62%);
+  transform:translateX(-120%);
+  animation:dailyLeaderSheen 5.5s ease-in-out infinite;
+}
+.daily-leader-card.is-empty::before{display:none}
+.daily-leader-card.is-compact{min-height:205px;padding:17px 16px 16px}
+.daily-leader-card.is-empty{min-height:154px;padding:22px 18px}
+.daily-leader-card.is-empty.is-compact{min-height:124px;padding:18px 16px}
+.daily-leader-kicker{
+  position:relative;
+  z-index:1;
+  font-size:.72rem;
+  line-height:1.2;
+  font-weight:950;
+  letter-spacing:.18em;
+  color:#e0bf69;
+}
+.daily-leader-avatar{
+  position:relative;
+  z-index:1;
+  width:80px;
+  height:80px;
+  flex:0 0 auto;
+  margin:13px 0 9px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:2px solid #d9b760;
+  background:linear-gradient(145deg,#2b2518,#0d0d0f);
+  box-shadow:0 0 0 5px rgba(217,183,96,.09),0 11px 26px rgba(0,0,0,.36);
+}
+.daily-leader-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.daily-leader-initials{font-size:1.24rem;font-weight:950;letter-spacing:.04em;color:#f6df9d}
+.daily-leader-name{
+  position:relative;
+  z-index:1;
+  max-width:100%;
+  margin:0;
+  font-size:1.18rem;
+  line-height:1.18;
+  font-weight:950;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-wrap:balance;
+}
+.daily-leader-reason{
+  position:relative;
+  z-index:1;
+  max-width:100%;
+  margin-top:6px;
+  color:#d8d8db;
+  font-size:.71rem;
+  line-height:1.28;
+  font-weight:900;
+  letter-spacing:.075em;
+  overflow-wrap:anywhere;
+  text-wrap:balance;
+}
+.daily-leader-bonus{
+  position:relative;
+  z-index:1;
+  min-width:132px;
+  margin-top:13px;
+  padding:8px 17px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  border:1px solid rgba(217,183,96,.27);
+  border-radius:15px;
+  background:rgba(217,183,96,.09);
+}
+.daily-leader-bonus small{font-size:.60rem;line-height:1.2;font-weight:950;letter-spacing:.15em;color:#cdb574}
+.daily-leader-bonus b{font-size:1.20rem;line-height:1.15;color:#f4d981;font-variant-numeric:tabular-nums}
+.daily-leader-empty-copy{
+  position:relative;
+  z-index:1;
+  max-width:300px;
+  margin:14px 0 0;
+  color:#c7c7cb;
+  font-size:.93rem;
+  line-height:1.4;
+  font-weight:780;
+  text-wrap:balance;
+}
+.daily-leader-card.is-compact .daily-leader-avatar{width:66px;height:66px;margin:10px 0 7px}
+.daily-leader-card.is-compact .daily-leader-name{font-size:1.07rem}
+.daily-leader-card.is-compact .daily-leader-reason{font-size:.67rem;margin-top:5px}
+.daily-leader-card.is-compact .daily-leader-bonus{min-width:120px;margin-top:10px;padding:6px 14px}
+.daily-leader-card.is-compact .daily-leader-bonus b{font-size:1.08rem}
+.daily-leader-card.is-empty.is-compact .daily-leader-empty-copy{margin-top:11px;font-size:.86rem}
+
+.closure-driver-block--daily-bonuses{
+  border-color:rgba(217,183,96,.34);
+  background:linear-gradient(180deg,rgba(105,76,20,.14),rgba(20,16,8,.96));
+}
+.closure-driver-block--daily-bonuses .closure-daily-bonus-list{display:grid;gap:0;padding:0 15px}
+.closure-daily-bonus-row{
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  min-height:47px;
+  padding:9px 0;
+  border-bottom:1px solid rgba(255,255,255,.065);
+}
+.closure-daily-bonus-row:last-child{border-bottom:0}
+.closure-daily-bonus-row span{min-width:0;color:#e6e6e8;font-size:.82rem;line-height:1.35;font-weight:760;overflow-wrap:anywhere}
+.closure-daily-bonus-row strong{color:#79dca0;font-size:.93rem;line-height:1.2;font-weight:950;white-space:nowrap;font-variant-numeric:tabular-nums}
+.closure-daily-bonus-empty{padding:13px 0;color:#aaaab0;font-size:.81rem;line-height:1.4}
+.closure-daily-bonus-summary{display:grid;margin:0 15px;padding:12px 0 13px;border-top:1px solid rgba(217,183,96,.25)}
+.closure-daily-bonus-summary>div{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px}
+.closure-daily-bonus-summary span{color:#d2c9b3;font-size:.72rem;line-height:1.3;font-weight:950;letter-spacing:.055em;text-transform:uppercase;overflow-wrap:anywhere}
+.closure-daily-bonus-summary strong{color:#79dca0;font-size:1.02rem;line-height:1.2;font-weight:950;white-space:nowrap;font-variant-numeric:tabular-nums}
+.closure-driver-block--daily-bonuses.is-admin .closure-driver-block-head span{color:#d9b760}
+
+.closure-driver-block--reconciliation{
+  border-color:rgba(121,171,220,.30);
+  background:linear-gradient(180deg,rgba(34,69,105,.15),rgba(9,17,26,.97));
+}
+.closure-reconciliation-body{display:grid;padding:3px 15px 14px}
+.closure-reconciliation-group{display:grid;gap:7px;padding:12px 0 4px}
+.closure-reconciliation-caption{color:#a8c7e7;font-size:.68rem;line-height:1.3;font-weight:950;letter-spacing:.085em;text-transform:uppercase}
+.closure-reconciliation-row{
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  padding:9px 0;
+}
+.closure-reconciliation-row>span{min-width:0;color:#e1e4e7;font-size:.82rem;line-height:1.35;font-weight:800;overflow-wrap:anywhere}
+.closure-reconciliation-row>strong{color:#f5f6f7;font-size:1rem;line-height:1.2;font-weight:950;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.closure-reconciliation-row>strong.is-positive{color:#79dca0}
+.closure-reconciliation-row>strong.is-negative{color:#ff9d9d}
+.closure-reconciliation-row>strong.is-info{color:#9ecfff}
+.closure-reconciliation-row>strong.is-neutral{color:#f5f6f7}
+.closure-reconciliation-bonus{margin-top:4px;border-top:1px solid rgba(255,255,255,.065)}
+.closure-reconciliation-bonus>strong{color:#79dca0}
+.closure-reconciliation-divider{height:1px;margin:6px 0 0;background:rgba(217,183,96,.32)}
+.closure-reconciliation-result{padding-top:13px}
+.closure-reconciliation-result .closure-reconciliation-row>span{font-weight:950;text-transform:uppercase;letter-spacing:.035em}
+.closure-reconciliation-result .closure-reconciliation-row>strong{font-size:1.18rem}
+
+@keyframes dailyLeaderSheen{0%,62%{transform:translateX(-120%)}82%,100%{transform:translateX(120%)}}
+@media(max-width:420px){
+  .daily-leader-card{min-height:232px;padding-left:15px;padding-right:15px}
+  .daily-leader-card.is-compact{min-height:198px}
+  .daily-leader-card.is-empty{min-height:144px}
+  .daily-leader-card.is-empty.is-compact{min-height:116px}
+  .daily-leader-name{font-size:1.08rem}
+  .closure-driver-block--daily-bonuses .closure-daily-bonus-list,.closure-reconciliation-body{padding-left:12px;padding-right:12px}
+  .closure-daily-bonus-summary{margin-left:12px;margin-right:12px}
+  .closure-daily-bonus-row,.closure-daily-bonus-summary>div,.closure-reconciliation-row{grid-template-columns:minmax(0,1fr) auto;gap:10px}
+  .closure-daily-bonus-row strong,.closure-daily-bonus-summary strong,.closure-reconciliation-row>strong{font-size:.91rem}
+  .closure-reconciliation-result .closure-reconciliation-row>strong{font-size:1.05rem}
+}
+@media(max-width:350px){
+  .closure-daily-bonus-row,.closure-daily-bonus-summary>div,.closure-reconciliation-row{gap:8px}
+  .closure-daily-bonus-row span,.closure-reconciliation-row>span{font-size:.76rem}
+  .closure-daily-bonus-summary span{font-size:.66rem}
+}
+@media(prefers-reduced-motion:reduce){.daily-leader-card::before{animation:none}}
+
+/* Ajuste visual localizado: líder diario y ranking de derivaciones con igual altura */
+.performance-dashboard-grid{align-items:stretch!important}
+.performance-ranking-card-wrap,
+.performance-ranking-card-wrap .daily-ranking-trigger,
+.performance-daily-leader-host,
+.performance-ranking-card-wrap .daily-leader-card,
+.performance-derivator-card{height:100%!important}
+.performance-ranking-card-wrap .daily-leader-card,
+.performance-derivator-card{min-height:198px!important}
+@media(max-width:390px){
+  .performance-ranking-card-wrap .daily-leader-card,
+  .performance-derivator-card{min-height:198px!important}
+}
+
+
+/* EXPLORA v2.3.9 · caja chica semanal y total de descuentos */
+.closure-repair-fund-row>span small{
+  display:block;
+  margin-top:4px;
+  color:rgba(255,255,255,.48);
+  font-size:.64rem;
+  font-weight:700;
+  line-height:1.35;
+  letter-spacing:0;
+  text-transform:none;
+}
+.closure-discounts-total{
+  margin-top:5px;
+  border-top:1px solid rgba(217,183,96,.38);
+  border-bottom:0!important;
+  background:linear-gradient(90deg,rgba(217,183,96,.095),rgba(217,183,96,.025));
+}
+.closure-discounts-total>span{
+  color:#ead59a!important;
+  font-weight:950!important;
+  letter-spacing:.045em;
+}
+.closure-discounts-total>strong{
+  font-size:1.02rem!important;
+  font-weight:950!important;
+}
+@media(max-width:430px){
+  .closure-repair-fund-row{align-items:start}
+  .closure-repair-fund-row>strong{padding-top:2px}
+  .closure-repair-fund-row>span small{font-size:.61rem}
+}
+
+
+/* EXPLORA v2.4.0 · selector compacto semana actual / cierre anterior */
+#weeklyClosureOverlay .weekly-closure-view-switch{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:7px;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg,rgba(18,22,27,.99),rgba(13,17,21,.98));
+  z-index:3;
+}
+#weeklyClosureOverlay .weekly-closure-view-switch button{
+  min-width:0;
+  min-height:40px;
+  padding:9px 8px;
+  border:1px solid rgba(217,183,96,.23);
+  border-radius:12px;
+  background:rgba(255,255,255,.035);
+  color:#aaaeb5;
+  font:900 .69rem/1.2 inherit;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#weeklyClosureOverlay .weekly-closure-view-switch button.is-active{
+  border-color:rgba(217,183,96,.76);
+  background:linear-gradient(135deg,rgba(217,183,96,.23),rgba(93,68,20,.17));
+  color:#f5dfa2;
+  box-shadow:inset 0 0 0 1px rgba(255,229,151,.06),0 7px 18px rgba(0,0,0,.2);
+}
+#weeklyClosureOverlay .weekly-closure-view-switch button:disabled{opacity:.58;cursor:wait}
+#weeklyClosureOverlay .weekly-closure-content[data-closure-view="previous"] .weekly-closure-live-state{
+  border-color:rgba(217,183,96,.34);
+}
+@media(max-width:390px){
+  #weeklyClosureOverlay .weekly-closure-view-switch{padding:8px 10px;gap:6px}
+  #weeklyClosureOverlay .weekly-closure-view-switch button{min-height:38px;padding:8px 6px;font-size:.64rem;letter-spacing:.025em}
+}
+
+/* EXPLORA v2.4.1 · cierre anterior vacío y actualización viva de gastos */
+#weeklyClosureOverlay .weekly-closure-content[data-previous-empty="true"] > :not(#weeklyClosureLoading):not(#weeklyClosurePreviousEmpty){display:none!important}
+#weeklyClosureOverlay .weekly-closure-previous-empty{
+  margin:14px 12px 18px;
+  min-height:214px;
+  padding:26px 18px 22px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  border:1px solid rgba(217,183,96,.34);
+  border-radius:20px;
+  background:linear-gradient(155deg,rgba(217,183,96,.10),rgba(10,12,15,.98) 52%);
+  text-align:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 16px 34px rgba(0,0,0,.22);
+}
+#weeklyClosureOverlay .weekly-closure-previous-empty[hidden]{display:none!important}
+#weeklyClosureOverlay .weekly-closure-previous-empty-icon{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(217,183,96,.58);
+  border-radius:50%;
+  background:rgba(217,183,96,.12);
+  color:#efd47f;
+  font-size:1.25rem;
+  font-weight:950;
+}
+#weeklyClosureOverlay .weekly-closure-previous-empty strong{
+  color:#f2dfa7;
+  font-size:.86rem;
+  line-height:1.3;
+  font-weight:950;
+  letter-spacing:.055em;
+}
+#weeklyClosureOverlay .weekly-closure-previous-empty p{
+  max-width:310px;
+  margin:0;
+  color:#b8bbc0;
+  font-size:.78rem;
+  line-height:1.45;
+  font-weight:700;
+  text-wrap:balance;
+}
+#weeklyClosureOverlay .weekly-closure-previous-empty button{
+  min-height:40px;
+  margin-top:6px;
+  padding:9px 15px;
+  border:1px solid rgba(217,183,96,.56);
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(217,183,96,.24),rgba(83,61,19,.18));
+  color:#f5dfa2;
+  font:950 .68rem/1.2 inherit;
+  letter-spacing:.045em;
+  cursor:pointer;
+}
+#weeklyClosureOverlay .weekly-closure-live-state[data-realtime-source="expense"]{
+  border-color:rgba(116,207,151,.42);
+  box-shadow:inset 0 0 0 1px rgba(116,207,151,.05);
+}
+@media(max-width:390px){
+  #weeklyClosureOverlay .weekly-closure-previous-empty{min-height:190px;margin:11px 10px 16px;padding:22px 14px 19px}
+}
+
+/* v2.4.2 · evita mostrar simultáneamente el resumen anterior y el nuevo durante una recarga */
+#weeklyClosureContent[data-live-loading="true"] > :not(#weeklyClosureLoading){display:none!important}
+#weeklyClosureContent[data-live-loading="true"] > #weeklyClosureLoading{display:flex!important;align-items:center;justify-content:center;min-height:120px}
+
+/* v2.4.91 · cierre semanal como liquidación corrida real, sin tarjetas */
+#weeklyClosureContent.weekly-liquidation-flow-active [data-weekly-section="A"],
+#weeklyClosureContent.weekly-liquidation-flow-active [data-weekly-section="B"],
+#weeklyClosureContent.weekly-liquidation-flow-active [data-weekly-section="C"],
+#weeklyClosureContent.weekly-liquidation-flow-active [data-weekly-section="D"]{
+  display:none!important;
+}
+.weekly-liquidation-flow{
+  display:block;
+  padding:0 2px 4px;
+  color:#f7fafc;
+}
+.weekly-liquidation-title{
+  padding:8px 0 14px;
+  margin:0 0 8px;
+  border-bottom:1px solid rgba(245,185,66,.28);
+}
+.weekly-liquidation-title span,
+.weekly-liquidation-step h3{
+  display:block;
+  color:#ffd66e;
+  font-size:11px;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  font-weight:950;
+}
+.weekly-liquidation-title strong{
+  display:block;
+  margin-top:5px;
+  color:#fff;
+  font-size:18px;
+  line-height:1.15;
+  font-weight:950;
+}
+.weekly-liquidation-title small,
+.weekly-liquidation-note{
+  color:rgba(255,255,255,.70);
+  font-size:12px;
+  line-height:1.42;
+}
+.weekly-liquidation-title small{display:block;margin-top:5px}
+.weekly-liquidation-step{
+  display:block;
+  margin:0;
+  padding:13px 0 14px;
+  border:0;
+  border-bottom:1px solid rgba(255,255,255,.10);
+  border-radius:0;
+  background:transparent;
+  overflow:visible;
+}
+.weekly-liquidation-step h3{
+  margin:0 0 8px;
+  padding:0 0 8px;
+  border:0;
+  border-bottom:1px dashed rgba(255,255,255,.10);
+  background:transparent;
+}
+.weekly-liquidation-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(90px,auto);
+  gap:12px;
+  align-items:start;
+  min-height:0;
+  padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+.weekly-liquidation-row:last-child{border-bottom:0}
+.weekly-liquidation-row span{
+  min-width:0;
+  color:rgba(255,255,255,.77);
+  font-size:12px;
+  font-weight:820;
+  line-height:1.25;
+}
+.weekly-liquidation-row span small{
+  display:block;
+  margin-top:3px;
+  color:rgba(255,255,255,.50);
+  font-size:10px;
+  font-weight:700;
+}
+.weekly-liquidation-row strong,
+.weekly-liquidation-formula strong{
+  color:#f7fafc;
+  font-size:15px;
+  font-weight:950;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.weekly-liquidation-row.is-positive strong,
+.weekly-liquidation-formula.is-positive strong{color:#74eda4}
+.weekly-liquidation-row.is-negative strong,
+.weekly-liquidation-formula.is-negative strong{color:#ffaaa9}
+.weekly-liquidation-row.is-info strong,
+.weekly-liquidation-formula.is-info strong{color:#9cd0ff}
+.weekly-liquidation-subrows{
+  display:block;
+  margin:2px 0 7px;
+  padding:0 0 0 10px;
+  border-left:2px solid rgba(255,255,255,.10);
+  background:transparent;
+}
+.weekly-liquidation-subrows .weekly-liquidation-row{padding:6px 0;min-height:0}
+.weekly-liquidation-note{
+  margin:7px 0 8px;
+  padding:8px 10px;
+  border-left:3px solid rgba(245,185,66,.55);
+  border-radius:0 10px 10px 0;
+  background:rgba(245,185,66,.07);
+  color:#ffe399;
+  font-weight:760;
+}
+.weekly-liquidation-balances{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  padding:8px 0 0;
+  border:0;
+}
+.weekly-liquidation-balances.is-three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.weekly-liquidation-balances span{
+  min-width:0;
+  display:grid;
+  gap:3px;
+  padding:7px 8px;
+  border-radius:10px;
+  background:rgba(0,0,0,.16);
+  border:1px solid rgba(255,255,255,.06);
+  color:rgba(255,255,255,.58);
+  font-size:10px;
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.045em;
+}
+.weekly-liquidation-balances b{
+  color:#fff;
+  font-size:13px;
+  letter-spacing:0;
+  text-transform:none;
+  font-variant-numeric:tabular-nums;
+}
+.weekly-liquidation-expense{
+  display:block;
+  margin:8px 0 10px;
+  padding:0 0 8px;
+  border:0;
+  border-left:2px solid rgba(255,170,169,.35);
+  border-radius:0;
+  background:transparent;
+  overflow:visible;
+}
+.weekly-liquidation-expense-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  padding:7px 0 7px 10px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.weekly-liquidation-expense-head span{
+  color:#ffc2c2;
+  font-size:13px;
+  font-weight:950;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+.weekly-liquidation-expense-head strong{
+  color:#ffb0b0;
+  font-size:16px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.weekly-liquidation-expense-note{
+  margin:5px 0 0 10px;
+  color:rgba(255,255,255,.56);
+  font-size:11px;
+  font-weight:760;
+}
+.weekly-liquidation-expense .weekly-liquidation-row{margin-left:10px;padding:7px 0}
+.weekly-liquidation-empty{
+  margin:8px 0;
+  padding:10px 0;
+  border:0;
+  border-top:1px dashed rgba(255,255,255,.18);
+  border-bottom:1px dashed rgba(255,255,255,.18);
+  color:rgba(255,255,255,.62);
+  font-size:12px;
+  font-weight:800;
+  text-align:left;
+}
+.weekly-liquidation-formula{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:6px 12px;
+  align-items:center;
+  padding:9px 0;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+.weekly-liquidation-formula span{
+  color:rgba(255,255,255,.76);
+  font-size:12px;
+  font-weight:850;
+}
+.weekly-liquidation-formula code{
+  grid-column:1/-1;
+  padding:8px 9px;
+  border-radius:10px;
+  background:rgba(0,0,0,.18);
+  color:#cfe8ff;
+  font-size:12px;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.weekly-liquidation-final-step{
+  border-bottom-color:rgba(116,237,164,.30);
+}
+.weekly-liquidation-result{
+  display:grid;
+  gap:7px;
+  margin:12px 0 0;
+  padding:14px 12px;
+  border-radius:16px;
+  text-align:center;
+  border:1px solid rgba(116,237,164,.32);
+  background:linear-gradient(135deg,rgba(25,126,69,.20),rgba(5,21,14,.32));
+}
+.weekly-liquidation-result[data-result="driver-pays"]{
+  border-color:rgba(255,170,169,.34);
+  background:linear-gradient(135deg,rgba(142,42,42,.20),rgba(28,8,8,.32));
+}
+.weekly-liquidation-result span{
+  color:#ffd66e;
+  font-size:10px;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  font-weight:950;
+}
+.weekly-liquidation-result b{
+  color:#fff;
+  font-size:17px;
+  line-height:1.2;
+}
+.weekly-liquidation-result strong{
+  color:#79efa8;
+  font-size:34px;
+  line-height:1;
+  font-weight:950;
+  font-variant-numeric:tabular-nums;
+}
+.weekly-liquidation-result[data-result="driver-pays"] strong{color:#ffaaa9}
+@media(max-width:390px){
+  .weekly-liquidation-row{grid-template-columns:minmax(0,1fr) minmax(82px,auto);gap:9px}
+  .weekly-liquidation-balances,.weekly-liquidation-balances.is-three{grid-template-columns:1fr}
+  .weekly-liquidation-result strong{font-size:30px}
+}
+

@@ -1,0 +1,19 @@
+EXPLORA v4058 · Login sin hoja iOS de contraseñas guardadas
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/11-script.mjs
+- css/segments/01-style.css
+
+Corrección aplicada:
+1. El login deja de ser un <form> real para no activar la heurística de inicio de sesión de iOS.
+2. El campo de clave deja de ser input asociado a contraseña y pasa a textarea manual enmascarado.
+3. La etiqueta visible cambia de "Contraseña" a "Clave de acceso".
+4. El botón Ingresar ahora dispara el login por click; Enter también funciona desde usuario/clave.
+5. Se conserva máscara visual y botón Ver/Ocultar.
+6. Se mantiene Firebase Auth igual: solo cambia el input visual para evitar el cartel de Face ID/llavero.
+7. Se reforzó autocomplete=one-time-code/off, data-lpignore, data-1p-ignore, data-bwignore.
+8. También se cambió Crear chofer de "Contraseña" a "Clave" y se evita type=password.
+
+No se tocaron cálculos, cierres, WhatsApp, histórico, deudas ni Firestore.

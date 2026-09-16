@@ -1,0 +1,21 @@
+EXPLORA v4103 — UBER ÚLTIMAS 8 SEMANAS
+
+CHOFER
+- Menú con las últimas 8 semanas, de la más actual a la más antigua.
+- Semanas automáticas de lunes 04:00 a lunes 04:00.
+- Estados: Falta cargar (rojo), En revisión (amarillo), Completado (verde).
+- Cada semana cerrada pendiente tiene botón Adjuntar.
+- La semana en curso aparece, pero no permite adjuntar hasta que cierre.
+- Si existe una semana cerrada sin cargar, el acceso muestra Semana vencida.
+- Se pueden cargar manualmente semanas anteriores dentro de las últimas 8.
+- Al subir foto cambia a En revisión y abre WhatsApp con la semana y el enlace.
+
+ADMIN
+- Aviso de choferes con semanas vencidas.
+- Lista de comprobantes en revisión.
+- Ver foto, aceptar o rechazar.
+- La revisión usa el ID exacto del comprobante.
+
+ROTACIÓN
+- Siempre se muestran solo 8 semanas.
+- Al entrar una semana nueva, la más antigua deja de mostrarse.

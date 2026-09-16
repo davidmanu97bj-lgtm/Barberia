@@ -1,0 +1,14 @@
+EXPLORA v4134
+
+Cambios:
+- Los cierres de facturación (Chofer / Explora / Facturación) mantienen explícitamente el aviso por WhatsApp.
+- El aviso se abre al WhatsApp de Explora también en Android APK/PWA usando el mecanismo HTTPS de v4133.
+- Los comprobantes de cierre siguen notificando por WhatsApp según quién los carga.
+- Telegram no fue modificado.
+- Se actualizó el cache/versionado PWA para forzar la carga del cambio.
+
+Archivos modificados:
+- js/segments/52-script.mjs
+- js/pwa-register.js
+- service-worker.js
+- index.html

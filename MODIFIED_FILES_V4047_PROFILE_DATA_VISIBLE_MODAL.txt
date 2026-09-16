@@ -1,0 +1,17 @@
+EXPLORA v4047 · Datos de perfil visibles en cierres
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Corrección aplicada:
+1. Cuando el chofer pide el cierre, el modal de Explora ahora muestra los datos cargados por el chofer en Mi perfil: alias, CUIT y celular.
+2. Cuando Explora/admin pide el cierre, el modal del chofer ahora muestra los datos cargados por Explora en Mi perfil: alias, CUIT y celular.
+3. Los datos también se mantienen dentro del WhatsApp del pedido y del WhatsApp de comprobante.
+4. Si el cierre viejo no trae esos campos guardados, el modal intenta reconstruirlos desde el perfil actual del chofer/admin.
+5. Los datos se muestran en una tarjeta compacta para que el modal siga entrando bien en Android e iOS.
+6. Si admin intenta pedir cierre y el chofer no tiene WhatsApp en Mi perfil, se muestra error claro antes de crear el cierre.
+
+No se tocaron cálculos financieros, reglas de cierre, Firestore de movimientos ni Storage.

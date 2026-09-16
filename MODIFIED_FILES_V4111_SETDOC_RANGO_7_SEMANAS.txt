@@ -1,0 +1,9 @@
+ARCHIVOS MODIFICADOS
+- index.html
+- js/segments/52-script.mjs
+
+CAMBIOS
+- Se importó setDoc desde Firebase Firestore.
+- Se reforzó la detección de la fecha de alta/ingreso del chofer.
+- Sin datos solo aparece entre la semana 1 y la 7 desde el alta.
+- Se actualizó la versión de caché a v4111.

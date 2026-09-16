@@ -1,0 +1,14 @@
+EXPLORA v4082 — GESTIÓN DE CHOFERES VISIBLE
+
+CORRECCIÓN
+- Todos los accesos de Admin que antes abrían directamente el formulario Crear chofer ahora abren primero la pantalla CHOFERES.
+- La pantalla CHOFERES muestra cada chofer activo con los botones RESETEAR DATOS y ELIMINAR CHOFER.
+- Desde esa misma pantalla se mantiene el botón CREAR CHOFER.
+- La tarjeta rápida ahora dice GESTIONAR CHOFERES · Crear, resetear o eliminar.
+- Al crear un chofer correctamente, se vuelve a la lista actualizada.
+- Se actualizó la versión PWA para evitar que iPhone conserve la pantalla anterior en caché.
+
+PUBLICACIÓN
+Como la Cloud Function ya está publicada, para esta corrección basta publicar Hosting:
+
+firebase deploy --only hosting --project explora-control-operativo

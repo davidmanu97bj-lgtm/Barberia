@@ -1,0 +1,18 @@
+EXPLORA v4049 · Dock inferior simétrico + icono premium Agregar cobro
+
+Archivos modificados:
+- css/segments/52-style.css
+- index.html
+- service-worker.js
+
+Cambios aplicados:
+1. Barra inferior más baja y menos invasiva.
+2. Botón central integrado al dock: sobresale menos y queda en eje con el menú.
+3. Íconos laterales normalizados: mismo tamaño visual y misma altura.
+4. Textos alineados bajo cada icono, incluyendo el botón central.
+5. Se redujo el padding inferior reservado por las pantallas.
+6. Se mantiene safe-area para iOS y Android.
+7. Se reemplazó el + del botón central por un icono premium de agregar cobro: tarjeta/cobro con signo + y detalle brillante.
+8. En admin se conserva el icono financiero/contable, no el icono de cobro.
+
+No se tocaron lógicas de cierre, WhatsApp, Firestore, Storage, deudas ni cálculos.

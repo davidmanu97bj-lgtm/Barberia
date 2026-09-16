@@ -1,0 +1,11 @@
+EXPLORA v67
+
+- Admin: nuevo botón Modificar / eliminar cobros o gastos.
+- Filtro por chofer y tipo de movimiento.
+- Modificación de importes con motivo obligatorio.
+- Eliminación de cobros/gastos con motivo y confirmación.
+- Las correcciones actualizan saldos abiertos y cierres relacionados.
+- Cobros en efectivo recalculan también Caja chica 5%.
+- Telegram: cobros, gastos, compensaciones, ajustes, deudas, pagos, solicitudes de adelanto, pedidos de cierre, actualizaciones de cierre, Uber y acciones administrativas de corrección.
+- Auditoría administrativa de modificaciones/eliminaciones.
+- Se conserva la corrección visual de iPhone de v66.1.

@@ -1,0 +1,27 @@
+EXPLORA v71 · MAIN UNIFICADO
+
+- Se reemplazaron las tarjetas separadas Chofer / Explora por una sola tarjeta de Facturación.
+- La tarjeta muestra únicamente quién debe liquidar a quién y la diferencia con signo + / −.
+- Efectivo, Digital, Uber y Gastos permanecen como cuatro botones dentro de la misma tarjeta.
+- Todos los comprobantes se mezclan en una única lista cronológica.
+- Cada cobro en efectivo genera también un comprobante visual automático de Caja chica 5%.
+- Antes de guardar Efectivo, Digital, Gasto o Uber se abre un segundo aviso con:
+  * saldo actual;
+  * impacto de la operación;
+  * saldo que quedará después de confirmar.
+- No se escribe en Firestore ni se dispara Telegram antes de confirmar ese segundo aviso.
+- Las deudas agregadas por Explora ahora incrementan “quién paga a quién” al 100%.
+- Las antiguas deudas automáticas de Uber quedan fuera de esa suma para evitar duplicaciones.
+- Telegram utiliza el mismo saldo final confirmado por el chofer.
+
+ARCHIVOS MODIFICADOS
+- index.html
+- styles.css
+- app.js
+- functions/index.js
+- functions/telegram-billing-balance.js
+- functions/telegram-driver-debt.js
+- functions/tests/telegram-billing-balance.test.js
+
+DESPLIEGUE
+Ejecutar DESPLEGAR_EXPLORA_COMPLETO.sh desde Cloud Shell.

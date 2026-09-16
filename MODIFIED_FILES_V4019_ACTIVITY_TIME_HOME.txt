@@ -1,0 +1,13 @@
+v4019 activity time + home start
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- js/segments/52-script.mjs
+
+Cambios:
+- Última actividad muestra fecha y hora de cada movimiento.
+- Al iniciar sesión/abrir la app vuelve siempre a Inicio > tarjeta Chofer.
+- Si la PWA queda en segundo plano y vuelve después de un rato, también regresa a Inicio > Chofer, salvo que haya un modal abierto.
+- Caché PWA actualizado a v4019-activity-time-home.

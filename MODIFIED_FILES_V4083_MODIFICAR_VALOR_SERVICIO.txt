@@ -1,0 +1,19 @@
+EXPLORA v4083 — MODIFICAR VALOR DE SERVICIO DESDE COMPROBANTES
+
+ARCHIVOS MODIFICADOS:
+- index.html
+- js/segments/09-script.js
+- js/segments/13-script.mjs
+- service-worker.js
+
+ARCHIVO NUEVO:
+- css/segments/53-style.css
+
+FUNCIONAMIENTO:
+- En Administrador > Comprobantes > Pago cliente, cada servicio muestra MODIFICAR VALOR.
+- Abre un modal con chofer, valor actual y nuevo valor.
+- Actualiza el documento autoritativo en billing_records.
+- Sincroniza el monto del receipt_index para que el comprobante muestre el nuevo valor.
+- Registra la corrección en admin_audit con valor anterior, valor nuevo, diferencia, administrador y período.
+- Invalida y refresca facturación, ranking, cierres y panel administrativo.
+- La opción no aparece para choferes ni para cierres, gastos, préstamos o deudas.

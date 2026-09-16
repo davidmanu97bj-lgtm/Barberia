@@ -1,0 +1,34 @@
+EXPLORA v68 · GASTOS 50% AUTOMÁTICO
+Fecha: 26/08/2026
+
+CAMBIOS
+1. Al registrar un gasto se abre una confirmación visual con el diseño solicitado:
+   - Gasto total.
+   - Explora reconoce 50%.
+   - Saldo ANTES.
+   - Saldo AHORA.
+   - Mensaje de cuánto mejoró el saldo.
+   - Botón Listo.
+
+2. El 50% de cada gasto afecta automáticamente Facturación / "Quién paga a quién":
+   saldo = 50% efectivo + 50% Uber + caja chica 5% - 50% digital - 50% gastos,
+   ajustado por pagos ya registrados.
+
+3. Si el chofer debía a Explora, el 50% del gasto reduce esa deuda.
+   Si Explora ya debía al chofer, el 50% se suma al saldo a favor del chofer.
+   Si el gasto cruza el saldo, cambia automáticamente quién debe pagar.
+
+4. El panel Admin usa la misma lógica e incluye el 50% de gastos en la diferencia de cada chofer.
+
+5. Telegram para un gasto nuevo informa:
+   - NUEVO GASTO GENERADO.
+   - Gasto total.
+   - Explora reconoce (50%).
+   - Confirmación de aplicación automática a Facturación.
+   - Quién debe liquidar a quién y el importe final.
+
+6. En el resumen principal, el antiguo botón de compensación fue reemplazado por "Gasto total".
+
+VALIDACIÓN
+- Sintaxis app.js y funciones: OK.
+- Tests de Functions: 28/28 aprobados.

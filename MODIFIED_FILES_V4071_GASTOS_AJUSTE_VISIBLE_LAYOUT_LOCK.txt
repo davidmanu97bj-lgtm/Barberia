@@ -1,0 +1,15 @@
+EXPLORA v4071
+
+Cambios:
+- El ajuste de deuda con saldo de Gastos queda visible en una tarjeta de conciliación mientras pertenezca al período abierto.
+- La tarjeta muestra monto original, ajuste aplicado y saldo final que Explora debe liquidar.
+- Se eliminó scrollIntoView horizontal de las pestañas.
+- Se bloqueó el desplazamiento lateral del dashboard en iPhone y Android.
+- Se corrigió la unión del borde derecho entre la pestaña Deudas y la tarjeta principal.
+- Cache PWA actualizado.
+
+Archivos modificados:
+- index.html
+- css/segments/52-style.css
+- js/segments/52-script.mjs
+- service-worker.js

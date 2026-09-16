@@ -1,0 +1,19 @@
+EXPLORA v4091 — Cierre Uber semanal
+
+Cambios:
+- El botón anterior de eficiencia/KM ahora muestra el cierre semanal Uber y su cuenta regresiva.
+- En modo de prueba el formulario está siempre habilitado.
+- Foto obligatoria y monto manual.
+- Cálculo 50% chofer / 50% Explora en tiempo real.
+- Genera deuda automática a favor de Explora y queda visible en Deudas.
+- Bloquea una segunda carga de la misma semana.
+- Estado enviado, pendiente de revisión, aprobado o rechazado.
+- El administrador puede aprobar o rechazar desde el mismo botón al seleccionar al chofer.
+- Guarda receiptUrl, telegramPhotoUrl y notificationPhotoUrl para el puente de Telegram.
+- Se agregaron reglas para uber_weekly_closures, deuda Uber y notificación de revisión.
+
+Publicación necesaria:
+firebase deploy --only firestore:rules,hosting
+
+Nota Telegram:
+El proyecto guarda la URL de la foto en los campos estándar. La función externa de Telegram debe escuchar uber_weekly_closures o notificaciones tipo uber_weekly_review para enviar la foto.

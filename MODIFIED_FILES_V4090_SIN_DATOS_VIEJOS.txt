@@ -1,0 +1,14 @@
+EXPLORA v4090 — ARRANQUE SIN INFORMACIÓN VIEJA
+
+Cambios:
+1. En una apertura nueva ya no se restaura el tablero persistido de una sesión anterior.
+2. Se muestra “Actualizando EXPLORA” mientras se consultan datos confirmados de Firebase.
+3. El tablero aparece recién cuando perfil, saldos y estado operativo actuales están listos.
+4. Si la app continúa viva en memoria, conserva la interfaz abierta y actualiza en segundo plano.
+5. Se actualizó la caché PWA y el registro del Service Worker a v4090.
+
+Archivos modificados:
+- index.html
+- js/segments/11-script.mjs
+- js/pwa-register.js
+- service-worker.js

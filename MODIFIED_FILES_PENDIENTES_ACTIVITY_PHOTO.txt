@@ -1,0 +1,20 @@
+EXPLORA · Ajuste Pendientes / Última actividad
+
+Objetivo:
+- Eliminar por completo el cartel adicional "PENDIENTE REGISTRADO" / "Nueva deuda registrada".
+- Mantener la deuda como una actividad normal dentro de "Última actividad".
+- Agregar en esa tarjeta normal, abajo a la derecha, un botón pequeño "ver foto" si la deuda tiene comprobante.
+- Al tocar "ver foto", abrir el comprobante en el modal blanco moderno con botón cerrar.
+- Mantener la campana de Pendientes como aviso principal.
+
+Archivos modificados:
+- js/segments/14-script.mjs
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- index.html
+- service-worker.js
+
+No se modificaron:
+- Firestore Rules
+- Storage Rules
+- Cloud Functions

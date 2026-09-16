@@ -1,0 +1,25 @@
+EXPLORA v4145 - EDITAR Y ELIMINAR DESDE ULTIMAS ACTIVIDADES
+Fecha: 20 de agosto de 2026
+
+CORRECCION VISIBLE
+- Las tarjetas de cobros en efectivo muestran EDITAR y ELIMINAR al administrador.
+- Las tarjetas de cobros digitales muestran EDITAR y ELIMINAR al administrador.
+- Las tarjetas de gastos muestran EDITAR y ELIMINAR al administrador.
+- Las acciones aparecen directamente en Ultimas actividades, junto al importe.
+- Las cuentas de chofer continúan en modo de solo lectura.
+
+COMPORTAMIENTO
+- EDITAR abre el importe del cobro o gasto seleccionado.
+- ELIMINAR solicita confirmación antes de borrar.
+- Los cierres relacionados y quien paga a quien se recalculan.
+- Un cobro en efectivo también recalcula su Caja Chica 5 %.
+- Caja Chica es un movimiento derivado: se administra desde el cobro efectivo que la originó.
+- Se mantienen las acciones equivalentes dentro del módulo Comprobantes.
+
+PUBLICACION
+- GitHub Pages recibe el frontend mediante el push al repositorio santander.
+- Firebase Functions y Hosting se despliegan para garantizar que el backend v4144/v4145 quede activo.
+- No cambiaron firestore.rules ni storage.rules.
+
+COMANDO FIREBASE
+firebase deploy --project explora-control-operativo --only functions,hosting

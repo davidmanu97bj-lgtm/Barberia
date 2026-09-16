@@ -1,0 +1,27 @@
+EXPLORA v4137 - TELEGRAM GRUPAL
+
+CAMBIOS
+- WhatsApp operativo queda deshabilitado.
+- Cobros en efectivo -> Telegram.
+- Cobros digitales -> Telegram con comprobante.
+- Gastos -> Telegram con comprobante.
+- Pedido de cierre de Gastos / Caja chica / Facturación realizado por chofer -> Telegram.
+- Cierre Uber realizado por chofer -> Telegram con comprobante.
+- Uber "Sin datos" -> Telegram sin foto.
+- Reenvío de cierre Uber rechazado/corregido -> nuevo aviso Telegram.
+- Deduplicación mediante telegram_notifications.
+
+DESTINO
+Todas estas funciones usan TELEGRAM_CHAT_ID. Para enviarlas al grupo de choferes, configure TELEGRAM_CHAT_ID con el ID de ese grupo.
+El bot asociado a TELEGRAM_BOT_TOKEN debe estar agregado al grupo y tener permiso para publicar mensajes.
+
+CONFIGURACION
+firebase functions:secrets:set TELEGRAM_CHAT_ID
+
+No se requieren secretos ni API de WhatsApp para estos avisos.
+
+DEPLOY
+firebase deploy --only functions,hosting
+
+IMPORTANTE
+Las funciones antiguas notifyBillingWhatsappGroupV1, notifyExpenseWhatsappGroupV1, notifyClosureWhatsappGroupV1 y notifyUberClosureWhatsappGroupV1 se mantienen temporalmente como NO-OP para que el deploy reemplace cualquier versión anterior que todavía pudiera enviar WhatsApp.

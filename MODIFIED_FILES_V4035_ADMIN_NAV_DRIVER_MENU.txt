@@ -1,0 +1,28 @@
+EXPLORA v4035 · Admin nav + menú Chofer simplificado
+
+Archivos modificados:
+- index.html
+  - Cache bust a v4035-admin-nav-driver-menu para cargar CSS/JS nuevos.
+
+- service-worker.js
+  - Cache PWA actualizado a v4035-admin-nav-driver-menu.
+
+- js/segments/52-script.mjs
+  - Botón central admin: mantiene acción de Cierres, cambia icono visual a cierre financiero.
+  - Botón izquierdo admin: deja de filtrar Pendientes; abre Últimas actividades globales.
+  - Botón izquierdo admin: icono de comprobante.
+  - Botón + Chofer admin: icono de agregar chofer.
+  - Para chofer normal se conservan los iconos originales Inicio/Actividad/+ Cobrar.
+
+- js/segments/11-script.mjs
+  - Pantalla Choferes simplificada: solo Crear chofer y Eliminar chofer.
+  - Se quitó asignación/gestión de vehículos de esa pantalla.
+  - Header actualizado a “Crear y eliminar choferes”.
+  - Se agrega clase temporal para visual blanca compatible con Explora.
+
+- css/segments/52-style.css
+  - Estilos del nuevo icono central de cierre financiero.
+  - Estilos blancos/premium para pantalla Choferes.
+  - Tarjetas, botones y fuentes compatibles con la visual Explora blanca.
+
+No se tocaron cálculos financieros, cierres, comprobantes, reglas de saldos ni Firestore.

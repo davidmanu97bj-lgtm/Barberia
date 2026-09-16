@@ -1,0 +1,29 @@
+EXPLORA v71.1 — CORRECCIÓN SPLASH / LOGIN EN iPHONE
+Fecha: 26/08/2026
+
+PROBLEMA CORREGIDO
+- La aplicación podía quedar indefinidamente en la pantalla negra "Cargando" al abrirla con una sesión ya guardada.
+
+CAUSA EXACTA
+- applyRoleUI() intentaba ejecutar classList sobre #addDebtBtn.
+- Ese botón pertenecía a una interfaz anterior y ya no existe en el Main unificado v71.
+- Al recuperar una sesión guardada, JavaScript lanzaba una excepción antes de ejecutar finishSplash("app"), dejando el splash visible permanentemente.
+
+CAMBIOS
+1. app.js
+   - #addDebtBtn ahora se consulta de forma segura con optional chaining.
+   - #closeDayBtn también queda protegido ante futuras modificaciones de interfaz.
+   - La ausencia de controles históricos ya no puede interrumpir applyRoleUI().
+
+2. index.html
+   - Se actualizó el versionado de app.js a 20260826-51-splash-fix.
+   - Esto obliga al navegador/iPhone a pedir la versión corregida del JavaScript y evita reutilizar la anterior por caché.
+
+VALIDACIONES
+- Sintaxis JavaScript: OK (node --check app.js).
+- Comparación de IDs app.js vs index.html: no quedan accesos directos inseguros a IDs inexistentes.
+- Firebase configurado: explora-control-operativo.
+
+ARCHIVOS MODIFICADOS
+- app.js
+- index.html

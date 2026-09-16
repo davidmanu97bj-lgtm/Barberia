@@ -1,44 +1,11 @@
-# Despliegue desde Google Cloud Shell
+# Explora: configuración y publicación
 
-El proyecto destino es siempre:
+Proyecto de producción: `explora-control-operativo`.
 
-`explora-control-operativo`
+Las instrucciones vigentes están en [README.md](README.md). Usar Node 22.
+`npm run deploy` solo valida; publicar requiere `--deploy <SHA_COMPLETO_DE_MAIN>`.
+Todos los scripts históricos invocan ahora ese mismo procedimiento.
 
-## Opción recomendada
-
-Desde la raíz de `Barberia-main-migrado`, ejecuta:
-
-```bash
-chmod +x tools/deploy-migracion-cloud-shell.sh
-./tools/deploy-migracion-cloud-shell.sh
-```
-
-El script:
-
-1. valida JavaScript;
-2. instala dependencias de Functions con `npm ci`;
-3. ejecuta las pruebas de Telegram/saldos;
-4. selecciona `explora-control-operativo`;
-5. despliega Firestore Rules, Storage Rules y todas las Cloud Functions.
-
-## Secrets de Telegram
-
-El deploy reutiliza los secrets existentes del proyecto. No hace falta volver a cargar el token si ya está configurado.
-
-Para verificar que existen:
-
-```bash
-firebase functions:secrets:access TELEGRAM_CHAT_ID --project explora-control-operativo
-```
-
-No pegues `TELEGRAM_BOT_TOKEN` en archivos del repositorio.
-
-## Hosting
-
-Si la web se publica por GitHub Pages, sube el contenido de este proyecto al repositorio que uses para la app y no es necesario desplegar Firebase Hosting.
-
-Si también quieres publicar la web por Firebase Hosting:
-
-```bash
-firebase deploy --project explora-control-operativo --only hosting
-```
+No cambiar de proyecto Firebase para migrar de Codex a Work. La configuración del
+cliente y las Functions conservan el backend histórico; los secretos de Telegram
+permanecen en Secret Manager. Las pruebas deben aislarse de los datos de producción.

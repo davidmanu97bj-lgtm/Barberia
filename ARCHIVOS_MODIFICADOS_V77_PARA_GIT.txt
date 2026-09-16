@@ -1,0 +1,23 @@
+EXPLORA v77 · ARCHIVOS PARA GIT
+
+Subir o reemplazar:
+
+- app.js
+- index.html
+- styles.css
+- functions/index.js
+- functions/tests/team-realtime-contract.test.js
+- tests/closure-direct-flow.test.mjs
+- DESPLEGAR_EXPLORA_COMPLETO.sh
+- CAMBIOS_CIERRE_DIRECTO_v77.txt
+- ARCHIVOS_MODIFICADOS_V77_PARA_GIT.txt
+
+El archivo functions/index.js debe desplegarse para que Telegram reciba:
+- pagos de cierre en efectivo;
+- transferencias con comprobante;
+- solicitudes de cobro con monto, alias y CUIT;
+- confirmaciones y rechazos del administrador.
+
+Despliegue completo:
+chmod +x DESPLEGAR_EXPLORA_COMPLETO.sh
+./DESPLEGAR_EXPLORA_COMPLETO.sh

@@ -1,0 +1,5 @@
+Archivos originales restaurados desde santander-main (45):
+- index.html
+- js/segments/11-script.mjs
+- css/segments/01-style.css
+- service-worker.js

@@ -1,0 +1,33 @@
+EXPLORA v4074 · LOGIN PERSISTENTE SIN RECARGAS
+
+ARCHIVOS MODIFICADOS
+- index.html
+- js/segments/11-script.mjs
+- js/segments/37-script.js
+- js/pwa-register.js
+- service-worker.js
+
+CAMBIOS
+1. Firebase Authentication se inicializa con persistencia duradera y alternativas compatibles con iOS/Android:
+   - IndexedDB local
+   - almacenamiento local
+   - almacenamiento de sesión como respaldo
+2. La app espera a que Firebase termine de restaurar la sesión antes de decidir si muestra el login.
+3. Si el mismo usuario sigue autenticado, se abre de inmediato la última interfaz guardada y el perfil/saldos se actualizan en segundo plano.
+4. El login queda bloqueado mientras exista una sesión Firebase válida, excepto cuando el usuario pulse SALIR.
+5. Los reintentos de perfil ya no desmontan ni vuelven a cargar la interfaz abierta.
+6. Se eliminó la recarga automática del Service Worker al actualizarse.
+7. Se eliminó la recarga automática después de inactividad o al regresar desde segundo plano.
+8. Al volver a la app, los datos se actualizan silenciosamente sin reconstruir el login.
+9. La recarga manual continúa disponible desde su botón correspondiente.
+
+NO MODIFICADO
+- Tarjeta Uber Fleet y su integración.
+- Reglas Firestore.
+- Cloud Functions.
+- Cierres, deudas, gastos, caja chica y facturación.
+
+VALIDACIÓN
+- Sintaxis comprobada en los cuatro archivos JavaScript modificados.
+- Referencias de build y caché alineadas en v4074-login-persistente.
+- Recursos locales y APP_SHELL comprobados.

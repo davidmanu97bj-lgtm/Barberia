@@ -1,0 +1,15 @@
+EXPLORA v4047 · Menú inferior compacto global
+
+Archivo modificado:
+- css/segments/52-style.css
+
+Cambios aplicados:
+1. Se redujo la altura del menú inferior en todos los menús principales.
+2. El fondo blanco del menú ocupa menos pantalla visual.
+3. El botón central baja y se achica para no tapar tanto contenido.
+4. Se achicaron iconos, texto y padding inferior.
+5. Se redujo el padding reservado al final de las pantallas para que el contenido quede más abajo.
+6. También se compactó el main-bottom-nav/performance-bottom-nav usado en pantallas heredadas.
+7. Compatible con iOS y Android usando env(safe-area-inset-bottom).
+
+No se tocaron reglas financieras, Firestore, WhatsApp, cierres, deudas ni lógica JS.

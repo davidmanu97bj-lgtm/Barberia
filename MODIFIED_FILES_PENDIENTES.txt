@@ -1,0 +1,36 @@
+MODIFICACIÓN: MÓDULO PENDIENTES INDEPENDIENTE
+
+Archivos modificados:
+
+1) js/segments/52-script.mjs
+- Agrega quinta tarjeta Pendientes junto a Chofer, Explora, Gastos y Caja chica.
+- Pendientes lee deudas_choferes y deuda_pagos.
+- Muestra saldo pendiente total, pagado, intereses y deudas activas.
+- Reemplaza acción por Reducir deuda.
+- Agrega modal para pago parcial con monto + comprobante obligatorio.
+- Sube comprobante a Storage y crea deuda_pagos.
+- Reduce saldos automáticamente con transacción Firestore.
+- Crea deuda_movimientos y notificación para admin.
+- No modifica facturación, gastos, caja chica ni quién paga a quién.
+
+2) js/segments/15-script.mjs
+- Cambia el módulo administrativo a PENDIENTES.
+- Permite crear/editar Multa, Choque, Préstamo y Adelanto.
+
+3) js/segments/13-script.mjs
+- Agrega soporte a tipos personal_loan y advance.
+- Crea deudas con remainingAmount, paidAmount y campos de mora.
+- Mantiene compatibilidad con fine y crash.
+
+4) js/core/driver-debt-core.mjs
+- Normaliza nuevos tipos de deuda: personal_loan y advance.
+- Agrega etiquetas PRÉSTAMO y ADELANTO.
+- Agrega totales/cantidades de préstamos, adelantos e intereses.
+
+5) functions/index.js
+- Agrega Cloud Function applyDailyDebtPenalties.
+- Aplica 3% diario luego de 15 días sobre saldo pendiente actual.
+- Registra auditoría en deuda_movimientos.
+
+6) PENDIENTES_REGLAS_FIREBASE_NOTAS.txt
+- Notas de reglas esperadas para Firestore y Storage.

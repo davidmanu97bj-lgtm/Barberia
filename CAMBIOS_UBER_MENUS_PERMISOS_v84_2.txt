@@ -1,0 +1,17 @@
+EXPLORA · UBER v84.2 · MENÚS + PERMISOS
+
+1. MENÚ DE CARGA
+- Aclara que el envío avisa por Telegram.
+- El saldo no cambia hasta que David confirme.
+- El cierre se contabiliza como efectivo porque el dinero queda en poder del chofer.
+
+2. MENÚ DE CONFIRMACIÓN
+- Se eliminó el desglose repetido 50% / 5% / 45%.
+- Quedan sólo Ganancias semanales y Total para Explora 50% + 5% de caja chica.
+- El modal móvil queda compacto.
+
+3. PERMISOS / REINTENTOS
+- Firestore valida el alta del chofer sin depender de cálculos derivados susceptibles a redondeos.
+- La consulta del chofer usa explícitamente driverUid.
+- Storage permite al propietario reintentar la misma evidencia semanal si la foto ya había subido antes de un fallo.
+- La app consulta el ID semanal directamente para distinguir un cierre existente de un error real de permisos.

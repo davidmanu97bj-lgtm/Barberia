@@ -1,0 +1,16 @@
+EXPLORA v4104 — Telegram con foto para gastos y cobros digitales
+
+ARCHIVOS MODIFICADOS
+- functions/index.js
+- functions/package.json
+- functions/package-lock.json
+- package.json
+- CLOUD_SHELL_TELEGRAM_FOTOS.md
+
+CAMBIOS
+1. Se agregó notifyBillingRecordV2 para tarjeta, QR y transferencia.
+2. Se agregó notifyExpenseV2 para todos los gastos nuevos.
+3. Ambos envían sendPhoto con la URL del comprobante y respaldo de adjunto binario.
+4. Se agregó deduplicación en telegram_notifications.
+5. Los secretos se administran con TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID.
+6. El cobro en efectivo queda excluido porque no posee foto.

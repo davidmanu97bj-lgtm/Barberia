@@ -1,0 +1,56 @@
+/* Explora · 2026-09-14 · web-only-1. Presentation only: no sizes, order, signs or rates.
+   Green/red belong to the movement TYPE, never to +/− or the ending balance. */
+:root { --movement-green: #00993d; --movement-red: #e62632; --movement-green-tint: #e9fbf1; --movement-red-tint: #fff0f1; }
+[data-movement-color="green"] { --movement-color: var(--movement-green); --movement-tint: var(--movement-green-tint); }
+[data-movement-color="red"] { --movement-color: var(--movement-red); --movement-tint: var(--movement-red-tint); }
+.movement-value[data-movement-color] { color: var(--movement-color); }
+
+/* Receipts use the same hook; +/- is kept as stored. */
+.movement-card[data-movement-color="green"] .movement-icon,
+.movement-card[data-movement-color="red"] .movement-icon { color: var(--movement-color); background: var(--movement-tint); }
+.movement-card[data-movement-color="green"] .movement-balances strong,
+.movement-card[data-movement-color="red"] .movement-balances strong,
+.movement-card[data-movement-color="green"] .movement-no-snapshot strong,
+.movement-card[data-movement-color="red"] .movement-no-snapshot strong { color: var(--movement-color); }
+
+/* Quick actions and both directions of Gestión. */
+#driverDashboard .driver-action[data-movement-color] svg { color: var(--movement-color); }
+.management-action[data-movement-color] .management-action-icon { color: var(--movement-color); background: var(--movement-tint); }
+.management-action[data-movement-color]:focus-visible { outline-color: var(--movement-color); }
+
+/* All steps of cash/digital, expenses and Gestión keep their existing layout. */
+:is(#chargeModal, #managementModal, #expenseModal, #operationPreviewModal)[data-movement-color="green"],
+:is(#chargeModal, #managementModal, #expenseModal, #operationPreviewModal)[data-movement-color="red"] {
+  --charge-accent: var(--movement-color); --charge-tint: var(--movement-tint);
+  --operation-tone: var(--movement-color); --operation-soft: var(--movement-tint);
+  --expense-color: var(--movement-color); --expense-tint: var(--movement-tint);
+}
+:is(#chargeModal, #managementModal, #expenseModal) .charge-account[data-movement-color] > div:nth-child(2) strong,
+#expenseRefundBlock[data-movement-color] :is(.positive, .negative),
+#expenseModal[data-movement-color] .expense-movement-title,
+#chargeModal[data-movement-color] :is(#chargeTitle, #chargeAccountTitle, #chargeInvoiceTotal),
+#managementModal[data-movement-color] #managementTitle,
+#expenseModal[data-movement-color] #expenseTitle { color: var(--movement-color); }
+#operationPreviewModal[data-movement-color="green"] :is(#operationPreviewAmount, #operationPreviewImpact),
+#operationPreviewModal[data-movement-color="red"] :is(#operationPreviewAmount, #operationPreviewImpact) { color: var(--movement-color); }
+#operationPreviewModal .movement-value[data-movement-color] { color: var(--movement-color); }
+#operationPreviewModal[data-movement-color="green"] #operationPreviewConfirm,
+#operationPreviewModal[data-movement-color="red"] #operationPreviewConfirm { background: var(--movement-color); }
+
+/* Shared and driver-responsibility groups red; Explora-responsibility green. */
+#expenseModal .expense-type-group[data-responsibility="shared"],
+#expenseModal .expense-type-group[data-responsibility="driver"] { --expense-color: var(--movement-red); --expense-tint: var(--movement-red-tint); }
+#expenseModal .expense-type-group[data-responsibility="explora"] { --expense-color: var(--movement-green); --expense-tint: var(--movement-green-tint); }
+#expenseModal .expense-type-group h3 { color: var(--expense-color); }
+
+/* Administrator: movement review, internal payments and closures. */
+:is(.admin-movement-item, .admin-history-item)[data-movement-color="green"] .admin-history-top,
+:is(.admin-movement-item, .admin-history-item)[data-movement-color="red"] .admin-history-top { background: var(--movement-tint); }
+:is(.admin-movement-item, .admin-history-item)[data-movement-color="green"] .admin-history-top :is(span,b),
+:is(.admin-movement-item, .admin-history-item)[data-movement-color="red"] .admin-history-top :is(span,b) { color: var(--movement-color); }
+
+/* Amount editor inherits only the reviewed movement's visual category. */
+#financialEditModal[data-movement-color="green"] :is(h2, #financialEditAmount),
+#financialEditModal[data-movement-color="red"] :is(h2, #financialEditAmount) { color: var(--movement-color); }
+#financialEditModal[data-movement-color="green"] #saveFinancialEditBtn,
+#financialEditModal[data-movement-color="red"] #saveFinancialEditBtn { background: var(--movement-color); }

@@ -1,0 +1,35 @@
+PENDIENTES - NOTAS DE FIREBASE RULES
+
+En este ZIP no venían archivos firestore.rules ni storage.rules, y firebase.json tampoco los referencia.
+Por eso no reemplacé reglas dentro del proyecto.
+
+COLECCIONES NUEVAS/USADAS
+- deudas_choferes: se amplía para fine, crash, personal_loan y advance.
+- deuda_pagos: pagos parciales cargados por el chofer para reducir deuda.
+- deuda_movimientos: auditoría de pagos e intereses/mora.
+- notificaciones: aviso al admin cuando el chofer reduce deuda.
+
+RUTA STORAGE NUEVA
+- deudas/{driverUid}/pagos/{paymentId}/comprobante.{jpg/png/webp/pdf}
+
+REGLA ESPERADA EN FIRESTORE
+- Admin: puede leer/escribir deudas_choferes, deuda_pagos y deuda_movimientos.
+- Chofer: puede leer sus propias deudas.
+- Chofer: puede crear pagos en deuda_pagos solo si driverUid/choferUid coincide con request.auth.uid.
+- Chofer: puede leer sus propios pagos.
+- Chofer: NO debe poder actualizar deudas_choferes directamente.
+- Chofer: NO debe poder borrar deudas, pagos ni movimientos.
+- Cloud Functions/Admin SDK aplica la mora diaria sin depender de reglas de cliente.
+
+REGLA ESPERADA EN STORAGE
+- Admin: puede leer todo.
+- Chofer: puede subir comprobantes solo a deudas/{suUid}/pagos/{paymentId}/...
+- Chofer: puede leer sus propios comprobantes.
+- Chofer: no puede escribir en carpetas de otros choferes.
+
+CLOUD FUNCTION AGREGADA
+- applyDailyDebtPenalties
+- Corre todos los días 03:15 Argentina.
+- Aplica 3% diario solo después de 15 días de gracia.
+- Aplica sobre saldo actual pendiente, no sobre monto original.
+- Evita aplicar dos veces el mismo día usando lastPenaltyAppliedDay.

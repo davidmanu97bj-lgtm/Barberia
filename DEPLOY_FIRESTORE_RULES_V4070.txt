@@ -1,0 +1,21 @@
+PUBLICAR LAS REGLAS V4070
+
+Proyecto Firebase detectado en la app:
+explora-control-operativo
+
+Desde la carpeta santander-main ejecutar:
+
+firebase login
+firebase use explora-control-operativo
+firebase deploy --only firestore:rules
+
+Alternativa desde Firebase Console:
+1. Abrir Firestore Database.
+2. Entrar en la pestaña Reglas.
+3. Reemplazar el contenido por firestore.rules.
+4. Pulsar Publicar.
+
+IMPORTANTE
+- Subir solamente el ZIP al hosting NO publica las reglas de Firestore.
+- No hace falta cerrar o reinstalar la PWA después de publicar las reglas.
+- La corrección entra en vigor en cuanto Firebase termina de publicar.

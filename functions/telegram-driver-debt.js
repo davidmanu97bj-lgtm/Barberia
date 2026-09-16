@@ -54,14 +54,25 @@ function buildAdminDriverDebtTelegramText(data = {}, options = {}) {
   const driverName = safeText(data.driverName || data.choferNombre || data.nombreChofer || "Chofer");
   const reason = safeText(data.description || data.reasonDescription || data.notes || data.motivo || data.detalle || data.reasonLabel || "Deuda del chofer");
   const registeredBy = safeText(data.createdByName || data.registeredByName || "Administrador");
+  const pendingDriverAcceptance = data.driverConfirmationRequired === true && data.acknowledgedByDriver !== true;
+  const settlementAfter = Number(data.telegramSettlementAfterBalance);
+  const settlementLine = Number.isFinite(settlementAfter)
+    ? settlementAfter > 0.49
+      ? `${pendingDriverAcceptance ? "Si acepta" : "Quién paga a quién"}: Chofer debe liquidar a Explora ${formatMoney(settlementAfter)}`
+      : settlementAfter < -0.49
+        ? `${pendingDriverAcceptance ? "Si acepta" : "Quién paga a quién"}: Explora debe liquidar al chofer ${formatMoney(Math.abs(settlementAfter))}`
+        : `${pendingDriverAcceptance ? "Si acepta" : "Quién paga a quién"}: cuentas equilibradas`
+    : "";
   return [
     "DEUDA DEL CHOFER REGISTRADA",
+    ...(pendingDriverAcceptance ? ["Estado: Pendiente de aceptación del chofer"] : []),
     `Chofer: ${driverName}`,
     `Motivo: ${reason.slice(0, 300)}`,
-    `Importe agregado: ${formatMoney(amount)}`,
-    `Deuda anterior: ${formatMoney(previousBalance)}`,
-    `Deuda actual: ${formatMoney(currentBalance)}`,
+    `${pendingDriverAcceptance ? "Importe pendiente" : "Importe agregado"}: ${formatMoney(amount)}`,
+    `${pendingDriverAcceptance ? "Deuda actual sin aceptar" : "Deuda anterior"}: ${formatMoney(previousBalance)}`,
+    `${pendingDriverAcceptance ? "Deuda si acepta" : "Deuda actual"}: ${formatMoney(currentBalance)}`,
     `Quién paga: Chofer paga a Explora el 100 %`,
+    ...(settlementLine ? [settlementLine] : []),
     `Registrado por: ${registeredBy}`,
     `Fecha: ${formatDate(data)}`
   ].join("\n");

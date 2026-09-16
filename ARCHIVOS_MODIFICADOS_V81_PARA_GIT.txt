@@ -1,0 +1,18 @@
+ARCHIVOS MODIFICADOS · EXPLORA v81
+
+- index.html
+- styles.css
+- app.js
+- firestore.rules
+- functions/index.js
+- functions/telegram-billing-balance.js
+- functions/tests/telegram-billing-balance.test.js
+- functions/tests/unified-main-preview-contract.test.js
+- tests/uber-weekly-split-flow.test.mjs
+- DESPLEGAR_EXPLORA_COMPLETO.sh
+- CAMBIOS_UBER_SEMANAL_v81.txt
+- ARCHIVOS_MODIFICADOS_V81_PARA_GIT.txt
+
+El ZIP pequeño conserva estas mismas rutas dentro de santander-main para que
+pueda descomprimirse sobre el repositorio sin mover archivos manualmente.
+

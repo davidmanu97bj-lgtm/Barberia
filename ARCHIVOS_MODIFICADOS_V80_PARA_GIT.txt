@@ -1,0 +1,12 @@
+ARCHIVOS MODIFICADOS PARA GIT · EXPLORA v80
+
+OBLIGATORIOS
+- index.html
+- styles.css
+
+DOCUMENTACIÓN
+- CAMBIOS_MENU_CIERRE_ADMIN_v80.txt
+- ARCHIVOS_MODIFICADOS_V80_PARA_GIT.txt
+
+Esta entrega repara únicamente el menú de cierre pendiente del administrador.
+No requiere cambios en app.js, Functions, Rules ni Telegram.

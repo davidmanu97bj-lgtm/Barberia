@@ -1,0 +1,31 @@
+EXPLORA v4142 - TRANSFERENCIA Y COMPROBANTE EN IPHONE
+Fecha: 20 de agosto de 2026
+
+CORRECCIÓN
+- El toque sobre Transferencia ya no se interpreta como un toque sobre Pago del chofer.
+- Efectivo y Transferencia tienen selectores separados y limitados a esta pantalla.
+- Se agregó el input real que abre Fotos, Cámara o Archivos en iPhone.
+- El comprobante acepta JPG, PNG, WebP y PDF.
+- En Transferencia el comprobante se marca como obligatorio.
+- Se agregó showPicker con respaldo click para compatibilidad iOS/PWA.
+- Se incrementó la caché PWA a v4142 para reemplazar la versión defectuosa.
+
+CAUSA
+El formulario usaba data-debt-operation para guardar su estado. El listener de
+clic buscaba cualquier ancestro con ese atributo; por eso todos los toques dentro
+del formulario se detenían antes de llegar a Transferencia o Subir comprobante.
+Además, el botón visual no tenía asociado un input type=file real.
+
+ARCHIVOS MODIFICADOS
+- index.html
+- service-worker.js
+- js/pwa-register.js
+- css/segments/52-style.css
+- js/segments/15-script.mjs
+- js/segments/52-script.mjs
+- js/core/admin-debt-ledger-core.mjs
+- js/core/admin-debt-payment-core.mjs
+- tests/admin-debt-menu-release.test.mjs
+
+DESPLIEGUE
+firebase deploy --project explora-control-operativo --only functions,hosting

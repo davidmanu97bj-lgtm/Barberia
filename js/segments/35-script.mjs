@@ -1,0 +1,10 @@
+window.__exploraCanonicalWeeklyClosureV2438=true;
+const disabledSummary=()=>({disabled:true,closureMode:"on_demand_only"});
+window.ExploraCanonicalWeeklyClosure=Object.freeze({disabled:true,schemaVersion:"disabled-on-demand-only",storageBasePath:()=>"cierres_semanales",closureCollectionName:()=>"cierres_semanales",canonicalizeSnapshot:disabledSummary,displaySummary:disabledSummary,buildCanonicalWeeklyClosureSnapshot:async()=>null,materializeWeeklyClosure:async()=>null,loadDailyRankingBonusesForPeriod:async()=>[]});
+window.buildCanonicalWeeklyClosureSnapshot=async()=>null;
+window.buildCanonicalWeeklyFinancialSnapshot=async()=>null;
+window.determineCanonicalSettlement=()=>null;
+window.getWeeklyClosurePresentation=()=>disabledSummary();
+window.runWeeklyClosureSelfTests=()=>({disabled:true});
+console.info("EXPLORA_LEGACY_WEEKLY_CLOSURE_ENGINE_DISABLED");
+export {};

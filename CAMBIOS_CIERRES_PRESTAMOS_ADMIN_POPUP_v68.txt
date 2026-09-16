@@ -1,0 +1,39 @@
+CAMBIOS v68 · CIERRES, PRÉSTAMOS, DATOS DE TRANSFERENCIA Y POP-UP ADMIN
+
+1. PEDIR CIERRE · CHOFER PAGA A EXPLORA
+- Se muestran datos fijos de transferencia:
+  Alias: MP.explora
+  CUIT: 20-40411688-7
+- El chofer adjunta comprobante.
+- El pago queda pendiente de revisión y NO afecta el saldo hasta que Admin lo confirme.
+- Admin puede confirmar o rechazar el comprobante desde el pop-up.
+
+2. PEDIR CIERRE · EXPLORA PAGA AL CHOFER
+- El chofer debe cargar obligatoriamente:
+  - Alias receptor
+  - CUIT receptor
+- Los datos quedan guardados dentro del cierre.
+- Admin los ve en el pop-up y también al registrar el pago.
+- Admin puede pagar o rechazar el pedido.
+
+3. ADELANTO / PRÉSTAMO
+- La solicitud queda pendiente de aprobación de Admin.
+- Mientras esté pendiente NO genera deuda al chofer.
+- Admin puede Aprobar o Rechazar.
+- Solo al aprobar se activa el capital + 40% de interés.
+
+4. POP-UP ADMIN
+- Cualquier cierre nuevo pendiente o solicitud de adelanto abre automáticamente una ventana en Admin.
+- Si se cierra sin resolver, vuelve a aparecer cuando la app vuelve a abrirse / vuelve de segundo plano.
+- Los movimientos resueltos dejan de aparecer.
+
+5. TELEGRAM
+- Sigue notificando cada pedido de cierre.
+- Sigue notificando cada pedido de adelanto/préstamo.
+- Ahora también notifica las decisiones de Admin sobre adelantos: aprobado o rechazado.
+- Las acciones sobre cierres notifican por la actualización del propio cierre: pago confirmado, pago registrado o rechazo.
+
+6. DESPLIEGUE
+- Nuevo script raíz: DESPLEGAR_EXPLORA_COMPLETO.sh
+- También disponible en tools/desplegar-explora-completo.sh
+- Valida frontend y Functions, ejecuta tests y despliega Hosting + Firestore Rules + Storage + Functions.

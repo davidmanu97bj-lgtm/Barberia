@@ -1,0 +1,17 @@
+Modificación aplicada: cierre de facturación balanceado y gastos separados.
+
+Archivos tocados:
+- index.html
+- js/segments/52-script.mjs
+- service-worker.js
+
+Regla nueva:
+- Bruto: informativo, no genera cierre.
+- Chofer y Explora: son dos vistas del mismo cierre de facturación.
+  Se compara efectivo cobrado por chofer contra digital cobrado por Explora.
+  Total facturado = efectivo + digital.
+  Parte de cada uno = total facturado / 2.
+  Quien tenga más que su parte paga la diferencia al otro.
+- Gastos: cierre separado. Explora reintegra siempre al chofer el 50% de los gastos cargados.
+- Un cierre pedido desde Chofer o Explora corta toda la facturación abierta.
+- Un cierre pedido desde Gastos corta solo gastos.

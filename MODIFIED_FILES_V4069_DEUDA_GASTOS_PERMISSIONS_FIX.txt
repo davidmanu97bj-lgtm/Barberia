@@ -1,0 +1,13 @@
+EXPLORA v4069 · CORRECCIÓN DE PERMISOS EN COMPENSACIÓN DE DEUDA
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- service-worker.js
+
+Corrección:
+- Se eliminó la lectura/escritura de la colección nueva gastos_deuda_saldos, que no estaba contemplada por las reglas Firebase activas y provocaba “Missing or insufficient permissions”.
+- La compensación usa únicamente las colecciones ya existentes del módulo de deudas.
+- El saldo previamente utilizado se reconstruye desde deuda_pagos y continúa descontándose de Gastos.
+- Se mantiene la transacción atómica de actualización de deuda, registro de pago, movimiento y notificación.
+- Se agregó mensaje de error en español y se actualizó la caché PWA.

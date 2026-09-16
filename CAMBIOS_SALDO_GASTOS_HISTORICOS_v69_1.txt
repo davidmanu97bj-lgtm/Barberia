@@ -1,0 +1,29 @@
+EXPLORA v69.1 · CORRECCIÓN SALDO DE FACTURACIÓN / GASTOS HISTÓRICOS
+Fecha: 26/08/2026
+
+PROBLEMA DETECTADO
+La versión v68/v69 estaba aplicando automáticamente el 50% de TODO el histórico de gastos al saldo "Quién paga a quién".
+Eso retroaplicaba gastos anteriores al cambio de lógica que ya habían sido administrados mediante el antiguo reintegro/compensación.
+
+CASO MARCELO DE LA CAPTURA
+Efectivo: $3.556.400 -> 50% = $1.778.200
+Caja chica 5%: $177.820
+Digital: $2.070.911 -> 50% = $1.035.455,50
+Ajuste del chofer ya pagado: $400.000
+Reintegro de gastos realmente aplicado (Telegram): $65.000
+Saldo correcto: 1.778.200 + 177.820 - 1.035.455,50 - 400.000 - 65.000 = $455.564,50
+Visual redondeada: CHOFER DEBE LIQUIDAR A EXPLORA $455.565.
+
+CORRECCIÓN
+1. Los gastos históricos ya existentes NO reciben ahora un 50% automático retroactivo.
+2. Las compensaciones/reintegros históricos realmente registrados sí siguen afectando Facturación hasta el próximo cierre/base de Facturación.
+3. Solo los gastos creados desde la lógica automática v68+ aplican su 50% automáticamente.
+4. Los gastos v68/v69 existentes se reconocen por la fotografía Telegram que ya guardaban; los nuevos además llevan marcadores explícitos autoApplyToBilling/gastoAuto50/billingImpactMode.
+5. El cálculo del Admin usa exactamente la misma regla que el Home del chofer.
+6. "Total gastado" continúa mostrando el gasto total real; la corrección solo modifica cuánto de esos gastos afecta Facturación.
+7. Telegram no se modifica: el formato actual era correcto. Los gastos nuevos seguirán enviando el saldo final usando la lógica corregida.
+
+VALIDACIÓN
+- node --check app.js: OK.
+- Functions: 28/28 tests aprobados.
+- Caso Marcelo de la captura: $455.565 a favor de Explora.

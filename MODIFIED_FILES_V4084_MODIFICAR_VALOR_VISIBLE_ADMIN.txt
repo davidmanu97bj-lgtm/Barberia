@@ -1,0 +1,20 @@
+EXPLORA v4084 — MODIFICAR VALOR VISIBLE EN ADMINISTRADOR
+
+CORRECCIÓN:
+- La tarjeta COMPROBANTES del administrador ahora abre directamente PAGO CLIENTE.
+- Los grupos de chofer, mes y semana quedan abiertos en PAGO CLIENTE para que cada comprobante sea visible.
+- Cada comprobante de servicio muestra el botón MODIFICAR VALOR.
+- La detección del rol administrador ahora también reconoce el perfil, las clases administrativas y ExploraAccessState.
+- Se reforzó la detección del ID original de billing_records, incluso para comprobantes antiguos de receipt_index.
+- CIERRES sigue accesible desde la tarjeta Cierres pendientes.
+- Se actualizó el caché PWA para forzar la nueva versión.
+
+ARCHIVOS MODIFICADOS:
+- index.html
+- js/segments/09-script.js
+- js/segments/11-script.mjs
+- js/segments/13-script.mjs
+- service-worker.js
+
+ARCHIVO CONSERVADO:
+- css/segments/53-style.css

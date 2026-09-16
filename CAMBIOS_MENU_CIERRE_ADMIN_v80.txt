@@ -1,0 +1,19 @@
+EXPLORA v80 · MENÚ CIERRE PENDIENTE ADMIN
+
+Se reparó exclusivamente el modal "Cierre pendiente de confirmación".
+
+CAMBIOS
+- Se definió correctamente el tono admin-pending que faltaba.
+- La tarjeta vuelve a tener fondo blanco sólido en iPhone y Android.
+- El botón Confirmar pago ahora es oscuro, blanco y completamente visible.
+- El botón Rechazar entrega usa fondo rojo suave y texto de alto contraste.
+- Se mejoró el contraste del título, datos, recordatorio y botón de cierre.
+- Se ajustaron márgenes, tamaño y safe-area para pantallas de iPhone.
+- Se actualizó la versión de styles.css para evitar que el teléfono conserve
+  el estilo transparente anterior.
+
+NO SE MODIFICÓ
+- Cálculos ni saldos.
+- Acciones de confirmar o rechazar.
+- Telegram ni Cloud Functions.
+- Los demás menús de la aplicación.

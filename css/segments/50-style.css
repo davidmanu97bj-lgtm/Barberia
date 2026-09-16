@@ -1,0 +1,14 @@
+/* EXPLORA v2.4.58 · alta de acceso y borrado selectivo de datos */
+.admin-create-form input[type="password"],.admin-create-form .explora-password-masked{font:inherit;letter-spacing:.04em;-webkit-text-security:disc;text-security:disc}
+.admin-management-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.admin-management-actions .admin-management-reset{min-height:44px;border:1px solid rgba(59,130,246,.48);border-radius:14px;background:linear-gradient(180deg,rgba(22,52,96,.94),rgba(9,25,50,.97));color:#dcecff;font-weight:900;letter-spacing:.04em;padding:11px 14px}
+.admin-management-actions .admin-management-hard-delete{grid-column:1/-1;min-height:44px;border:1px solid rgba(255,91,112,.58);border-radius:14px;background:linear-gradient(180deg,rgba(96,15,31,.92),rgba(45,6,15,.96));color:#ffd8df;font-weight:900;letter-spacing:.05em;padding:11px 14px}
+.admin-management-actions .admin-management-reset:disabled,.admin-management-actions .admin-management-hard-delete:disabled{opacity:.55}
+@media(max-width:520px){.admin-management-actions{grid-template-columns:1fr}.admin-management-actions .admin-management-hard-delete{grid-column:auto}.admin-create-form fieldset{min-width:0}}
+/* EXPLORA v4015 · Chofer admin panel */
+.admin-create-help{margin:6px 0 0;color:#737789;font-size:.88rem;font-weight:700;line-height:1.35}
+.admin-role-fixed span{color:#16a34a;font-weight:900}
+.admin-management-toolbar-copy strong{letter-spacing:.01em}
+.admin-management-actions{grid-template-columns:1fr 1fr}
+.admin-management-actions .admin-management-hard-delete{grid-column:auto}
+@media(max-width:520px){.admin-management-actions{grid-template-columns:1fr}.admin-management-actions .admin-management-hard-delete{grid-column:auto}}

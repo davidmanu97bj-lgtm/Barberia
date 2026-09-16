@@ -1,0 +1,24 @@
+EXPLORA v4051 · Histórico Explora + icono cobro claro
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios aplicados:
+1. Botón inferior Actividades ahora lleva el scroll automáticamente hasta arriba, tanto admin como chofer.
+2. En admin, el botón Futuro pasa a llamarse Histórico.
+3. Se cambió el icono de Futuro/Histórico por un gráfico/histórico.
+4. Histórico abre un nuevo menú con selector de chofer y selector de vista:
+   - Histórico total hasta el momento
+   - Histórico mensual
+   - Histórico semanal
+   - Histórico diario
+5. Al elegir chofer y vista, muestra gráfico y métricas de ganancia Explora.
+6. Fórmula aplicada sin depender de cierres:
+   Total facturado - parte chofer 50% + caja chica + deuda cobrada - gastos.
+7. El cálculo usa la fecha actual y el rango seleccionado: total, mes, semana operativa o día.
+8. El icono central para registrar cobro fue cambiado por uno más claro: tarjeta/cobro con + y símbolo de dinero, sin brillo/estrella.
+
+No se tocaron reglas de cierres, WhatsApp, Storage ni Firestore de escritura.

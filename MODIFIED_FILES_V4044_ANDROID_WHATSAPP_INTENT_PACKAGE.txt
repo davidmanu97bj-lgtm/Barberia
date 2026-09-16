@@ -1,0 +1,19 @@
+EXPLORA v4044 · Corrección Android WhatsApp ERR_UNKNOWN_URL_SCHEME
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+
+Corrección aplicada:
+1. Android deja de usar whatsapp://send porque en algunos Chrome/PWA/WebView se abre como página web y muestra net::ERR_UNKNOWN_URL_SCHEME.
+2. Android ahora usa un Intent explícito con package=com.whatsapp:
+   intent://send?...#Intent;scheme=whatsapp;package=com.whatsapp;...;end
+3. El intent incluye fallback oficial api.whatsapp.com solo si Android/Chrome no puede resolver la app.
+4. iOS conserva whatsapp://send directo.
+5. Escritorio conserva fallback oficial.
+6. Se conserva que Explora pida cierre y mande comprobante al WhatsApp guardado por el chofer en su perfil.
+7. Se conserva el selector obligatorio de país en perfil admin/chofer.
+8. Se actualizó versionado/cache para evitar que Android siga usando el JS viejo.
+
+No se tocaron cálculos financieros, Firestore, Storage, Deudas ni reglas de cierres.

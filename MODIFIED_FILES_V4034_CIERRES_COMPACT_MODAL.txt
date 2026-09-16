@@ -1,0 +1,21 @@
+EXPLORA v4034 · Cierres compactos sin menú inferior encima
+
+Archivos modificados:
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- index.html
+- service-worker.js
+
+Cambios:
+1. El modal de cierres agrega la clase body.pay-closure-modal-open al abrir y la remueve al cerrar.
+2. El menú inferior y el botón flotante quedan ocultos mientras el modal de cierre está abierto.
+3. El modal de cierres queda por encima del bottom nav con z-index alto.
+4. La vista de revisión de cierre se compactó para mostrar solo información importante:
+   - Resultado y monto
+   - datos financieros del módulo
+   - comprobante si existe
+   Se quitaron filas repetidas como Motivo, Corte y Estado.
+5. Se redujeron márgenes, alturas y tipografías del modal para evitar scroll en iPhone.
+6. Cache PWA actualizado a v4034-closure-compact-modal.
+
+No se modificaron cálculos financieros ni reglas de cierre.

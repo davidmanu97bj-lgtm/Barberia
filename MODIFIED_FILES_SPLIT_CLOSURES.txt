@@ -1,0 +1,20 @@
+EXPLORA · Cierres separados a demanda
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- service-worker.js
+
+Cambios:
+- Bruto queda solo informativo: no muestra ni permite pedir cierre.
+- Gastos tiene cierre propio: solo gastos desde el último cierre de gastos.
+- Explora tiene cierre propio: solo transferencias, QR y tarjetas cobradas por Explora desde el último cierre Explora.
+- Chofer tiene cierre propio: solo efectivo cobrado por el chofer desde el último cierre Chofer.
+- Cada cierre corta inmediatamente por requestedAtMs/cutoffAtMs. Lo cargado después empieza desde cero en su propio período.
+- Se agregan closureKind/closureType/payTab para separar gastos, explora y chofer.
+- Los cierres pendientes también cortan el período; no esperan confirmación para reiniciar el período abierto.
+- Se mantiene comprobante si el chofer debe rendir a Explora.
+
+Verificación estática:
+- node --check js/segments/52-script.mjs
+- node --check service-worker.js

@@ -1,0 +1,17 @@
+V4028 · Admin cierres action/visual fix
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Cambios:
+- En Admin > Cierres, los botones se activan por quien debe pagar realmente.
+- CHOFER solo queda activo si el chofer debe liquidar a Explora.
+- EXPLORA queda activo como "Cargar comprobante" si Explora/admin debe liquidar al chofer.
+- GASTOS queda activo como "Cargar comprobante" si Explora debe reintegrar al chofer.
+- CAJA CHICA sigue como "Pedir cierre" cuando el chofer debe liquidar caja chica a Explora.
+- El flujo "Cargar comprobante" de admin crea el cierre y lo cierra con comprobante en un solo paso.
+- El admin no debe cargar KM; en cierres de facturación iniciados/cerrados por admin, el KM queda pendiente para el chofer.
+- Ajuste visual: menú inferior pegado abajo en el tablero de cierres, con el botón central menos alto.

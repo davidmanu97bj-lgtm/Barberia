@@ -1,0 +1,23 @@
+EXPLORA v4039 · WhatsApp + scroll Android en Más
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- css/segments/52-style.css
+- js/segments/52-script.mjs
+
+Cambios:
+1) WhatsApp:
+   - Se elimina el uso de whatsapp://send porque en Android PWA/WebView puede generar net::ERR_UNKNOWN_URL_SCHEME.
+   - Ahora se abre por https://wa.me/<telefono>?text=<mensaje>, compatible con Android/iOS/navegador.
+
+2) Más / Administrador / Salir sesión:
+   - El panel Más ahora tiene scroll propio fixed a 100dvh.
+   - No depende del scroll del body, que puede quedar bloqueado por vistas admin.
+   - Se agrega padding inferior real para que el botón Salir no quede tapado por el menú inferior en Android.
+   - Al abrir Más, Notificaciones o Cierres admin se resetea el scroll del contenedor correcto.
+
+Validación sugerida:
+- Android Chrome/PWA: abrir Más con cuenta admin, bajar hasta Salir y tocarlo.
+- Desde Cierres admin volver/tocar Más y verificar que el scroll responde.
+- Pedir cierre / cargar comprobante y verificar que abre WhatsApp sin página de error whatsapp://.

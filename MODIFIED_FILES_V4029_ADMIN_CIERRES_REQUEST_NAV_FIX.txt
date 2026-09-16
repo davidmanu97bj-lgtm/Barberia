@@ -1,0 +1,14 @@
+V4029 · Admin cierres request/nav fix
+
+Archivos modificados:
+- index.html
+- service-worker.js
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+
+Correcciones:
+- Explora y Gastos ya no muestran “Cargar comprobante” solo por tener monto a liquidar.
+- Explora y Gastos quedan en “Sin pedido activo” hasta que el chofer pida el cierre.
+- Cuando exista pedido del chofer, recién aparece botón rojo para que admin cargue/revise comprobante.
+- El menú inferior en Admin > Cierres vuelve a usar el mismo alineado/tamaño del menú inicial.
+- Se actualizó cache-buster a v4029-admin-cierres-request-nav-fix.

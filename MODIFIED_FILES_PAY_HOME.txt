@@ -1,0 +1,31 @@
+EXPLORA · Pago Home con cierre a demanda
+
+Archivos modificados/agregados:
+- index.html
+- service-worker.js
+- firebase.json
+- css/segments/52-style.css
+- js/segments/52-script.mjs
+
+Cambios principales:
+- Nueva pantalla principal visual tipo app de pagos con pestañas: Bruto / Gastos / Explora / Chofer.
+- Ranking diario y carrusel de ranking ocultos de la página principal, pero los módulos no fueron eliminados.
+- La pantalla principal queda centrada en cobros, gastos, actividad y cierre.
+- Última actividad detalla cobros, gastos y cierres, mostrando impacto Chofer / Explora.
+- Nuevo cierre a demanda, sin depender de viernes/sábado:
+  - Admin puede pedir cierre a un chofer.
+  - Chofer puede pedir cierre propio.
+  - Chofer confirma cierre y carga comprobante si debe transferir.
+  - Admin puede confirmar recibido desde el mismo flujo.
+- El cálculo principal usa el ciclo abierto desde el último cierre a demanda confirmado/cargado.
+
+Colección usada para cierre a demanda:
+- cierres_semanales
+
+Campos clave nuevos:
+- closureMode: "on_demand"
+- periodType: "on_demand"
+- status: requested | driver_uploaded | driver_confirmed_zero | confirmed
+
+Storage:
+- Los comprobantes de cierre a demanda se suben bajo gastos/{driverUid}/{closureId}/cierre-a-demanda.ext para mantener compatibilidad con reglas existentes del proyecto.

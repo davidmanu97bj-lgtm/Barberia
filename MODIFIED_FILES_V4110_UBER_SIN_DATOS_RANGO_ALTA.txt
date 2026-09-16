@@ -1,0 +1,12 @@
+MODIFICACIÓN V4110
+
+- Corrige la opción “Sin datos” para que solo aparezca entre la semana 1 y la semana 7 desde el alta real del chofer.
+- Las semanas anteriores al alta ya no muestran “Sin datos”.
+- Desde la semana 8 en adelante tampoco aparece.
+- Se mantiene validación al guardar para impedir cierres fuera de ese rango.
+- Se actualiza la caché PWA.
+
+Archivos modificados:
+- index.html
+- js/segments/52-script.mjs
+- service-worker.js

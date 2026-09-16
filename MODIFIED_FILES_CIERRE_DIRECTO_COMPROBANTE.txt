@@ -1,0 +1,14 @@
+Modificación solicitada: flujo de cierre directo por comprobante.
+
+Archivos modificados:
+- index.html
+  * Actualiza el cache-buster del módulo 52 para forzar carga de la nueva versión.
+- js/segments/52-script.mjs
+  * La subida del comprobante por quien debe pagar cierra automáticamente el cierre.
+  * Se elimina la necesidad de confirmación posterior del admin o del chofer.
+  * Si Explora debe pagar, admin sube comprobante y el cierre queda cerrado.
+  * Si el chofer debe pagar, chofer sube comprobante y el cierre queda cerrado.
+  * Admin puede ver notificaciones globales de cierres aunque todavía no haya seleccionado chofer.
+  * Admin puede abrir una notificación y se selecciona automáticamente el chofer del cierre.
+  * Se habilita el pedido de cierre al chofer desde la pestaña Chofer cuando el chofer debe liquidar facturación.
+  * El corte del período queda fijo al momento de pedir cierre; subir comprobante no mueve el corte.

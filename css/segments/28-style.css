@@ -1,0 +1,78 @@
+
+    .vehicle-management-real h2{font-size:clamp(20px,5.7vw,25px)!important;line-height:1.08;white-space:normal;text-wrap:balance}
+    .vehicle-management-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+    .vehicle-management-card{min-height:168px!important;height:168px;padding:15px 14px!important;justify-content:center!important;gap:9px!important;overflow:hidden}
+    .vehicle-management-card .vehicle-management-icon{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;flex:0 0 auto;background:rgba(246,190,59,.10)}
+    .vehicle-management-card .vehicle-management-icon svg{width:27px;height:27px;stroke:#f6be3b!important;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+    .vehicle-management-card--alerts .vehicle-management-icon{background:rgba(255,108,120,.10)}
+    .vehicle-management-card--alerts .vehicle-management-icon svg{stroke:#ff7f8c!important}
+    .vehicle-management-card .vehicle-management-title{display:block;color:#fff!important;font-size:clamp(13px,3.5vw,16px)!important;font-weight:900;line-height:1.16;letter-spacing:.02em;overflow-wrap:anywhere;text-wrap:balance}
+    .vehicle-management-card small{display:block;color:rgba(255,255,255,.62)!important;font-size:clamp(10px,2.8vw,12px)!important;line-height:1.3;overflow-wrap:anywhere;text-wrap:balance}
+    .vehicle-management-card:focus-visible{outline:2px solid rgba(246,190,59,.75);outline-offset:3px}
+    .vehicle-management-card--alerts:focus-visible{outline-color:rgba(255,127,140,.75)}
+    .vehicle-detail-screen{position:fixed;inset:0;z-index:2100;display:none;min-height:100dvh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:radial-gradient(circle at 18% -8%,rgba(246,190,59,.13),transparent 34%),linear-gradient(180deg,#05080a,#020406);color:#fff;padding:max(16px,env(safe-area-inset-top)) 16px calc(30px + env(safe-area-inset-bottom))}
+    .vehicle-detail-screen.is-open{display:block}.vehicle-detail-shell{width:100%;max-width:520px;margin:0 auto}.vehicle-detail-header{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:center;margin-bottom:18px}.vehicle-detail-back{width:46px;height:46px;border:1px solid rgba(255,255,255,.12);border-radius:15px;background:rgba(255,255,255,.045);color:#fff;font-size:32px;line-height:1}.vehicle-detail-header p{margin:0 0 4px;color:#f6be3b;font-size:10px;font-weight:900;letter-spacing:.12em}.vehicle-detail-header h1{margin:0;font-size:clamp(23px,6vw,30px);line-height:1.05}.vehicle-detail-status{padding:18px;border:1px solid rgba(255,255,255,.10);border-radius:20px;background:rgba(255,255,255,.035);color:rgba(255,255,255,.72);line-height:1.4;text-align:center}.vehicle-detail-status.is-error{color:#ffb1b8;border-color:rgba(255,108,120,.28)}.vehicle-detail-content,.vehicle-incidents-list{display:grid;gap:12px}.vehicle-info-card,.vehicle-incident-card{border:1px solid rgba(255,255,255,.10);border-radius:21px;background:linear-gradient(180deg,rgba(18,24,29,.97),rgba(8,12,15,.98));padding:16px;box-shadow:0 16px 38px rgba(0,0,0,.24)}.vehicle-info-hero{border-color:rgba(246,190,59,.27);background:radial-gradient(circle at 90% 0%,rgba(246,190,59,.10),transparent 34%),linear-gradient(180deg,rgba(18,24,29,.97),rgba(8,12,15,.98))}.vehicle-info-hero small,.vehicle-info-row span,.vehicle-incident-row span{display:block;color:rgba(255,255,255,.54);font-size:11px;font-weight:800;letter-spacing:.04em}.vehicle-info-hero strong{display:block;margin-top:6px;color:#fff;font-size:22px}.vehicle-info-hero b{display:block;margin-top:7px;color:#f6be3b;font-size:15px}.vehicle-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.vehicle-info-row{min-width:0;padding:13px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(255,255,255,.025)}.vehicle-info-row strong{display:block;margin-top:6px;color:#fff;font-size:14px;line-height:1.3;overflow-wrap:anywhere}.vehicle-incident-card{display:grid;gap:12px}.vehicle-incident-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.vehicle-incident-head h2{margin:0;font-size:17px;line-height:1.2}.vehicle-incident-badge{padding:6px 9px;border-radius:999px;background:rgba(255,108,120,.10);color:#ffabb3;font-size:10px;font-weight:900;white-space:nowrap}.vehicle-incident-badge.is-paid{background:rgba(98,223,145,.10);color:#8ff0b2}.vehicle-incident-badge.is-review{background:rgba(246,190,59,.10);color:#f5cf75}.vehicle-incident-description{margin:0;color:rgba(255,255,255,.72);font-size:13px;line-height:1.4}.vehicle-incident-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.vehicle-incident-row{min-width:0}.vehicle-incident-row strong{display:block;margin-top:4px;color:#fff;font-size:13px;overflow-wrap:anywhere}.vehicle-incident-media{display:flex;gap:8px;overflow-x:auto}.vehicle-incident-media a{min-height:40px;padding:9px 12px;border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#f5cf75;text-decoration:none;font-size:12px;font-weight:850;white-space:nowrap}
+    @media(max-width:350px){.vehicle-management-card{padding:12px 9px!important}.vehicle-info-grid,.vehicle-incident-grid{grid-template-columns:1fr}}
+  
+/* EXPLORA 2.2.2 · Mi auto compacto y estado del Dashboard */
+.vehicle-management-card--car[data-mi-auto-state="ok"]{border-color:rgba(64,207,132,.34)!important;box-shadow:0 14px 34px rgba(0,0,0,.24),inset 0 0 0 1px rgba(64,207,132,.05)!important}
+.vehicle-management-card--car[data-mi-auto-state="warning"]{border-color:rgba(246,190,59,.72)!important;animation:miAutoWarningPulse 1.8s ease-in-out infinite!important}
+.vehicle-management-card--car[data-mi-auto-state="expired"]{border-color:rgba(255,91,103,.78)!important;animation:miAutoExpiredPulse 1.7s ease-in-out infinite!important}
+.vehicle-management-card--car[data-mi-auto-state="pending"]{border-color:rgba(255,255,255,.11)!important;animation:none!important}
+.vehicle-management-card .vehicle-management-status{display:block!important;max-width:100%;min-height:28px;color:rgba(255,255,255,.64)!important;font-size:clamp(10px,2.8vw,12px)!important;font-weight:800;line-height:1.25;text-align:center;overflow-wrap:anywhere;text-wrap:balance}
+.vehicle-management-card--car[data-mi-auto-state="ok"] .vehicle-management-status{color:#8ff0b2!important}
+.vehicle-management-card--car[data-mi-auto-state="warning"] .vehicle-management-status{color:#ffd875!important}
+.vehicle-management-card--car[data-mi-auto-state="expired"] .vehicle-management-status{color:#ffabb3!important}
+@keyframes miAutoWarningPulse{0%,100%{border-color:rgba(238,156,35,.68);box-shadow:0 14px 34px rgba(0,0,0,.24),0 0 0 0 rgba(238,156,35,.06)}50%{border-color:rgba(246,190,59,.98);box-shadow:0 14px 34px rgba(0,0,0,.24),0 0 22px 3px rgba(246,190,59,.25)}}
+@keyframes miAutoExpiredPulse{0%,100%{border-color:rgba(220,57,66,.78);box-shadow:0 14px 34px rgba(0,0,0,.24),0 0 0 0 rgba(220,57,66,.08)}50%{border-color:rgba(246,190,59,.95);box-shadow:0 14px 34px rgba(0,0,0,.24),0 0 24px 4px rgba(228,68,78,.28)}}
+@media(prefers-reduced-motion:reduce){.vehicle-management-card--car[data-mi-auto-state="warning"],.vehicle-management-card--car[data-mi-auto-state="expired"]{animation:none!important}}
+
+#myVehicleScreen{overscroll-behavior:contain;scroll-padding-top:max(92px,calc(env(safe-area-inset-top) + 76px));scroll-padding-bottom:max(42vh,calc(env(safe-area-inset-bottom) + 240px))}
+#myVehicleScreen .vehicle-detail-shell{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+#myVehicleScreen .vehicle-detail-header{position:sticky;top:calc(env(safe-area-inset-top) * -1);z-index:4;padding:8px 0 10px;background:linear-gradient(180deg,rgba(5,8,10,.98) 72%,rgba(5,8,10,0));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#myVehicleContent{gap:10px!important}
+.mi-auto-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:12px;row-gap:4px;padding:14px!important}
+.mi-auto-hero small,.mi-auto-hero strong,.mi-auto-hero b{grid-column:1}
+.mi-auto-hero strong{font-size:19px!important;line-height:1.16}
+.mi-auto-hero b{margin-top:3px!important}
+.mi-auto-overall{grid-column:2;grid-row:1/4;align-self:center;max-width:130px;padding:7px 9px;border-radius:999px;font-size:10px;font-weight:900;line-height:1.2;text-align:center;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04)}
+.mi-auto-overall--ok{color:#8ff0b2;border-color:rgba(64,207,132,.28);background:rgba(64,207,132,.08)}
+.mi-auto-overall--warning{color:#ffd875;border-color:rgba(246,190,59,.30);background:rgba(246,190,59,.08)}
+.mi-auto-overall--expired{color:#ffabb3;border-color:rgba(255,91,103,.32);background:rgba(255,91,103,.09)}
+.mi-auto-overall--pending{color:rgba(255,255,255,.66)}
+.mi-auto-list{display:grid;gap:9px}
+.mi-auto-row{min-width:0;padding:13px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:linear-gradient(180deg,rgba(18,24,29,.97),rgba(8,12,15,.98));box-shadow:0 10px 26px rgba(0,0,0,.18)}
+.mi-auto-row-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mi-auto-row-head>div{min-width:0}
+.mi-auto-row h2{margin:0 0 5px;color:#fff;font-size:13px;font-weight:950;line-height:1.15;letter-spacing:.035em}
+.mi-auto-row p{margin:2px 0;color:rgba(255,255,255,.57);font-size:11px;line-height:1.3}
+.mi-auto-row p strong{color:#fff;font-size:12px}
+.mi-auto-state{flex:0 0 auto;max-width:122px;padding:6px 8px;border-radius:999px;font-size:10px;font-weight:900;line-height:1.2;text-align:center;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04)}
+.mi-auto-state--ok{color:#8ff0b2;border-color:rgba(64,207,132,.27);background:rgba(64,207,132,.08)}
+.mi-auto-state--warning{color:#ffd875;border-color:rgba(246,190,59,.30);background:rgba(246,190,59,.08)}
+.mi-auto-state--expired{color:#ffabb3;border-color:rgba(255,91,103,.32);background:rgba(255,91,103,.09)}
+.mi-auto-state--missing{color:rgba(255,255,255,.60)}
+.mi-auto-update{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px;align-items:stretch}
+.mi-auto-update input{width:100%;min-width:0;height:42px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.045);color:#fff;padding:0 11px;font:inherit;font-size:16px;outline:none;color-scheme:dark;-webkit-appearance:none;appearance:none}
+.mi-auto-update input:focus{border-color:rgba(246,190,59,.68);box-shadow:0 0 0 3px rgba(246,190,59,.10)}
+.mi-auto-update input::placeholder{color:rgba(255,255,255,.38)}
+.mi-auto-update button{min-width:90px;height:42px;border:1px solid rgba(246,190,59,.40);border-radius:12px;background:linear-gradient(135deg,#f6be3b,#d89b1f);color:#171107;padding:0 12px;font-size:11px;font-weight:950;letter-spacing:.025em;white-space:nowrap;touch-action:manipulation}
+.mi-auto-update button:disabled{opacity:.55;filter:saturate(.65)}
+.mi-auto-row-message{min-height:16px;margin-top:5px;color:rgba(255,255,255,.50);font-size:10px;line-height:1.3}
+.mi-auto-row-message.is-success{color:#8ff0b2}.mi-auto-row-message.is-error{color:#ffabb3}.mi-auto-row-message.is-saving{color:#ffd875}
+@media(max-width:360px){.mi-auto-hero{grid-template-columns:1fr}.mi-auto-overall{grid-column:1;grid-row:auto;justify-self:start;max-width:none}.mi-auto-row-head{display:grid}.mi-auto-state{justify-self:start;max-width:none}.mi-auto-update{grid-template-columns:minmax(0,1fr) 84px}.mi-auto-update button{min-width:84px;padding:0 8px}}
+
+/* EXPLORA 2.2.4 · Mi auto editable para chofer y administrador */
+.vehicle-detail-screen[hidden]{display:none!important}
+body.vehicle-detail-open #mainBottomNav,
+body.vehicle-detail-open .main-bottom-nav{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+#myVehicleScreen.is-open{z-index:2300}
+.admin-mi-auto-mount,.admin-mi-auto-shell{display:grid;gap:12px;min-width:0}
+.admin-mi-auto-select{display:grid;gap:7px;padding:13px;border:1px solid rgba(246,190,59,.19);border-radius:18px;background:rgba(246,190,59,.045)}
+.admin-mi-auto-select label{color:#f6be3b;font-size:10px;font-weight:950;letter-spacing:.08em}
+.admin-mi-auto-select select{width:100%;min-height:46px;border:1px solid rgba(255,255,255,.13);border-radius:13px;background:#0c1115;color:#fff;padding:10px 12px;font:inherit;font-size:14px}
+#adminMiAutoEditor{display:grid;gap:10px;min-width:0}
+#adminMiAutoEditor[hidden]{display:none!important}
+.mi-auto-admin-driver{grid-column:1;display:block;margin-top:4px;color:rgba(255,255,255,.63);font-size:10px;font-weight:850;letter-spacing:.04em}
+.admin-mi-auto-shell .mi-auto-row{box-shadow:none}
+@media(max-width:390px){.mi-auto-hero{grid-template-columns:minmax(0,1fr)}.mi-auto-overall{grid-column:1;grid-row:auto;justify-self:start;max-width:100%}.mi-auto-admin-driver{grid-column:1}}

@@ -1,0 +1,11 @@
+V4112 — REGLAS FIRESTORE PARA UBER SIN DATOS
+
+"
+"- Permite al chofer crear su propio cierre Uber con estado no_data.
+"
+"- No exige monto ni comprobante en ese caso.
+"
+"- Mantiene la propiedad por UID y evita cerrar semanas de otro chofer.
+"
+"- Requiere desplegar firestore.rules en Firebase.
+"

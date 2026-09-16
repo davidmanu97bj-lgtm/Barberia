@@ -1,0 +1,6 @@
+EXPLORA v84.5 - Corrección del SH autogestionable
+
+- Incluye functions/telegram-billing-balance.js dentro del paquete interno.
+- Evita que Cloud Shell conserve una calculadora de saldo anterior incompatible con el flujo v84.
+- La validación de Uber/Telegram ahora usa el mismo conjunto de archivos que se despliega.
+- Mantiene las correcciones de menús, permisos, cálculo de Uber y fallback de Telegram.

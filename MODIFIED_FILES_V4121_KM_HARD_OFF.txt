@@ -1,0 +1,16 @@
+EXPLORA v4121 · KM HARD OFF
+
+Archivos a reemplazar:
+- index.html
+- js/segments/52-script.mjs
+- css/segments/52-style.css
+- service-worker.js
+
+Corrección:
+- KM actual del auto eliminado del modal de cierre.
+- El cierre ya no solicita, valida ni guarda KM.
+- Se elimina cualquier DOM legado #payClosureKmField que pudiera quedar activo.
+- CSS hard-off impide que una versión mezclada vuelva a mostrar el campo.
+- Eficiencia Operativa antigua continúa eliminada.
+- Cierre Uber semanal NO fue eliminado ni modificado funcionalmente.
+- Versionado/caché actualizado a v4121-km-hard-off.

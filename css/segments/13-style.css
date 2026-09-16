@@ -1,0 +1,12 @@
+
+    .dashboard-realtime-status{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;min-height:27px;margin-top:-8px;padding:5px 10px;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(10,15,19,.76);color:rgba(255,255,255,.67);font-size:10px;font-weight:850;letter-spacing:.025em;line-height:1;transition:opacity .18s ease,border-color .18s ease,color .18s ease;pointer-events:none}
+    .dashboard-realtime-status::before{content:"";width:7px;height:7px;border-radius:50%;background:#8b949e;box-shadow:0 0 0 3px rgba(139,148,158,.09)}
+    .dashboard-realtime-status[data-state="syncing"]{color:#f4cc73;border-color:rgba(245,185,66,.20)}
+    .dashboard-realtime-status[data-state="syncing"]::before{background:#f3c45d;animation:exploraRealtimePulse 1s ease-in-out infinite}
+    .dashboard-realtime-status[data-state="updated"]{color:#8feeb0;border-color:rgba(98,223,145,.20)}
+    .dashboard-realtime-status[data-state="updated"]::before{background:#62df91}
+    .dashboard-realtime-status[data-state="offline"],.dashboard-realtime-status[data-state="error"]{color:#ffbf8e;border-color:rgba(255,145,84,.24)}
+    .dashboard-realtime-status[data-state="offline"]::before,.dashboard-realtime-status[data-state="error"]::before{background:#ff985f}
+    @keyframes exploraRealtimePulse{0%,100%{opacity:.45}50%{opacity:1}}
+    @media(prefers-reduced-motion:reduce){.dashboard-realtime-status[data-state="syncing"]::before{animation:none}}
+  

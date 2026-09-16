@@ -1,0 +1,28 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "arca_invoices",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "driverUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAtMs",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+    ,{
+      "collectionGroup": "arca_invoices",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "seriesKey", "order": "ASCENDING"},
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "createdAtMs", "order": "ASCENDING"}
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
