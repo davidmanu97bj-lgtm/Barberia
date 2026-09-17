@@ -7869,3 +7869,13 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 .closure-report-proof b{max-width:60%;color:#111a43;text-align:right;overflow-wrap:anywhere}
 #generateClosureReport:disabled{opacity:.48;cursor:not-allowed;filter:saturate(.6)}
 /* FIN EXPLORA · Cierre comprobante obligatorio 3.2.0 */
+
+/* Explora · reparto 40/60 */
+.statement-distribution-note{
+  margin:0;
+  padding:10px 18px 15px;
+  color:#7a8498;
+  font-size:11px;
+  line-height:1.35;
+  text-align:left;
+}

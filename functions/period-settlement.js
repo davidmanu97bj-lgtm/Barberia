@@ -8,7 +8,7 @@
   else root.ExploraPeriodSettlement = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = 'net_period_cashbox_10_split_50_v1';
+  const VERSION = 'net_period_split_40_driver_60_explora_v1';
   const AMOUNTS = ['amount','monto','valor','finalPrice','total','importe','price','precio',
     'precioFinal','montoFinal','montoCobrado','importeTotal','finalAmount','totalAmount',
     'billingAmount','chargedAmount','paidAmount','fare','tarifa','value','totalCobrado','facturacion','billingTotal'];
@@ -190,11 +190,13 @@
     const gross = cash + digital;
     const expense = expenseCash + expenseDigital;
     const available = gross - expense;
-    // A loss never creates a negative reserve or a fictitious refund from Caja.
-    const cashbox = Math.round(Math.max(0,available) / 10);
-    const toSplit = available - cashbox;
-    const driverShare = Math.trunc(toSplit / 2);
-    const exploraShare = toSplit - driverShare; // odd cent remains with Explora
+    // Reparto único del disponible: 40% Chofer / 60% Explora.
+    // Caja chica deja de ser un renglón adicional: queda absorbida dentro
+    // del 60% de Explora y nunca se suma una segunda vez.
+    const cashbox = 0;
+    const toSplit = available;
+    const driverShare = Math.trunc(toSplit * 40 / 100);
+    const exploraShare = toSplit - driverShare; // redondeo residual queda con Explora
     const cashRemaining = cash - expenseCash;
     const digitalRemaining = digital - expenseDigital;
     const periodBalance = cashRemaining - driverShare;
@@ -222,7 +224,7 @@
       cashBox:money(cashbox), cashboxTotal:money(cashbox), cashboxGeneratedTotal:money(cashbox),
       cashboxResetMs:0, cashboxOffsetPreviouslyApplied:0, regularCashboxGenerated:money(cashbox), uberCashboxGenerated:0,
       totalToSplit:money(toSplit), driverShare:money(driverShare), exploraShare:money(exploraShare),
-      shareEach:money(driverShare), billingShareEach:money(driverShare), exploraWithCashbox:money(exploraShare+cashbox),
+      shareEach:money(driverShare), billingShareEach:money(driverShare), exploraWithCashbox:money(exploraShare),
       periodBalance:money(periodBalance), baseBalance:money(opening+periodBalance+adminDebt+advanceRepayments),
       adminDebt:money(adminDebt), adminDebtTotal:money(adminDebt), driverDebtTotal:money(adminDebt), advanceRepayments:money(advanceRepayments),
       driverPaid:money(driverPaid), exploraPaid:money(exploraPaid), driverSettlementTotal:money(driverPaid), exploraSettlementTotal:money(exploraPaid),

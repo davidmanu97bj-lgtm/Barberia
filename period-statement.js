@@ -56,13 +56,13 @@ export function statementHtml({model,driverName,invoices=new Map(),orderedRows})
     ${section('debt','Deudas chofer 100%',rows.debts||[],'debt',m.driverDebtTotal ?? m.adminDebt,'Total deudas chofer 100%')}
     <p class="statement-debt-note">Saldos pendientes de deudas aceptadas, incluso anteriores al período. Se suman a la liquidación; no reducen el efectivo ni generan Caja Explora. Los pagos de la cuenta se muestran por separado.</p>
     <section class="statement-section tone-result" data-statement-section="result"><h2>${icon('result')}<span>Resultado del período</span></h2>
-      ${line('Efectivo restante en poder del chofer',m.cashRemaining)}
-      ${line('Total disponible',m.available,'is-subtotal')}${line('Caja Explora 10%',-m.cashBox)}
+      ${line('Efectivo restante en mano del chofer',m.cashRemaining)}
+      ${line('Digital cuenta de Explora',m.digitalRemaining)}
       <div class="tone-distribution">${line('Total a dividir',m.totalToSplit,'is-subtotal')}</div>
     </section>
     <section class="statement-section tone-distribution" data-statement-section="distribution"><h2>${icon('distribution')}<span>Distribución</span></h2>
-      ${line('50% Explora',m.exploraShare)}${line('50% Chofer',m.driverShare)}
-      <details class="statement-explanation"><summary>Ver Caja Explora por separado</summary>${line('Participación de Explora',m.exploraShare)}${line('Caja Explora',m.cashBox)}${line('Total de Explora con su caja',m.exploraWithCashbox)}<p>La caja se separa después de los gastos, antes del reparto. No se vuelve a descontar por movimiento.</p></details>
+      ${line('40% Chofer',m.driverShare)}${line('60% Explora',m.exploraShare)}
+      <p class="statement-distribution-note">(Incluye Caja chica efectivo + caja chica digital + dinero en digital)</p>
     </section>
     ${adjustmentNeeded?`<section class="statement-section tone-result" data-statement-section="adjustments"><h2>Liquidación y ajustes</h2>${line('Diferencia del período',m.periodBalance)}${m.openingBalance?line('Saldo anterior conservado',m.openingBalance):''}${m.adminDebt?line('Deudas chofer 100% · incorporadas una vez',m.adminDebt):''}${m.advanceRepayments?line('Aplicado a adelantos',m.advanceRepayments):''}${m.driverPaid?line('Pagos del chofer a Explora',-m.driverPaid):''}${m.exploraPaid?line('Pagos de Explora al chofer',m.exploraPaid):''}</section>`:''}
     <div class="statement-settlement ${m.balance>0?'is-owing':m.balance<0?'is-receiving':'is-balanced'}" role="status">${icon('wallet')}<div><span>${balanceText}</span><strong>${format(Math.abs(m.balance))}</strong></div><small>${m.balance===0?'No hay diferencia pendiente.':'Importe pendiente de liquidar; no es un cobro nuevo.'}</small></div>

@@ -1,5 +1,5 @@
 import {createReceiptBundle,createReceiptPhoto,shortReceiptName,shortInvoiceName} from "./receipt-files.js?v=20260916-uber-retired-316";
-import {statementHtml,documentButton} from "./period-statement.js?v=20260916-uber-retired-316";
+import {statementHtml,documentButton} from "./period-statement.js?v=20260916-reparto-40-60-v1";
 import {buildClosurePreview,closureReportHtml,createClosurePdf} from "./closure-report.js?v=20260916-cierre-proof-320";
 import { app, auth, authReady } from "./auth-session.js?v=20260914-web-only-1";
 import { movementColor } from "./movement-colors.js?v=20260914-web-only-1";
