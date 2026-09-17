@@ -7879,3 +7879,14 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
   line-height:1.35;
   text-align:left;
 }
+
+/* EXPLORA · Cierre simple V3 */
+.closure-simple-card{position:relative;max-width:520px;padding:26px 22px 22px;text-align:center}
+.closure-simple-x{position:absolute;right:16px;top:14px}
+.closure-simple-brand img{display:block;width:min(210px,58vw);height:auto;margin:8px auto 16px}
+.closure-simple-brand h2{margin:0 auto 22px;max-width:360px;color:#101a45;font-size:24px;line-height:1.15}
+.closure-simple-amount{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:16px;padding:18px;border:1px solid #e5eaf2;border-radius:18px;background:#f7f9fc}
+.closure-simple-amount span{color:#66748f;font-size:14px;font-weight:650}
+.closure-simple-amount strong{color:#101a45;font-size:34px;font-weight:850}
+.closure-simple-notice{text-align:left;margin-bottom:16px}
+.closure-simple-confirm,.closure-simple-back{width:100%;margin-top:10px}

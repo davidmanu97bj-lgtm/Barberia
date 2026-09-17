@@ -5847,9 +5847,10 @@ function openClosureReport(){
   setPhotoPickerDisabled("closure",false);
   closureRequestId=newClosureRequestId();
   closureReportSnapshot=buildClosurePreview({model:settlementModel(),driverName:currentDriverName(),driverUid:user.uid,createdAtMs:Date.now()});
-  $("closureReportContent").innerHTML=closureReportHtml(closureReportSnapshot);
   const amount=Math.abs(Number(closureReportSnapshot.reconciliation.balanceBefore)||0);
   const dir=closureReportSnapshot.reconciliation.settlementDirection;
+  const simpleLabel=dir==="driver_to_explora"?"Debes a Explora":dir==="explora_to_driver"?"Explora te debe":"Cuenta al día";
+  $("closureReportContent").innerHTML=`<span>${simpleLabel}</span><strong>${money(amount)}</strong>`;
   const directionLabel=dir==="driver_to_explora"?"Chofer → Explora":dir==="explora_to_driver"?"Explora → Chofer":"Cuenta equilibrada";
   $("closureProofInstruction").textContent=amount>0.005
     ? `${directionLabel} · ${money(amount)}. Adjuntá el comprobante real de esta liquidación.`
@@ -5857,7 +5858,7 @@ function openClosureReport(){
   $("closureReportStatus").textContent="Adjuntá el comprobante obligatorio para habilitar el cierre.";
   $("closureReportStatus").className="status";
   $("generateClosureReport").disabled=true;
-  $("generateClosureReport").textContent="Confirmar cierre y dejar cuenta en $0";
+  $("generateClosureReport").textContent="Confirmar cierre";
   $("closureReportModal").classList.remove("hidden");
 }
 async function confirmClosureAndZero(){
@@ -5896,7 +5897,7 @@ async function confirmClosureAndZero(){
     });
     if(!data?.ok||!data.snapshot||Math.abs(Number(data.snapshot?.reconciliation?.balanceAfter)||0)>.005)throw Object.assign(new Error("Respuesta de cierre inválida."),{code:"closure-response-invalid"});
     closureReportSnapshot=data.snapshot;
-    $("closureReportContent").innerHTML=closureReportHtml(closureReportSnapshot);
+    $("closureReportContent").innerHTML=`<span>Cuenta al día</span><strong>${money(0)}</strong>`;
     createClosureReportFile(closureReportSnapshot);
     $("closureReportStatus").textContent=data.noNewMovements
       ? "La cuenta ya estaba cerrada. Se recuperó el último cierre."
@@ -6817,3 +6818,14 @@ async function recoverOperationalLedger(force=false) {
   })();
   try {return await operationalRecoveryPromise;} finally {operationalRecoveryPromise=null;}
 }
+
+
+// closure-simple-navigation-v3
+document.addEventListener("click",(event)=>{
+  const target=event.target.closest?.("#closureSimpleBack,#closureReportClose");
+  if(!target)return;
+  event.preventDefault();
+  $("closureReportModal")?.classList.add("hidden");
+  if(typeof clearClosureReportFile==="function") clearClosureReportFile();
+  if(typeof clearPhotoPicker==="function") clearPhotoPicker("closure");
+});
