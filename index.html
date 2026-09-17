@@ -697,37 +697,37 @@
   </div>
 </div>
 
-<div id="closureReportModal" class="modal hidden closure-report-modal" role="dialog" aria-modal="true" aria-labelledby="closureReportTitle">
-  <div class="closure-report-card">
-    <div class="modal-head"><div><p class="closure-report-kicker">CIERRE OPERATIVO</p><h2 id="closureReportTitle">Cierre y rendición de cuenta</h2></div><button id="closureReportClose" class="x" type="button" aria-label="Cerrar">×</button></div>
-    <div id="closureReportContent"></div>
+<div id="closureReportModal" class="modal hidden closure-report-modal closure-simple-modal" role="dialog" aria-modal="true" aria-labelledby="closureReportTitle">
+  <div class="closure-report-card closure-simple-card">
+    <button id="closureReportClose" class="x closure-simple-x" type="button" aria-label="Volver al inicio">&times;</button>
+    <div class="closure-simple-brand">
+      <img src="./assets/explora-logo.png?v=20260913-identidad-explora" alt="Explora · Iguazú Viajes y Servicios">
+      <h2 id="closureReportTitle">Juntos hacemos que cada viaje cuente</h2>
+    </div>
+    <div id="closureReportContent" class="closure-simple-amount"></div>
     <div class="closure-report-controls">
-      <div class="closure-zero-notice"><strong>Al confirmar, la cuenta queda en $0.</strong><span>Explora registra una liquidación interna por el saldo exacto previo. No se crea un nuevo ingreso por servicios.</span></div>
+      <div class="closure-zero-notice closure-simple-notice"><strong>Al finalizar, tu cuenta quedará en $0.</strong><span>Los movimientos anteriores quedan guardados en el historial.</span></div>
       <section class="closure-proof-panel">
-        <h3>Comprobante de liquidación obligatorio</h3>
+        <h3>Comprobante obligatorio</h3>
         <p id="closureProofInstruction" class="file-note">Adjuntá el comprobante real de la liquidación.</p>
         <div class="photo-source-picker" data-photo-picker="closure">
-          <div class="photo-source-actions" aria-label="Elegir comprobante de cierre">
-            <button type="button" class="photo-source-action camera" data-photo-input="closureProofCamera">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4a2 2 0 0 1 2 2v11H2V8a2 2 0 0 1 2-2Z"/><circle cx="12" cy="12" r="4"/></svg>
-              <span>Sacar foto<small>Usar la cámara</small></span><b aria-hidden="true">›</b>
-            </button>
-            <button type="button" class="photo-source-action gallery" data-photo-input="closureProofGallery">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg>
-              <span>Fotos / Galería<small>Elegir una foto</small></span><b aria-hidden="true">›</b>
-            </button>
+          <div class="photo-source-actions">
+            <button type="button" class="photo-source-action camera" data-photo-input="closureProofCamera"><span>Sacar foto<small>Usar la cámara</small></span></button>
+            <button type="button" class="photo-source-action gallery" data-photo-input="closureProofGallery"><span>Fotos / Galería<small>Elegir una foto</small></span></button>
           </div>
           <input id="closureProofCamera" class="photo-source-input" type="file" accept="image/*" capture="environment" data-photo-source="camera" tabindex="-1">
           <input id="closureProofGallery" class="photo-source-input" type="file" accept="image/*" data-photo-source="gallery" tabindex="-1">
           <div class="photo-source-selection" data-photo-selection aria-live="polite">Ningún comprobante seleccionado.</div>
         </div>
       </section>
-      <button id="generateClosureReport" class="save" type="button" disabled>Confirmar cierre y dejar cuenta en $0</button>
+      <button id="generateClosureReport" class="save closure-simple-confirm" type="button" disabled>Confirmar cierre</button>
+      <button id="closureSimpleBack" class="secondary closure-simple-back" type="button">Volver al inicio</button>
       <div id="closureReportActions" class="closure-report-file-actions"></div>
       <div id="closureReportStatus" class="status" role="status"></div>
     </div>
   </div>
 </div>
+
 <div id="managementModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="managementTitle"><div class="charge-screen-card"><header class="charge-brand"><span class="explora-wordmark charge-brand-logo"><img src="./assets/explora-logo.png?v=20260913-identidad-explora" alt="Explora · Iguazú Viajes y Servicios" width="1942" height="809" decoding="async"></span></header><button type="button" class="charge-back" data-close="managementModal">‹ Inicio</button><h2 id="managementTitle">Gestión</h2><div id="managementChoices"><button type="button" id="managementPay" data-movement-color="green" class="management-action management-pay"><span class="management-action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></span><span class="management-action-copy"><strong>Pagar a Explora</strong><small>Registrar dinero entregado</small></span><span class="management-chevron" aria-hidden="true">›</span></button><button type="button" id="managementCollect" data-movement-color="red" class="management-action management-collect"><span class="management-action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7v10h10"/></svg></span><span class="management-action-copy"><strong>Cobrar a Explora</strong><small>Registrar dinero recibido</small></span><span class="management-chevron" aria-hidden="true">›</span></button></div><form id="managementForm" class="hidden"><button type="button" id="managementBack" class="charge-back">‹ Gestión</button><p id="managementIntro"></p><section class="charge-panel"><div class="field"><label for="managementAmount">Importe</label><div class="money-entry"><span>$</span><input id="managementAmount" type="text" inputmode="numeric" data-money-input required placeholder="0" autocomplete="off"></div></div><div class="field"><label for="managementNote">Nota (opcional)</label><input id="managementNote" maxlength="300"></div></section><section class="charge-panel management-proof-panel"><h3>Comprobante obligatorio</h3><p class="file-note">Adjuntá una foto del comprobante. Máximo 15 MB.</p><div class="photo-source-picker" data-photo-picker="management"><div class="photo-source-actions" aria-label="Elegir comprobante"><button type="button" class="photo-source-action camera" data-photo-input="managementProofCamera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4a2 2 0 0 1 2 2v11H2V8a2 2 0 0 1 2-2Z"/><circle cx="12" cy="12" r="4"/></svg><span>Sacar foto<small>Usar la cámara</small></span><b aria-hidden="true">›</b></button><button type="button" class="photo-source-action gallery" data-photo-input="managementProofGallery"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg><span>Fotos / Galería<small>Elegir una foto</small></span><b aria-hidden="true">›</b></button></div><input id="managementProofCamera" class="photo-source-input" type="file" accept="image/*" capture="environment" data-photo-source="camera" tabindex="-1"><input id="managementProofGallery" class="photo-source-input" type="file" accept="image/*" data-photo-source="gallery" tabindex="-1"><div class="photo-source-selection" data-photo-selection aria-live="polite">Ningún comprobante seleccionado.</div></div></section><section class="charge-panel"><h3>Resultado en tu cuenta</h3><div id="managementPreview" class="charge-account" aria-live="polite"></div></section><p class="file-note">Operación interna · Sin caja chica ni factura ARCA.</p><button id="managementConfirm" class="btn primary" type="submit">Confirmar</button><div id="managementStatus" class="status" role="status"></div></form></div></div>
 <div id="closeModal" class="modal hidden">
   <div class="modal-card">
@@ -814,6 +814,6 @@
 
 <script src="./functions/period-settlement.js?v=20260916-reparto-40-60-v1"></script>
 <script src="./functions/expense-policy.js?v=20260915-deudas-310"></script>
-<script type="module" src="./app.js?v=20260916-reparto-40-60-v1"></script>
+<script type="module" src="./app.js?v=20260916-cierre-simple-final-v1"></script>
 </body>
 </html>
