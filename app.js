@@ -2755,8 +2755,8 @@ function availabilityOccupation(driver = {}) {
   return driver.availabilityDetail || driver.occupationType || driver.tripType || driver.motivoOcupado || "";
 }
 
-function availabilityDotClass(state) {
-  return state === "busy" ? "is-busy" : "is-free";
+function availabilityDotClass(state, detail = "") {
+  return state === "busy" && String(detail).toLowerCase() === "aeropuerto" ? "is-airport" : state === "busy" ? "is-busy" : "is-free";
 }
 
 function availabilityPhone(driver = {}) {
@@ -2859,7 +2859,7 @@ function renderDriverAvailability() {
   const availabilityCard = $("driverAvailabilityCard");
   if (availabilityCard) availabilityCard.classList.remove("is-free", "is-busy");
   if (availabilityCard) availabilityCard.classList.add(`is-${currentState}`);
-  if (currentDot) currentDot.className = `availability-dot ${availabilityDotClass(currentState)}`;
+  if (currentDot) currentDot.className = `availability-dot ${availabilityDotClass(currentState, availabilityOccupation(current))}`;
   if (currentLabel) currentLabel.textContent = `Estás ${availabilityStateLabel(currentState).toUpperCase()}`;
   if (currentHint) currentHint.textContent = currentState === "busy" && availabilityOccupation(current) ? `${availabilityStateHint(currentState)} · ${availabilityOccupation(current)}` : availabilityStateHint(currentState);
   if (!list) return;
@@ -2872,7 +2872,7 @@ function renderDriverAvailability() {
     const initials = name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase();
     return `<article class="availability-row ${isCurrent ? "is-current" : ""}">
       <div class="availability-avatar">${escapeHtml(initials || "C")}</div>
-      <div class="availability-driver-info"><div class="availability-driver-name">${escapeHtml(name)}${isCurrent ? '<span class="you-badge">Tú</span>' : ""}</div><div class="availability-driver-state"><i class="availability-dot ${availabilityDotClass(state)}"></i>${availabilityStateLabel(state)}${state === "busy" && availabilityOccupation(driver) ? `<span class="availability-driver-occupation">· ${escapeHtml(availabilityOccupation(driver))}</span>` : ""}</div></div>
+      <div class="availability-driver-info"><div class="availability-driver-name">${escapeHtml(name)}${isCurrent ? '<span class="you-badge">Tú</span>' : ""}</div><div class="availability-driver-state"><i class="availability-dot ${availabilityDotClass(state, availabilityOccupation(driver))}"></i>${availabilityStateLabel(state)}${state === "busy" && availabilityOccupation(driver) ? `<span class="availability-driver-occupation">· ${escapeHtml(availabilityOccupation(driver))}</span>` : ""}</div></div>
       <button type="button" class="availability-whatsapp" data-whatsapp-driver="${escapeHtml(driver.id)}" ${state !== "free" || !phone ? "disabled aria-hidden=\"true\"" : `aria-label="Abrir WhatsApp de ${escapeHtml(name)}"`}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .4 5.2.4 11.7c0 2.1.6 4.1 1.6 5.8L.3 24l6.7-1.7a11.8 11.8 0 0 0 5.1 1.1h.1c6.4 0 11.6-5.2 11.6-11.7 0-3.1-1.2-6-3.3-8.2ZM12.1 21.4h-.1c-1.7 0-3.4-.5-4.8-1.4l-.3-.2-4 1 1.1-3.9-.2-.3a9.7 9.7 0 0 1-1.5-5.2C2.3 6 6.7 1.7 12.1 1.7c2.6 0 5 1 6.8 2.8a9.7 9.7 0 0 1 2.8 6.9c0 5.4-4.3 9.8-9.6 10Zm5.4-7.3c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.6-.8-2.7-1.4-3.8-3.2-.3-.5.3-.5.8-1.6.1-.2 0-.4 0-.5 0-.1-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1 2.9 1.1 3.1c.1.2 2 3.1 4.9 4.4 1.8.8 2.5.9 3.4.8.5-.1 1.7-.7 1.9-1.3.2-.6.2-1.2.1-1.3-.1-.2-.3-.3-.6-.4Z"/></svg>
       </button>

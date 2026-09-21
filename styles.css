@@ -7427,6 +7427,7 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 .availability-dot { display:inline-block; width:12px; height:12px; flex:0 0 12px; border-radius:50%; }
 .availability-dot.is-free { background:#22b15b; box-shadow:0 0 0 3px rgba(34,177,91,.12); }
 .availability-dot.is-busy { background:#d82b4c; box-shadow:0 0 0 3px rgba(216,43,76,.10); }
+.availability-dot.is-airport { background:#2774b9; box-shadow:0 0 0 3px rgba(39,116,185,.12); }
 .availability-dot.is-offline { background:#8c94a5; box-shadow:0 0 0 3px rgba(140,148,165,.10); }
 .availability-current-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .availability-current-status { display:flex; align-items:center; gap:10px; min-width:0; }
