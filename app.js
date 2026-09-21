@@ -2803,6 +2803,9 @@ function renderDriverAvailability() {
   const currentDot = $("currentAvailabilityDot");
   const currentLabel = $("currentAvailabilityLabel");
   const currentHint = $("currentAvailabilityHint");
+  const availabilityCard = $("driverAvailabilityCard");
+  if (availabilityCard) availabilityCard.classList.remove("is-free", "is-busy");
+  if (availabilityCard) availabilityCard.classList.add(`is-${currentState}`);
   if (currentDot) currentDot.className = `availability-dot ${availabilityDotClass(currentState)}`;
   if (currentLabel) currentLabel.textContent = `Estás ${availabilityStateLabel(currentState).toUpperCase()}`;
   if (currentHint) currentHint.textContent = availabilityStateHint(currentState);
