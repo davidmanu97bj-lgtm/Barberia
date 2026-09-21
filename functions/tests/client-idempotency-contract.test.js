@@ -15,25 +15,32 @@ function sourceSection(startMarker, endMarker) {
   return appSource.slice(start, end);
 }
 
-test("los cobros usan la clave estable y una confirmación autenticada del servidor", () => {
-  const section = sourceSection('$("chargeForm")?.addEventListener("submit"', '$("addExpenseBtn")?.addEventListener("click"');
-  assert.match(section, /submitOperationalMovement/);
-  assert.doesNotMatch(section, /addDoc|setDoc|transaction\.set/);
-  assert.match(appSource, /reservePendingOperation\(pendingKind,user\.uid,fingerprint\)/);
-  assert.match(appSource, /action:"check",\.\.\.key/);
-  assert.match(appSource, /validateOperationalAck\(response,key,user\)/);
-  const server = fs.readFileSync(path.join(projectRoot,'functions/operational-save.js'),'utf8');
-  assert.match(server, /await tx\.get\(ref\)/);
-  assert.match(server, /tx\.create\(ref/);
-  assert.match(server, /same\(current\.data\(\),key,uid\)/);
+test("los cobros reutilizan un documento determinístico y verifican si ya existe", () => {
+  const section = sourceSection(
+    '$("chargeForm")?.addEventListener("submit"',
+    '$("addExpenseBtn")?.addEventListener("click"'
+  );
+  assert.match(section, /reservePendingOperation\("payment"/);
+  assert.match(section, /doc\(db, ROOT_COLLECTIONS\.payments, operation\.operationId\)/);
+  assert.match(section, /transaction\.get\(paymentRef\)/);
+  assert.match(section, /assertSameCommittedOperation\(existingPayment/);
+  assert.match(section, /idempotencyKey:\s*operation\.operationId/);
+  assert.match(section, /confirmCommittedOperation\(paymentRef/);
+  assert.doesNotMatch(section, /addDoc\s*\(/);
 });
 
-test("gastos y deuda no leen un documento inexistente con permisos del cliente", () => {
-  const section = sourceSection('$("expenseForm")?.addEventListener("submit"', 'function parseUberAmount');
-  assert.match(section, /submitOperationalMovement/);
-  assert.doesNotMatch(section, /addDoc|setDoc|transaction\.get|getDocFromServer/);
-  assert.match(appSource, /clearPendingOperation\(pendingKind,user\.uid,key\.fingerprint,key\.operationId\)/);
-  assert.match(appSource, /stage==="guardar"/);
+test("los gastos reutilizan un documento determinístico sin leer un documento todavía inexistente", () => {
+  const section = sourceSection(
+    '$("expenseForm")?.addEventListener("submit"',
+    '$("addUberBtn")?.addEventListener("click"'
+  );
+  assert.match(section, /reservePendingOperation\("expense"/);
+  assert.match(section, /doc\(db, ROOT_COLLECTIONS\.expenses, operation\.operationId\)/);
+  assert.match(section, /setDoc\(expenseRef, expensePayload\)/);
+  assert.doesNotMatch(section, /await\s+[^;\n]*transaction\.get\(expenseRef\)/);
+  assert.match(section, /idempotencyKey:\s*operation\.operationId/);
+  assert.match(section, /confirmCommittedOperation\(expenseRef/);
+  assert.doesNotMatch(section, /addDoc\s*\(/);
 });
 
 test("Telegram deduplica por operación tanto cobros como gastos", () => {

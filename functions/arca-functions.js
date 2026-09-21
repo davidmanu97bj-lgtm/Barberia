@@ -7,15 +7,14 @@ const {enqueueInvoice,processInvoice,enabled}=require('./arca-worker');
 const {internationalCEnabled}=require('./arca-invoice');
 const certificate=defineSecret('ARCA_CERTIFICATE'),privateKey=defineSecret('ARCA_PRIVATE_KEY');
 const region='southamerica-east1';
-const deploymentOptions=require('./deployment-options.json');
 module.exports=function registerArca({db,assertAdmin}) {
-  const config=async()=> { const c=(await db.collection('arca_settings').doc('current').get()).data()||{}; return {...c,enabled:deploymentOptions.arcaEnabled && c.enabled===true}; };
+  const config=async()=> (await db.collection('arca_settings').doc('current').get()).data()||{};
   function client(c) {
     const {createArcaClient}=require('./arca-client');
     const ticketRef=db.collection('arca_tickets').doc(`${c.environment}_${c.cuit}`);
     return createArcaClient({...c,certificate:certificate.value(),privateKey:privateKey.value(),ticketStore:{load:async()=>(await ticketRef.get()).data(),save:ticket=>ticketRef.set(ticket)}});
   }
-  const workOptions={region,secrets:deploymentOptions.arcaEnabled ? [certificate,privateKey] : [],timeoutSeconds:120,maxInstances:1,concurrency:1};
+  const workOptions={region,secrets:[certificate,privateKey],timeoutSeconds:120,maxInstances:1,concurrency:1};
   async function processId(id) { const c=await config();if(enabled(c))await processInvoice({db,id,config:c,client:client(c)}); }
   return {
     queueArcaInvoice:onDocumentCreated({document:'billing_records/{id}',region,retry:true},async event=>{

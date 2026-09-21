@@ -15,15 +15,15 @@ function setup() {
   const register=(changes={})=>registerUberSubmission({db,uid,input,driverName:'Chofer de prueba',balance:20000,businessId:'demo',now:NOW,...changes});
   return {db,proof,input,register};
 }
-test('Uber válido se aplica sin aprobación; dos envíos concurrentes registran una sola semana y 55% del cobro como saldo (10% neto + reparto)',async()=>{
+test('Uber válido se aplica sin aprobación; dos envíos concurrentes registran una sola semana y 105%',async()=>{
   const {db,register}=setup();
   const [first,second]=await Promise.all([register(),register()]);
   assert.equal(first.id,second.id);assert.equal(second.alreadyRegistered,true);
   const row=first.record;
   assert.equal(row.settlementWorkflowVersion,WORKFLOW);assert.equal(row.reviewStatus,'completed');
-  assert.equal(row.adminConfirmed,false);assert.equal(row.settlementImpact,55000);
-  assert.equal(row.telegramSettlementAfterBalance,75000);
-  assert.equal(balance({uberWeeks:[row]}).balance,55000);
+  assert.equal(row.adminConfirmed,false);assert.equal(row.settlementImpact,105000);
+  assert.equal(row.telegramSettlementAfterBalance,125000);
+  assert.equal(balance({uberWeeks:[row]}).balance,105000);
   assert.equal(balance({uberWeeks:[{...row,verifiedAutomatically:false}]}).balance,0);
   assert.equal(balance({uberWeeks:[{...row,reviewStatus:'pending_admin_review',settlementWorkflowVersion:'v84_driver_submission_admin_review'}]}).balance,0);
   assert.equal([...db.data.keys()].filter(key=>key.startsWith('uber_weekly_closures/')).length,1);
@@ -52,7 +52,7 @@ test('una semana histórica pendiente también bloquea duplicados sin aprobarla 
 });
 test('eliminar revierte el saldo, guarda auditoría y permite recargar con una captura verificada nueva',async()=>{
   const {db,proof,input,register}=setup();const first=await register();
-  const before=balance({uberWeeks:[first.record]}).balance;assert.equal(before,55000);
+  const before=balance({uberWeeks:[first.record]}).balance;assert.equal(before,105000);
   await deleteUberSubmission({db,documentId:first.id,adminUid:'admin',reason:'Captura incorrecta',now:NOW+1000});
   const rows=[...db.data.entries()].filter(([key])=>key.startsWith('uber_weekly_closures/')).map(([,row])=>row);
   assert.equal(balance({uberWeeks:rows}).balance,0);
@@ -62,7 +62,7 @@ test('eliminar revierte el saldo, guarda auditoría y permite recargar con una c
   await assert.rejects(register()); // consumed proof cannot resurrect a deleted record
   db.data.set('uber_proof_checks/b',{...proof,usedAt:undefined});
   const replacement=await register({input:{...input,verifiedProofId:'b'},now:NOW+2000});
-  assert.equal(replacement.record.verifiedProofId,'b');assert.equal(balance({uberWeeks:[replacement.record]}).balance,55000);
+  assert.equal(replacement.record.verifiedProofId,'b');assert.equal(balance({uberWeeks:[replacement.record]}).balance,105000);
 });
 test('un Uber ya incluido en un cierre no se borra dejando un saldo congelado incorrecto',async()=>{
   const {db,register}=setup();const first=await register();

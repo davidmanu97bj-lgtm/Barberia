@@ -1,4 +1,3 @@
-// Release: 3.1.2.0 · Permisos operativos por cuenta · 2026-09-15
 const CACHE_PREFIX = "explora-shell";
 
 self.addEventListener("install", () => self.skipWaiting());

@@ -26,22 +26,3 @@ arca-config.local.json
 # Paquetes de Hosting y registros de despliegue
 dist/
 .deploy/
-
-# Estado local del gestor: contiene configuraciones y copias privadas.
-.explora-local/
-.explora-tools/
-*.deploy.log
-
-# --- EXPLORA: no subir datos locales/privados ---
-node_modules/
-functions/node_modules/
-.explora-local/
-.firebase/
-*.log
-*.pem
-*.key
-*.p12
-*.pfx
-.env
-.env.*
-.DS_Store

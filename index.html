@@ -11,12 +11,19 @@
   <link rel="apple-touch-icon" href="./icon-192.png?v=20260913-identidad-explora" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=20260913-identidad-explora" />
   <title>Explora — Control operativo</title>
+  <script>
+    if (new URLSearchParams(location.search).has("mobile-preview")) document.documentElement.classList.add("mobile-preview");
+  </script>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-  <link rel="modulepreload" href="./app.js?v=20260916-reparto-40-60-v1" />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js" crossorigin />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js" crossorigin />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js" crossorigin />
+  <script type="module" async src="./login-entry.js?v=20260919-admin-1"></script>
+  <link rel="modulepreload" href="./app.js?v=20260921-availability-1" />
   <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
-  <script type="module" src="./auth-session.js?v=20260915-net-period-1"></script>
+  <script type="module" src="./auth-session.js?v=20260914-web-only-1"></script>
   <style>
     :root{
       --bg:#f3f5f7;--panel:#ffffff;--ink:#0e1116;--muted:#737a85;--line:#e7eaee;
@@ -121,9 +128,10 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260915-nav-color-315" />
-  <link rel="stylesheet" href="./movement-colors.css?v=20260915-net-period-1" />
-  <link rel="stylesheet" href="./period-statement.css?v=20260916-foto-317">
+  <link rel="stylesheet" href="./styles.css?v=20260921-availability-2" />
+  <link rel="stylesheet" href="./movement-colors.css?v=20260919-admin-1" />
+  <link rel="stylesheet" href="./explora-ui.css?v=20260919-admin-1" />
+  <link rel="stylesheet" href="./admin-workspace.css?v=20260919-admin-1" />
 </head>
 <body>
 <section id="splashScreen" class="splash-screen" aria-live="polite" aria-label="Cargando Explora">
@@ -167,59 +175,95 @@
     <div class="driver-brand" aria-label="Explora Iguazú, app del conductor">
       <span class="explora-wordmark driver-brand-logo"><img src="./assets/explora-logo.png?v=20260913-identidad-explora" alt="Explora · Iguazú Viajes y Servicios" width="1942" height="809" decoding="async"></span>
     </div>
-    <button id="driverProfileBtn" class="driver-profile-button" type="button" aria-label="Abrir menú y perfil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/></svg></button>
-    <button id="driverCalendarShortcut" class="statement-calendar-button" type="button" aria-label="Abrir calendario"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6M17 2v6M3 10h18M7 14h2M12 14h2M7 18h2M12 18h2"/></svg></button>
+    <button id="driverProfileBtn" class="driver-profile-button" type="button" aria-label="Abrir perfil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></button>
   </header>
   <main class="main">
     <section id="adminDashboard" class="admin-dashboard hidden" aria-label="Panel de administración">
-      <div class="admin-dashboard-heading">
-        <div>
-          <span class="admin-kicker">ADMIN</span>
-          <h1>Tiempo real</h1>
-          <p>Choferes activos y diferencia actual de cada uno.</p>
+      <div class="admin-shell">
+        <aside class="admin-sidebar admin-desktop-only">
+          <div class="admin-sidebar-brand">EXPLORA<small>CONTROL OPERATIVO</small></div>
+          <nav aria-label="Administración">
+            <button type="button" data-admin-view="overview" aria-current="page"><span data-explora-icon="home"></span>Resumen del equipo</button>
+            <button type="button" data-admin-view="movements"><span data-explora-icon="management"></span>Movimientos</button>
+            <button type="button" data-admin-view="closures"><span data-explora-icon="wallet"></span>Cierres y pagos</button>
+            <button type="button" data-admin-view="accountant"><span data-explora-icon="expense"></span>Contadora</button>
+          </nav>
+          <div class="admin-sidebar-tools"><small>HERRAMIENTAS</small>
+            <button id="adminInvoicesBtn" type="button">Facturas ARCA <span>↗</span></button>
+            <button id="adminCalendarBtn" type="button">Calendario <span>↗</span></button>
+            <button id="adminDriversBtn" type="button">Gestionar choferes <span>↗</span></button>
+          </div>
+          <p class="admin-sidebar-note">Todo el equipo.<br>Una misma vista.</p>
+        </aside>
+        <div class="admin-workspace">
+          <header class="admin-workspace-heading"><div><span class="admin-eyebrow">ADMINISTRACIÓN</span><h1 id="adminWorkspaceTitle">Resumen del equipo</h1><h1 class="admin-mobile-title">Administración</h1><p id="adminWorkspaceSubtitle">Saldos actualizados de todos tus choferes.</p></div><button id="adminLogoutBtn" type="button" class="admin-exit">Salir</button></header>
+          <section class="admin-quick-section" aria-label="Cargas rápidas"><div class="admin-section-label"><h2>Cargas rápidas</h2><span>Elegí qué querés registrar</span></div><div class="admin-quick-actions">
+            <button id="adminDigitalExpenseBtn" disabled class="admin-quick digital" type="button"><span data-explora-icon="digital"></span><span><strong>Pago digital</strong><small>Gasto pagado por Explora para un chofer.</small></span><b aria-hidden="true">↗</b></button>
+            <button id="adminAddDebtBtn" disabled class="admin-quick debt" type="button"><span data-explora-icon="debt"></span><span><strong>Deuda 100% chofer</strong><small>Multa u otro importe a su cargo.</small></span><b aria-hidden="true">↗</b></button>
+            <button id="adminGroupDebtBtn" disabled class="admin-quick group" type="button"><span data-explora-icon="management"></span><span><strong>Deuda grupal</strong><small>El mismo importe para cada chofer activo.</small></span><b aria-hidden="true">↗</b></button>
+          </div><p id="adminQuickStatus" role="status">Sincronizando el equipo…</p></section>
+          <p class="admin-mobile-note">Los informes y el control del equipo están disponibles en la versión para notebook.</p>
+          <div class="admin-desktop-only">
+            <section data-admin-panel="overview">
+              <div id="adminOverviewMetrics" class="admin-metrics" aria-live="polite"></div>
+              <div class="admin-surface"><div class="admin-section-label"><div><h2>Estado de las cuentas</h2><p>Quién debe a quién, sin abrir cada chofer.</p></div><span class="admin-live">En tiempo real</span></div><div id="adminDriverList" class="admin-driver-list" aria-live="polite"><div class="admin-driver-empty">Consultando saldos…</div></div></div>
+            </section>
+            <section data-admin-panel="movements" hidden class="admin-surface">
+              <div class="admin-section-label"><div><h2>Actividad de todo el equipo</h2><p>Cobros, gastos y deudas con sus comprobantes.</p></div><button id="adminMovementsBtn" type="button" class="admin-outline">Corregir un movimiento</button></div>
+              <div class="admin-filters"><label>Mes<select id="adminActivityMonth"></select></label><label>Mostrar<select id="adminActivityType"><option value="all">Todos</option><option value="cash">Cobros en efectivo</option><option value="digital">Cobros digitales</option><option value="expense">Gastos</option><option value="debt">Deudas</option><option value="payment">Pagos</option><option value="uber">Uber</option></select></label><label class="admin-search">Buscar<input id="adminActivitySearch" type="search" placeholder="Chofer o detalle"></label></div>
+              <div id="adminActivityTable" class="admin-table-scroll"></div><button id="adminMoreActivity" class="admin-outline" type="button" hidden>Ver más movimientos</button>
+            </section>
+            <section data-admin-panel="closures" hidden class="admin-surface">
+              <div class="admin-section-label"><div><h2>Cierres y pagos</h2><p>Rendiciones de todos los choferes y sus comprobantes.</p></div><button id="adminManageClosuresBtn" class="admin-outline" type="button">Gestionar pendientes</button></div>
+              <div class="admin-toolbar"><button id="adminAdjustmentBtn" class="admin-outline" type="button">Registrar pago / ajuste</button><button id="adminHistoryBtn" class="admin-outline" type="button">Consultar historial</button></div>
+              <div id="adminClosuresTable" class="admin-table-scroll"></div>
+            </section>
+            <section data-admin-panel="accountant" hidden class="admin-surface">
+              <div class="admin-section-label"><div><h2>Documentación del mes</h2><p>El 40% de participación, el resumen detallado y la factura recibida de cada chofer.</p></div><button id="adminRefreshDocuments" type="button" class="admin-outline">Actualizar</button></div>
+              <div class="admin-filters"><label>Mes del informe<select id="adminDocumentsMonth"></select></label><p>El importe se calcula sobre la facturación bruta. Los gastos y las deudas no reducen el 40%.</p></div>
+              <p id="adminDocumentsStatus" role="status"></p><div id="adminDocumentsTable" class="admin-table-scroll"></div>
+            </section>
+          </div>
         </div>
-      </div>
-
-      <div id="adminDriverList" class="admin-driver-list" aria-live="polite">
-        <div class="admin-driver-empty">Cargando choferes activos…</div>
-      </div>
-
-      <div class="admin-action-grid" aria-label="Acciones del administrador">
-        <button id="adminCalendarBtn" class="admin-action-btn" type="button"><strong>Calendario</strong><span>Viajes del equipo.</span></button>
-        <button id="adminInvoicesBtn" class="admin-action-btn" type="button"><strong>Facturas ARCA</strong><span>Autorizaciones, pendientes y PDF.</span></button>
-        <button id="adminDriversBtn" class="admin-action-btn primary" type="button">
-          <strong>Crear / editar / borrar chofer</strong>
-          <span>Altas, datos, clave y acceso.</span>
-        </button>
-        <button id="adminAddDebtBtn" class="admin-action-btn" type="button">
-          <strong>Agregar deuda</strong>
-          <span>Monto, motivo y comprobante.</span>
-        </button>
-        <button id="adminAdjustmentBtn" class="admin-action-btn" type="button">
-          <strong>Registrar pago / ajuste</strong>
-          <span>Pagos entre chofer y Explora.</span>
-        </button>
-        <button id="adminMovementsBtn" class="admin-action-btn" type="button">
-          <strong>Modificar / eliminar cobros o gastos</strong>
-          <span>Corregir importes o borrar duplicados.</span>
-        </button>
-        <button id="adminHistoryBtn" class="admin-action-btn" type="button">
-          <strong>Historial</strong>
-          <span>Deudas, ajustes y cierres.</span>
-        </button>
-        <button id="adminManageClosuresBtn" class="admin-action-btn" type="button">
-          <strong>Gestionar cierres</strong>
-          <span>Pagos pendientes de Explora.</span>
-        </button>
-        <button id="adminLogoutBtn" class="admin-action-btn logout" type="button">
-          <strong>Salir</strong>
-          <span>Cerrar sesión de administrador.</span>
-        </button>
       </div>
     </section>
 
     <div id="driverDashboard">
-      <section id="periodStatement" aria-label="Cuenta corriente del período"></section>
+      <section id="principalView" class="principal-view">
+        <div class="institutional-hero" role="group" aria-label="Explora · Iguazú Viajes y Servicios">
+          <img src="./assets/explora-home-reference.png" alt="" width="864" height="1536">
+          <button id="homeLogoutBtn" class="home-logout" type="button">Salir</button>
+        </div>
+        <p id="homeDriverGreeting" class="home-driver-greeting">Hola, chofer</p>
+        <section id="driverAvailabilityCard" class="driver-availability-card" aria-labelledby="driverAvailabilityTitle">
+          <div class="availability-current-row">
+            <div class="availability-current-status"><i id="currentAvailabilityDot" class="availability-dot is-free"></i><div><strong id="currentAvailabilityLabel">Estás LIBRE</strong><small id="currentAvailabilityHint">Disponible para recibir viajes</small></div></div>
+            <button id="changeAvailabilityBtn" class="availability-change" type="button">↔&nbsp; Cambiar</button>
+          </div>
+          <button id="availabilityOpenBtn" class="availability-summary availability-summary-button" type="button" aria-label="Ver disponibilidad de choferes">
+            <span class="availability-count"><i class="availability-dot is-free"></i><b id="availableDriversCount">0</b> libres</span>
+            <span class="availability-count"><i class="availability-dot is-busy"></i><b id="busyDriversCount">0</b> ocupados</span>
+            <span class="availability-open" aria-hidden="true">›</span>
+          </button>
+        </section>
+        <section class="collection-tools" aria-labelledby="collectionToolsTitle">
+          <h1 id="collectionToolsTitle">Herramientas de cobro <span aria-hidden="true"></span></h1>
+          <div id="driverQuickActions" class="collection-grid" tabindex="-1">
+            <button type="button" data-mode="cash" class="collection-tool icon-cash"><span data-explora-icon="cash"></span><span>Cobrar<br>efectivo</span></button>
+            <button type="button" data-mode="digital" class="collection-tool icon-digital"><span data-explora-icon="digital"></span><span>Cobrar<br>digital</span></button>
+            <button type="button" id="addExpenseBtn" class="collection-tool icon-expense"><span data-explora-icon="expense"></span><span>Cargar<br>gasto</span></button>
+            <button type="button" id="closeDayBtn" class="collection-tool icon-management" aria-label="Gestión"><span data-explora-icon="management"></span><span>Gestión</span></button>
+          </div>
+        </section>
+        <section class="latest-activities" aria-labelledby="latestActivitiesTitle">
+          <div class="activities-heading"><h2 id="latestActivitiesTitle">Últimas actividades</h2><button type="button" id="viewAllActivities">Consultar todas <span aria-hidden="true">→</span></button></div>
+          <div id="recentActivities" class="activity-list" aria-live="polite"><div class="activity-empty">Consultando tus movimientos…</div></div>
+        </section>
+      </section>
+      <section id="walletView" class="wallet-view hidden" aria-labelledby="walletTitle" tabindex="-1">
+        <div class="wallet-heading"><div class="wallet-title-actions"><button type="button" id="backFromManagement">Volver</button><h1 id="walletTitle">Gestión</h1></div></div>
+        <section id="monthlyManagement" aria-label="Información mensual del chofer"></section>
+      <div class="legacy-wallet-summary" aria-hidden="true" hidden>
       <section class="driver-balance-card" id="driverBalanceCard" aria-label="Resultado actual">
         <div class="driver-balance-top"><span>Resultado actual</span><span id="syncStatus" class="sync" aria-live="polite">Conectando…</span></div>
         <h1 class="driver-balance-title"><span id="settlementDirection">Consultando tu saldo</span> <span id="settlementTotal">—</span></h1>
@@ -227,21 +271,13 @@
         <span id="driverBalanceBadge" class="driver-balance-badge">Actualizando</span>
         <svg class="driver-balance-trend" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 17 6-6 4 4 7-9M15 6h6v6"/></svg>
       </section>
-      <section id="driverQuickActions" class="driver-quick-actions" aria-label="Operaciones" tabindex="-1">
-        <button type="button" data-mode="cash" data-movement-color="red" class="driver-action tone-cash"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><ellipse cx="12" cy="12" rx="3" ry="4"/><path d="M5 8h.01M19 8h.01M5 16h.01M19 16h.01"/></svg><span>Cobrar<br>efectivo</span></button>
-        <button type="button" data-mode="digital" data-movement-color="green" class="driver-action tone-digital"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span>Cobrar<br>digital</span></button>
-        <button id="addExpenseBtn" type="button" class="driver-action tone-expense"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V3h11v18M2 21h14M3 10h11M14 8h2l3 3v6a2 2 0 0 0 4 0V8l-4-4M20 5v4h3"/></svg><span>Cargar<br>gasto</span></button>
-        <button id="closeDayBtn" type="button" class="driver-action tone-close" aria-label="Cierre"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12 3 3 7-7"/></svg><span>Cierre</span></button>
-      </section>
+        <div class="wallet-pair"><article><span>Efectivo · Neto</span><strong id="driverWalletValue">—</strong></article><article><span>Digital · Neto</span><strong id="exploraWalletValue">—</strong></article></div>
+        <button type="button" id="openPeriodClose" class="period-primary">Ir a Billeteras <span aria-hidden="true">→</span></button>
+        <div class="wallet-existing-tools"><button id="walletCalendar" type="button">Calendario</button>
       <div class="driver-other-actions">
         <span id="advanceBox"><button id="requestAdvanceBtn" type="button">Pedir adelanto <span aria-hidden="true">↗</span></button></span>
       </div>
-      <details class="statement-history-toggle"><summary>Consultar historial detallado y orden de movimientos</summary><section class="driver-history" id="driverHistory" aria-labelledby="driverHistoryTitle" tabindex="-1">
-        <div class="driver-history-heading"><h2 id="driverHistoryTitle">Historial de movimientos <span id="receiptCount">0</span></h2><label class="driver-sort"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M6 12h12M9 18h6"/></svg><select id="receiptSort" aria-label="Orden del historial"><option value="newest">Más recientes</option><option value="oldest">Más antiguos</option></select></label></div>
-        <div id="receiptList" class="driver-movements"><div class="empty">Los movimientos aparecerán acá.</div></div>
-        <button id="receiptsToggle" class="receipts-toggle hidden" type="button">Ver más movimientos</button>
-      </section>
-      </details>
+        </div>
       <details class="driver-advice"><summary>Recomendación para tu saldo</summary><div id="settlementDifferenceHint"></div>
       <section id="driverNewsCard" class="driver-news-card is-balanced" aria-labelledby="driverNewsTitle" aria-live="polite">
         <div class="driver-news-icon" aria-hidden="true">!</div>
@@ -252,20 +288,46 @@
         </div>
       </section>
       </details>
-      <nav class="driver-nav" aria-label="Navegación del conductor">
-        <button type="button" data-driver-nav="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-8 9 8v11h-6v-7H9v7H3Z"/></svg><span>Movimientos</span></button>
-        <button type="button" data-mode="cash"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><ellipse cx="12" cy="12" rx="3" ry="4"/></svg><span>Cobrar efectivo</span></button>
-        <button type="button" data-mode="digital"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg><span>Cobrar digital</span></button>
-        <button type="button" data-statement-action="expense"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V3h11v18M2 21h14M3 10h11M14 8h2l3 3v6a2 2 0 0 0 4 0V8l-4-4"/></svg><span>Cargar gastos</span></button>
-        <button type="button" data-statement-action="management"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12 3 3 7-7"/></svg><span>Cierre</span></button>
+      </div>
+      </section>
+      <section id="historyView" class="hidden" tabindex="-1"><button type="button" id="backFromHistory" class="text-back">← Principal</button>
+      <section class="driver-history" id="driverHistory" aria-labelledby="driverHistoryTitle" tabindex="-1">
+        <div class="driver-history-heading"><h2 id="driverHistoryTitle">Todas las actividades <span id="receiptCount">0</span></h2><label class="driver-sort"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M6 12h12M9 18h6"/></svg><select id="receiptSort" aria-label="Orden del historial"><option value="newest">Más recientes</option><option value="oldest">Más antiguos</option></select></label></div>
+        <div id="receiptList" class="activity-list"><div class="empty">Los movimientos aparecerán acá.</div></div>
+        <button id="receiptsToggle" class="receipts-toggle hidden" type="button">Ver más movimientos</button>
+      </section>
+      </section>
+      <section id="periodView" class="period-view hidden" tabindex="-1" aria-labelledby="periodTitle">
+        <header class="period-header"><button type="button" id="backFromPeriod" aria-label="Volver a Principal">←</button><div class="period-brand">EXPLORA<small>IGUAZÚ | VIAJES Y SERVICIOS</small></div><div class="period-date"><span data-explora-icon="calendar"></span><div><time id="periodDate"></time><small>Cierre del período</small></div></div></header>
+        <h1 id="periodTitle">Cierre del período</h1><p class="period-intro">Revisá el resumen antes de confirmar.</p>
+        <div id="periodSections"></div>
+        <button type="button" id="confirmPeriodClose" class="period-primary">CONFIRMAR CIERRE <span data-explora-icon="arrow"></span></button>
+        <p id="periodStatus" role="status"></p>
+        <p class="period-motto">DISCIPLINA HOY, MÁS DESTINOS MAÑANA</p>
+      </section>
+      <nav class="explora-nav" aria-label="Navegación del conductor">
+        <button type="button" data-driver-nav="home" aria-current="page"><span data-explora-icon="home"></span><span>Principal</span></button>
+        <button type="button" data-driver-nav="wallet"><span data-explora-icon="wallet"></span><span>Billeteras</span></button>
       </nav>
+
     </div>
   </main>
 </section>
 
-<div id="documentModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="documentTitle">
-  <div class="modal-card document-modal-card"><div class="modal-head"><h2 id="documentTitle">Comprobante PDF</h2><button id="documentCloseBtn" class="x" type="button" aria-label="Cerrar PDF">×</button></div><p id="documentStatus" role="status"></p><div id="documentActions" class="document-actions"></div></div>
+
+<div id="periodReceiptModal" class="period-receipt-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="periodReceiptTitle">
+  <div class="period-receipt-card">
+    <button type="button" id="dismissPeriodReceipt" class="receipt-dismiss" aria-label="Cerrar">×</button>
+    <span class="receipt-upload-symbol" data-explora-icon="upload"></span>
+    <h2 id="periodReceiptTitle">Para cerrar por favor carga el comprobante de la operación</h2>
+    <label class="period-primary receipt-file-label" for="periodReceiptFile" tabindex="0" role="button">Cargar comprobante</label>
+    <input type="file" id="periodReceiptFile" accept="image/*,.pdf" hidden>
+    <p id="periodReceiptStatus" role="status"></p>
+    <button type="button" id="acceptPeriodReceipt" class="period-primary" disabled>Aceptar y cerrar</button>
+    <button type="button" id="cancelPeriodReceipt" class="receipt-cancel">Cancelar</button>
+  </div>
 </div>
+
 <div id="driverProfileModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="driverProfileTitle">
   <div class="modal-card driver-profile-card">
     <div class="modal-head"><h2 id="driverProfileTitle">Mi perfil</h2><button class="x" data-close="driverProfileModal" aria-label="Cerrar perfil">×</button></div>
@@ -301,7 +363,7 @@
     <div class="charge-heading"><span id="chargeIcon" class="charge-icon" aria-hidden="true"></span><div><h2 id="chargeTitle">Nuevo cobro</h2><p id="chargeIntro"></p></div></div>
     <form id="chargeForm" novalidate><div id="chargeStepLabel" class="charge-step-label" role="status" aria-live="polite"></div><div class="charge-step-track" aria-hidden="true"><span></span><span></span><span></span><span></span></div><section data-charge-step="0" class="charge-step">
       <input type="hidden" id="chargeMode">
-      <div id="chargeDigitalTypeField" class="charge-panel hidden"><label for="chargeDigitalType">Tipo de pago</label><select id="chargeDigitalType"><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="qr">QR</option></select></div>
+      <input id="chargeDigitalType" type="hidden" value="transfer">
       <div class="field charge-panel charge-amount-panel">
         <label for="chargeAmount">Monto cobrado</label>
         <div class="money-entry"><span aria-hidden="true">$</span><input id="chargeAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
@@ -309,7 +371,7 @@
 </section><section data-charge-step="1" class="charge-step hidden">
       <div class="charge-panel charge-trip"><h3>Servicio realizado</h3>
         <h4>Recorrido</h4><div class="charge-route-fields">
-          <div class="field tourism-location-field">
+          <div class="field tourism-location-field route-required-field">
             <label for="tourismOriginSearch">Salida</label>
             <div class="tourism-search-control">
               <input id="tourismOriginSearch" autocomplete="off" maxlength="120" placeholder="Lugar o país…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tourismOriginMatches" required>
@@ -318,7 +380,7 @@
             <input id="tourismOrigin" type="hidden">
             <div id="tourismOriginMatches" class="route-results tourism-matches" role="listbox" aria-label="Opciones de salida"></div>
           </div>
-          <div class="field tourism-location-field">
+          <div id="tourismDestinationField" class="field tourism-location-field route-required-field hidden">
             <label for="tourismDestinationSearch">Llegada</label>
             <div class="tourism-search-control">
               <input id="tourismDestinationSearch" autocomplete="off" maxlength="120" placeholder="Lugar o país…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tourismDestinationMatches" required>
@@ -336,20 +398,21 @@
 </section><section data-charge-step="2" class="charge-step hidden">
       <div id="proofField" class="field charge-panel hidden">
         <label>Comprobante digital</label>
-        <div class="photo-source-picker" data-photo-picker="digital">
+        <div class="photo-source-picker expense-proof-picker" data-photo-picker="digital">
           <div class="photo-source-actions" aria-label="Elegir origen de la foto">
-            <button type="button" class="photo-source-action camera" data-photo-input="proofCamera">Sacar foto con la cámara</button>
-            <button type="button" class="photo-source-action gallery" data-photo-input="proof">Subir foto de galería</button>
+            <button type="button" class="photo-source-action camera" data-photo-input="proofCamera"><span class="expense-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span><strong>Sacar foto</strong><small>Usar cámara</small></span></button>
+            <button type="button" class="photo-source-action gallery" data-photo-input="proof"><span class="expense-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-3 5 5"/></svg></span><span><strong>Elegir de galería</strong><small>Subir una foto</small></span></button>
           </div>
           <input id="proofCamera" class="photo-source-input" type="file" accept="image/*" capture="environment" data-photo-source="camera" tabindex="-1">
           <input id="proof" class="photo-source-input" type="file" accept="image/*" data-photo-source="gallery" tabindex="-1">
           <div class="photo-source-selection" data-photo-selection aria-live="polite">Ninguna foto seleccionada.</div>
         </div>
-        <div class="file-note">Solo se aceptan fotos tomadas con la cámara o elegidas desde la galería.</div>
+        <div class="file-note">Al elegir la foto se habilita la confirmación.</div>
       </div>
 </section><section data-charge-step="3" class="charge-step hidden">
         <div class="charge-named-invoice"><label class="charge-invoice-toggle"><input id="chargeNamedInvoice" type="checkbox" aria-controls="chargeCustomerFields" aria-expanded="false">El pasajero pide factura a su nombre</label><div id="chargeCustomerFields" class="hidden"><div class="field"><label for="chargeCustomerName">Nombre o razón social</label><input id="chargeCustomerName" maxlength="160" disabled></div><div class="charge-two-columns"><div class="field"><label for="chargeCustomerDocType">Documento</label><select id="chargeCustomerDocType" disabled><option value="DNI">DNI</option><option value="CUIT">CUIT</option><option value="passport">Pasaporte</option></select></div><div class="field"><label for="chargeCustomerDoc">Número</label><input id="chargeCustomerDoc" maxlength="30" autocomplete="off" disabled></div></div><div class="field"><label for="chargeCustomerVat">Condición frente al IVA</label><select id="chargeCustomerVat" disabled><option value="consumer">Consumidor final</option><option value="registered">Responsable inscripto</option><option value="monotributo">Monotributista</option><option value="exempt">Exento</option><option value="pending">Por confirmar</option></select></div></div></div>
       <section class="charge-panel charge-fiscal"><div class="charge-fiscal-heading"><h3>Factura de Explora</h3><span id="arcaModeLabel">Consultando…</span></div><p>Monotributo · Factura C</p><div class="charge-invoice-total"><span>Total a facturar</span><strong id="chargeInvoiceTotal">$ 0</strong></div><small id="arcaModeNote">Consultando el estado de la facturación.</small></section>
+</section>
 </section>
       <div id="chargeStatus" class="status" aria-live="polite"></div>
       <div class="modal-actions"><button id="chargeStepBack" type="button" class="secondary">Cancelar</button><button id="saveChargeBtn" type="submit" class="save">Confirmar cobro</button></div>
@@ -357,19 +420,33 @@
   </div>
 </div>
 
+
+<div id="adminDigitalExpenseModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminDigitalExpenseTitle">
+ <div class="modal-card admin-digital-card"><div class="modal-head"><h2 id="adminDigitalExpenseTitle">Pago digital de Explora</h2><button class="x" data-close="adminDigitalExpenseModal" aria-label="Cerrar">×</button></div>
+ <p class="admin-form-note">Registrá un gasto ya pagado por Explora y adjuntá su comprobante.</p>
+ <form id="adminDigitalExpenseForm">
+  <div class="field"><label for="adminExpenseDriver">Chofer</label><select id="adminExpenseDriver" required></select></div>
+  <div class="field"><label for="adminExpenseType">Concepto</label><select id="adminExpenseType" required></select><p id="adminExpenseResponsibility" class="file-note"></p></div>
+  <div class="field"><label for="adminExpenseAmount">Monto pagado</label><input id="adminExpenseAmount" class="money-input" type="text" inputmode="numeric" data-money-input autocomplete="off" placeholder="0" required></div>
+  <div class="field"><label for="adminExpenseDetail">Detalle</label><input id="adminExpenseDetail" maxlength="280" placeholder="Ej. Pago del seguro del auto" required></div>
+  <div class="field"><label for="adminExpenseProof">Comprobante</label><input id="adminExpenseProof" type="file" accept="image/*,.pdf" required></div>
+  <p id="adminDigitalExpenseStatus" role="status" class="status"></p><div class="modal-actions"><button type="button" class="secondary" data-close="adminDigitalExpenseModal">Cancelar</button><button type="submit" class="save" id="saveAdminDigitalExpense">Confirmar pago digital</button></div>
+ </form></div>
+</div>
+
 <div id="debtModal" class="modal hidden">
   <div class="modal-card">
-    <div class="modal-head"><h2>Agregar deuda</h2><button class="x" data-close="debtModal">×</button></div>
+    <div class="modal-head"><h2 id="debtModalTitle">Deuda 100% chofer</h2><button class="x" data-close="debtModal">×</button></div>
     <form id="debtForm">
-      <div class="debt-modal-note">La deuda quedará asociada al chofer seleccionado y aparecerá con su motivo y comprobante.</div>
+      <div id="debtModalNote" class="debt-modal-note">La deuda quedará asociada al chofer seleccionado y aparecerá con su motivo y comprobante.</div>
       <div class="field">
         <label for="debtDriver">Chofer</label>
         <select id="debtDriver" required></select>
       </div>
-      <div class="field"><label for="debtAmount">Importe de la deuda</label><input id="debtAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
+      <div class="field"><label id="debtAmountLabel" for="debtAmount">Importe de la deuda</label><input id="debtAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div>
       <div class="field"><label for="debtDetail">Detalle / motivo</label><input id="debtDetail" placeholder="Ej. Diferencia de caja" required></div>
       <div class="field"><label for="debtProof">Comprobante</label><input id="debtProof" type="file" accept="image/*,.pdf" required><div class="file-note">El chofer podrá ver este comprobante desde su pantalla.</div></div>
-      <div id="debtStatus" class="status"></div>
+      <div id="groupDebtPreview" class="group-debt-preview" hidden aria-live="polite"></div><div id="debtStatus" class="status"></div>
       <div class="modal-actions"><button type="button" class="secondary" data-close="debtModal">Cancelar</button><button id="saveDebtBtn" type="submit" class="save">Registrar deuda</button></div>
     </form>
   </div>
@@ -461,6 +538,14 @@
   </div>
 </div>
 
+<div id="availabilityModal" class="modal hidden availability-modal" role="dialog" aria-modal="true" aria-labelledby="availabilityModalTitle">
+  <div class="modal-card availability-card-modal">
+    <div class="modal-head"><div><h2 id="availabilityModalTitle">Disponibilidad de choferes</h2><p class="availability-modal-subtitle">Estado en tiempo real</p></div><button class="x" data-close="availabilityModal" aria-label="Cerrar">×</button></div>
+    <div id="availabilityList" class="availability-list" aria-live="polite"><div class="availability-empty">Consultando disponibilidad…</div></div>
+    <div class="availability-modal-note"><span aria-hidden="true">ⓘ</span><span>Tocá el ícono de WhatsApp para iniciar una conversación con un chofer libre.</span></div>
+  </div>
+</div>
+
 <div id="financialEditModal" class="modal hidden">
   <div class="modal-card">
     <div class="modal-head"><h2>Modificar importe</h2><button class="x" data-close="financialEditModal">×</button></div>
@@ -490,27 +575,27 @@
   <div class="charge-screen-card">
     <header class="charge-brand"><span class="explora-wordmark charge-brand-logo"><img src="./assets/explora-logo.png?v=20260913-identidad-explora" alt="Explora · Iguazú Viajes y Servicios" width="1942" height="809" decoding="async"></span></header>
     <button type="button" class="charge-back" data-close="expenseModal">‹ Inicio</button>
-    <div class="charge-heading"><span class="charge-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 21V3h10v18M4 10h10M2 21h14M14 7h2l4 4v7a1 1 0 0 0 2 0V8l-4-4"/></svg></span><div><h2 id="expenseTitle">Gastos y deudas</h2><p>Elegí qué vas a registrar.</p></div></div>
+    <div class="charge-heading"><span class="charge-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 21V3h10v18M4 10h10M2 21h14M14 7h2l4 4v7a1 1 0 0 0 2 0V8l-4-4"/></svg></span><div><h2 id="expenseTitle">Cargar gasto</h2><p>Elegí el gasto y adjuntá su comprobante.</p></div></div>
     <form id="expenseForm" novalidate>
-      <input id="expenseType" type="hidden"><input id="expenseEntryKind" type="hidden">
+      <input id="expenseType" type="hidden">
       <div id="expenseStepLabel" class="charge-step-label" role="status" aria-live="polite"></div>
       <div id="expenseStepTrack" class="charge-step-track" aria-hidden="true"></div>
-      <section data-expense-step="0" class="charge-step"><div id="expenseTypeGroups"></div></section>
+      <section data-expense-step="0" class="charge-step"><div id="expenseTypeGroups"></div><aside class="expense-attention"><strong>ATENCIÓN</strong><p>Explora no reconoce pagos personales: monotributo, seguro de vida, credenciales PSA, licencias de conducir. Solo gastos relacionados al auto.</p></aside></section>
       <section data-expense-step="1" class="charge-step hidden charge-panel">
         <div class="expense-selection" data-expense-selection></div>
-        <div class="field"><label id="expenseAmountLabel" for="expenseAmount">Importe</label><div class="money-entry"><span>$</span><input id="expenseAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div></div>
-        <div class="field"><label for="expenseDetail">Detalle <span class="expense-optional">(opcional)</span></label><input id="expenseDetail" placeholder="Ej. Carga en YPF" maxlength="280"></div>
+        <div class="field"><label for="expenseAmount">Monto del gasto</label><div class="money-entry"><span>$</span><input id="expenseAmount" class="money-input" type="text" inputmode="numeric" data-money-input placeholder="0" autocomplete="off" required></div></div>
+        <input id="expensePaymentMethod" type="hidden" value="cash"><p class="expense-cash-note">Se descuenta de tu billetera de efectivo.</p><div class="field"><label for="expenseDetail">Detalle <span class="expense-optional">(opcional)</span></label><input id="expenseDetail" placeholder="Ej. Carga en YPF" maxlength="280"></div>
       </section>
-      <section data-expense-step="2" class="charge-step hidden charge-panel"><div class="expense-selection" data-expense-selection></div><div id="expenseRegistrationSummary" class="expense-registration-summary"></div><h3>Foto del comprobante</h3><p class="expense-photo-note">Se guardará como PDF en Explora y se enviará como imagen a Telegram.</p><div class="photo-source-picker" data-photo-picker="expense">
+      <section data-expense-step="2" class="charge-step hidden charge-panel"><h3>Foto del comprobante</h3><p class="expense-photo-note">Obligatoria para registrar el gasto.</p><div class="photo-source-picker expense-proof-picker" data-photo-picker="expense">
           <div class="photo-source-actions" aria-label="Elegir origen de la foto">
-            <button type="button" class="photo-source-action camera" data-photo-input="expenseProofCamera">Sacar foto con la cámara</button>
-            <button type="button" class="photo-source-action gallery" data-photo-input="expenseProof">Subir foto de galería</button>
+            <button type="button" class="photo-source-action camera" data-photo-input="expenseProofCamera"><span class="expense-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span><strong>Sacar foto</strong><small>Usar cámara</small></span></button>
+            <button type="button" class="photo-source-action gallery" data-photo-input="expenseProof"><span class="expense-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 3-3 5 5"/></svg></span><span><strong>Elegir de galería</strong><small>Subir una foto</small></span></button>
           </div>
           <input id="expenseProofCamera" class="photo-source-input" type="file" accept="image/*" capture="environment" data-photo-source="camera" tabindex="-1">
           <input id="expenseProof" class="photo-source-input" type="file" accept="image/*" data-photo-source="gallery" tabindex="-1">
           <div class="photo-source-selection" data-photo-selection aria-live="polite">Ninguna foto seleccionada.</div>
         </div>
-<p class="file-note">Sacá una foto o elegila de Fotos / Galería.</p></section>
+<p class="file-note">Al elegir la foto se habilita la confirmación.</p></section>
       <div id="expenseStatus" class="status" role="status" aria-live="polite"></div>
       <div class="modal-actions"><button id="expenseStepBack" type="button" class="secondary">Cancelar</button><button id="saveExpenseBtn" type="submit" class="save">Continuar</button></div>
     </form>
@@ -598,8 +683,8 @@
         </div>
       </section>
       <section data-uber-step="2" class="charge-step hidden">
-        <div class="charge-panel"><label for="uberMoneyHolder">¿Quién tiene este dinero?</label><select id="uberMoneyHolder" required><option value="cash">Chofer · efectivo o cuenta propia</option><option value="digital">Explora · digital recibido</option></select><p>Elegí Explora solamente si el dinero ingresó a su cuenta. No sumes el mismo viaje dos veces.</p></div><div class="charge-panel"><h3>Movimientos en tu cuenta</h3><h4>Liquidación Uber · importe y saldo</h4><div id="uberPrincipalPreview" class="charge-account"></div><h4>Caja Explora · 10% del neto del período</h4><div id="uberCashboxPreview" class="charge-account"></div></div>
-        <p class="uber-review-note">Al registrar, el total y el 5% de caja chica se aplican a tu saldo.</p>
+        <div class="charge-panel"><h3>Movimientos en tu cuenta</h3><h4>Liquidación UBER · 50%</h4><div id="uberPrincipalPreview" class="charge-account"></div><h4 data-movement-color="red" class="movement-value">Caja chica · 10%</h4><div id="uberCashboxPreview" class="charge-account"></div></div>
+        <p class="uber-review-note">Al registrar, el reparto del 50% y el 10% de caja chica se aplican a tu saldo.</p>
       </section>
       <div id="uberStatus" class="status" aria-live="polite"></div>
       <div class="modal-actions"><button id="uberStepBack" type="button" class="secondary">Cancelar</button><button id="saveUberBtn" type="submit" class="save">Continuar</button></div>
@@ -697,47 +782,6 @@
   </div>
 </div>
 
-<div id="closureReportModal" class="modal hidden closure-report-modal closure-simple-modal" role="dialog" aria-modal="true" aria-labelledby="closureReportTitle">
-  <div class="closure-report-card closure-simple-card">
-    <button id="closureReportClose" class="x closure-simple-x" type="button" aria-label="Volver al inicio">&times;</button>
-
-    <div class="closure-simple-brand">
-      <img src="./assets/explora-logo.png?v=20260913-identidad-explora" alt="Explora · Iguazú Viajes y Servicios">
-      <h2 id="closureReportTitle">Juntos hacemos que cada viaje cuente</h2>
-    </div>
-
-    <div id="closureReportContent" class="closure-simple-amount"></div>
-
-    <div class="closure-report-controls">
-      <div class="closure-zero-notice closure-simple-notice">
-        <strong>Al finalizar, tu cuenta quedará en $0.</strong>
-        <span>El comprobante quedará guardado y los movimientos anteriores permanecerán en el historial.</span>
-      </div>
-
-      <section class="closure-proof-panel">
-        <h3>Comprobante obligatorio</h3>
-        <p id="closureProofInstruction" class="file-note">Adjuntá el comprobante real del cierre.</p>
-        <div class="photo-source-picker" data-photo-picker="closure">
-          <div class="photo-source-actions">
-            <button type="button" class="photo-source-action camera" data-photo-input="closureProofCamera"><span>Sacar foto<small>Usar la cámara</small></span></button>
-            <button type="button" class="photo-source-action gallery" data-photo-input="closureProofGallery"><span>Fotos / Galería<small>Elegir una foto</small></span></button>
-          </div>
-          <input id="closureProofCamera" class="photo-source-input" type="file" accept="image/*" capture="environment" data-photo-source="camera" tabindex="-1">
-          <input id="closureProofGallery" class="photo-source-input" type="file" accept="image/*" data-photo-source="gallery" tabindex="-1">
-          <div class="photo-source-selection" data-photo-selection aria-live="polite">Ningún comprobante seleccionado.</div>
-        </div>
-      </section>
-
-      <button id="generateClosureReport" class="save closure-simple-confirm" type="button" disabled>Confirmar cierre</button>
-      <button id="closureSimpleBack" class="secondary closure-simple-back" type="button">Volver al inicio</button>
-
-      <div id="closureReportActions" class="closure-report-file-actions"></div>
-      <div id="closureReportStatus" class="status" role="status"></div>
-    </div>
-  </div>
-</div>
-
-<div id="managementModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="managementTitle"><div class="charge-screen-card"><header class="charge-brand"><span class="explora-wordmark charge-brand-logo"><img src="./assets/explora-logo.png?v=20260913-identidad-explora" alt="Explora · Iguazú Viajes y Servicios" width="1942" height="809" decoding="async"></span></header><button type="button" class="charge-back" data-close="managementModal">‹ Inicio</button><h2 id="managementTitle">Gestión</h2><div id="managementChoices"><button type="button" id="managementPay" data-movement-color="green" class="management-action management-pay"><span class="management-action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></span><span class="management-action-copy"><strong>Pagar a Explora</strong><small>Registrar dinero entregado</small></span><span class="management-chevron" aria-hidden="true">›</span></button><button type="button" id="managementCollect" data-movement-color="red" class="management-action management-collect"><span class="management-action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7v10h10"/></svg></span><span class="management-action-copy"><strong>Cobrar a Explora</strong><small>Registrar dinero recibido</small></span><span class="management-chevron" aria-hidden="true">›</span></button></div><form id="managementForm" class="hidden"><button type="button" id="managementBack" class="charge-back">‹ Gestión</button><p id="managementIntro"></p><section class="charge-panel"><div class="field"><label for="managementAmount">Importe</label><div class="money-entry"><span>$</span><input id="managementAmount" type="text" inputmode="numeric" data-money-input required placeholder="0" autocomplete="off"></div></div><div class="field"><label for="managementNote">Nota (opcional)</label><input id="managementNote" maxlength="300"></div></section><section class="charge-panel management-proof-panel"><h3>Comprobante obligatorio</h3><p class="file-note">Adjuntá una foto del comprobante. Máximo 15 MB.</p><div class="photo-source-picker" data-photo-picker="management"><div class="photo-source-actions" aria-label="Elegir comprobante"><button type="button" class="photo-source-action camera" data-photo-input="managementProofCamera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4a2 2 0 0 1 2 2v11H2V8a2 2 0 0 1 2-2Z"/><circle cx="12" cy="12" r="4"/></svg><span>Sacar foto<small>Usar la cámara</small></span><b aria-hidden="true">›</b></button><button type="button" class="photo-source-action gallery" data-photo-input="managementProofGallery"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg><span>Fotos / Galería<small>Elegir una foto</small></span><b aria-hidden="true">›</b></button></div><input id="managementProofCamera" class="photo-source-input" type="file" accept="image/*" capture="environment" data-photo-source="camera" tabindex="-1"><input id="managementProofGallery" class="photo-source-input" type="file" accept="image/*" data-photo-source="gallery" tabindex="-1"><div class="photo-source-selection" data-photo-selection aria-live="polite">Ningún comprobante seleccionado.</div></div></section><section class="charge-panel"><h3>Resultado en tu cuenta</h3><div id="managementPreview" class="charge-account" aria-live="polite"></div></section><p class="file-note">Operación interna · Sin caja chica ni factura ARCA.</p><button id="managementConfirm" class="btn primary" type="submit">Confirmar</button><div id="managementStatus" class="status" role="status"></div></form></div></div>
 <div id="closeModal" class="modal hidden">
   <div class="modal-card">
     <div class="modal-head"><h2 id="closeModalTitle">Pedir cierre</h2><button class="x" data-close="closeModal">×</button></div>
@@ -821,8 +865,8 @@
 </div>
 
 
-<script src="./functions/period-settlement.js?v=20260916-reparto-40-60-v1"></script>
-<script src="./functions/expense-policy.js?v=20260915-deudas-310"></script>
-<script type="module" src="./app.js?v=20260916-cierre-simple-v3"></script>
+<script src="./functions/period-policy.js?v=20260919-admin-1"></script>
+<script src="./functions/expense-policy.js?v=20260919-admin-1"></script>
+<script type="module" src="./app.js?v=20260921-availability-1"></script>
 </body>
 </html>

@@ -11,8 +11,8 @@ const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const functions = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
 const rules = fs.readFileSync(path.join(root, "firestore.rules"), "utf8");
 
-test("el resumen anterior fue reemplazado por Tiempo real", () => {
-  assert.match(html, /<h1>Tiempo real<\/h1>/);
+test("el nuevo panel conserva los saldos en tiempo real de todo el equipo", () => {
+  assert.match(html, /id="adminWorkspaceTitle">Resumen del equipo<\/h1>/);
   assert.match(html, /id="adminDriverList"/);
   assert.doesNotMatch(html, /id="summaryBilledAmount"/);
   assert.doesNotMatch(html, /id="summaryExpenseTotal"/);

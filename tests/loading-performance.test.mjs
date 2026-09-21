@@ -80,8 +80,8 @@ function authHarness(profile) {
   const counts={driver:0,closures:0,admin:0,signOut:0,shown:[]};
   const noop=()=>{};
   const ctx=vm.createContext({authGeneration:0,auth:{currentUser:{uid:'a',email:'a@demo.local'}},dashboardLoad:null,
-    tripCalendar:{reset:noop},unsubscribeStatementInvoices:noop,statementInvoices:new Map(),clearDocumentFiles:noop,
-    $:()=>({classList:{add:noop,remove:noop},innerHTML:'',replaceChildren:noop,textContent:'',className:''}),RECENT_RECEIPTS_LIMIT:10,visibleReceiptCount:10,
+    tripCalendar:{reset:noop},
+    $:()=>({classList:{add:noop},textContent:'',className:''}),RECENT_RECEIPTS_LIMIT:10,visibleReceiptCount:10,
     ROOT_COLLECTIONS:{payments:'payments'},ADMIN_REQUIRED_SNAPSHOT_KEYS:new Set(['drivers']),
     fallbackProfile:()=>({displayName:'A',role:'chofer'}),loadProfile:()=>profile,
     createDashboardLoad:createLoad,
@@ -91,7 +91,7 @@ function authHarness(profile) {
     onAuthStateChanged:(_auth,callback)=>{ctx.callback=callback;}});
   for(const name of ['cancelDashboardRender','applyRoleUI','subscribeOwnProfileDashboard','subscribeTeamRealtimeDashboard',
     'renderDriverLoadState','unsubscribeTeamRealtimeDashboard','unsubscribeOwnProfileDashboard','unsubscribeAdminDashboard',
-    'renderAdminDashboardUpdates','render','refreshArcaBillingStatus','scheduleOperationalRecovery'])ctx[name]=noop;
+    'renderAdminDashboardUpdates','render','refreshArcaBillingStatus'])ctx[name]=noop;
   for(const name of ['Payments','Expenses','Uber','Debts','DebtPayments','Advances','Closures'])ctx['unsubscribe'+name]=noop;
   ctx.isAdminProfile=()=>ctx.currentProfile?.role==='admin';
   const start=source.indexOf('onAuthStateChanged(auth, async user => {');

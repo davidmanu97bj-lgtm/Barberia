@@ -1,93 +1,100 @@
-# EXPLORA · Movimientos del período · entrega 3.0.0
+# Explora
 
-Proyecto completo preparado a partir de `santander-main (2).zip`, para que el propietario lo suba a `davidmanu97bj-lgtm/Barberia`. Este paquete no ha sido subido ni desplegado por el asistente.
+Fuente del código: https://github.com/davidmanu97bj-lgtm/santander.
+Backend y Hosting de producción: `explora-control-operativo`.
 
-**Entrada recomendada: `bash explora.sh`.** También se entrega un instalador externo `EXPLORA_CLOUD_SHELL.sh` que contiene el proyecto completo y lo extrae en una carpeta nueva. No es necesario editar código ni pegar certificados dentro de archivos JavaScript.
+La aplicación actual empieza en `index.html`, carga `app.js` y `styles.css`, y usa
+`manifest.json` y `service-worker.js`. El código segmentado antiguo se conserva;
+sus pruebas de contrato no significan que esos archivos estén en la web publicada.
 
-## Atención al destino
+## Trabajar desde Codex o Work
 
-El destino incluido es **`barberia-c25a1`**, obtenido de la configuración del repositorio indicado. Este Firebase no es lo mismo que el repositorio GitHub ni que el proyecto anterior de Explora.
+Usar Node.js 22 (`nvm use` donde nvm esté instalado). Crear una rama por cambio desde
+`main`; al pasar a otra herramienta, guardar y subir los cambios e indicar URL,
+rama y commit completo. La siguiente sesión debe obtener esa misma rama.
+Los ZIP son exportaciones, no el origen desde el cual resolver diferencias de Git.
 
-Publicar allí reemplaza el Hosting y las reglas de ese destino. Si la barbería debe seguir funcionando, elegí **otro proyecto Firebase** con `configure` antes de publicar. Las colecciones existentes con los mismos nombres pertenecen a esa base: no hay aislamiento automático por cambiar el nombre de la app. No se copian usuarios, datos, comprobantes ni secretos desde `explora-control-operativo`. No se borran colecciones ni se ordena eliminar funciones ajenas.
-
-## Cloud Shell, paso a paso
-
-Desde la carpeta que contiene este README:
-
-```bash
-bash explora.sh
+```sh
+npm ci --prefix functions --ignore-scripts
+npm test
+npm run build
 ```
 
-El menú ofrece estas acciones; el orden inicial recomendado es:
+`npm test` valida recursos y configuración, comprueba sintaxis y ejecuta todas las
+pruebas de `tests/` y `functions/tests/`. Cualquier fallo devuelve un código distinto
+de cero. El proyecto raíz no necesita dependencias npm para estas comprobaciones.
+`npm run test:unit` ejecuta solamente las pruebas; `npm run test:release` usa las
+mismas comprobaciones completas que `npm test`.
 
-1. `install`: Node 22 y dependencias exactas de `functions/package-lock.json`.
-2. `configure`: elegir Firebase, confirmar su ID y elegir o crear la aplicación web. Hace una copia local del código antes de cambiar la configuración.
-3. `admin`: crear la cuenta administradora o habilitar una existente y su alias. La contraseña de una cuenta existente no se cambia. Cerrá y abrí la sesión después de cambiar permisos.
-4. `telegram`: ingresar token del bot y chat de destino de forma oculta; se guardan como secretos del proyecto, no dentro del repositorio.
-5. `arca`: asistente de datos fiscales o lectura de un JSON existente; solicita las rutas de certificado y clave privada y usa Secret Manager. La integración conservada es de **factura C para monotributo**. No convierte automáticamente Explora a otro régimen. Primero homologación; producción exige confirmaciones expresas.
-6. `check`, luego `deploy`: ejecuta todas las pruebas y el build; si falla un paso, se detiene. Para publicar hay que escribir `PUBLICAR <id-del-proyecto>`.
+Se consolidaron las pruebas de Functions en `functions/tests/`: las dos copias
+idénticas y la suite antigua de saldo en `functions/test/` fueron reemplazadas por
+los contratos actuales (50% + 5% de caja chica, sin reiniciar el histórico al cerrar).
+Los cálculos de la aplicación y el backend no se cambiaron. La vista previa se
+prueba ejecutando sus funciones puras reales, sin conectar Firebase.
 
-La opción `routes` configura el servicio de rutas opcional. El catálogo de recorridos y la carga manual siguen disponibles sin esa integración.
+Los antiguos comandos `test:mileage` y `test:admin-production` apuntaban a archivos
+inexistentes y ya no se ofrecen. Las pruebas automáticas no certifican por sí solas
+el login, permisos de Firebase o una operación real de negocio.
 
-**Requisitos de la cuenta:** acceso autorizado al Firebase destino, facturación del proyecto habilitada cuando la exijan las funciones/servicios, Firestore y Storage inicializados y el proveedor correo/contraseña habilitado en Authentication. El SH solicita inicio de sesión cuando corresponde; no inventa credenciales, no acepta cargos ni habilita servicios de pago en tu nombre. `doctor` comprueba accesos a Auth, Firestore y Storage sin enviar mensajes ni emitir facturas.
+## Revisar e integrar
 
-Las integraciones `telegramEnabled`, `arcaEnabled` y `routesEnabled` se entregan en `false`. Los comandos anteriores las habilitan para el siguiente despliegue, una vez configuradas. Un despliegue sin ARCA habilitada no crea PDFs fiscales ficticios: muestra el estado pendiente/desactivado. Configuralas **antes de empezar a registrar viajes reales**; habilitar ARCA después no factura automáticamente los registros históricos.
+Abrir un pull request a `main`. El workflow **Validar Explora** usa Node 22 y no
+despliega. Configurar posteriormente protección de `main` y exigir el check
+**Node 22 · pruebas y Hosting** antes de integrar. Esa protección es una opción
+del repositorio: este cambio de código no la activa por sí mismo.
 
-## Visual y orden
+Antes de producción, comprobar los flujos de negocio con emuladores o un entorno
+de pruebas. Los identificadores actuales apuntan a producción; una URL de preview
+por sí sola no aísla los datos.
 
-Pantalla blanca con títulos y totales por color, siguiendo la referencia: efectivo → gastos pagados en efectivo → efectivo restante → digital → Uber digital → resultado → distribución → liquidación. El logo original no se redibujó ni se sustituyó.
+## Desplegar una versión revisada
 
-La función de ordenación original y los snapshots de comprobantes se conservan. El orden cronológico seleccionado —más recientes o más antiguos— se aplica también a las filas del extracto. El historial detallado queda accesible debajo en “Consultar historial detallado y orden de movimientos”. Un Uber recibido por el chofer se muestra en un bloque específico junto al efectivo; no se clasifica como digital ni se cuenta dos veces.
+Desde una copia Git limpia y actualizada, con Node 22, npm, Git, tar y acceso
+autorizado al proyecto Firebase:
 
-## Cálculo implementado
+```sh
+# Solo comprueba. No publica ni modifica Git.
+npm run deploy
 
-```text
-Disponible = cobros de viajes + Uber − gastos operativos
-Caja Explora = 10% del disponible positivo
-A dividir = disponible − Caja Explora
-Chofer = 50% de lo que queda
-Explora = 50% de lo que queda, más la caja separada
-Diferencia = dinero retenido por el chofer − parte que le corresponde
-            + apertura/deudas/ajustes, descontando pagos ya realizados
+# Después de revisar e integrar el cambio en main:
+npm run deploy -- --deploy <SHA_COMPLETO_DE_MAIN>
 ```
 
-Cálculos en centavos. Si la división deja un centavo impar, ese centavo queda en la participación de Explora. Si hay pérdida, no se genera caja y la pérdida se comparte por mitades. Los gastos cargados como operativos se deducen antes del reparto; no se aplica además un segundo reintegro del 50%. No cargues allí como gasto compartido una deuda exclusivamente personal: registrala con el circuito separado de deuda.
+El segundo comando exige que el commit solicitado sea tanto `HEAD` como `main`
+en GitHub, comprueba el remoto y rechaza cambios locales sin confirmar. Exporta
+ese commit a una carpeta temporal y valida, prepara y publica esa copia fija.
+Nunca crea commits, hace push ni fusiona historiales. Si no puede comprobar GitHub,
+si falla una prueba o una etapa de Firebase, se detiene.
 
-Caso de referencia: $301.000 efectivo − $124.000 gastos = $177.000 con el chofer. $175.000 digital + $75.000 Uber digital = $250.000 con Explora. Disponible $427.000; caja $42.700; reparto $384.300; $192.150 cada uno. **Explora te debe $15.150**. Explora conserva $234.850, de los cuales $42.700 son caja y $192.150 participación.
+El CLI está fijado a `firebase-tools@15.30.0` y se ejecuta mediante npm exec. No se
+actualiza automáticamente a `latest`. No se usa `--force`; si se requiere eliminar
+una Function, se debe revisar como una operación separada. Se reutiliza la sesión
+o identidad autorizada de Firebase, sin pedir ni guardar tokens en el repositorio.
 
-Los cierres históricos `on_demand` mantienen su corte. Los pagos/ajustes y cierres de mera liquidación no se convierten en ingresos nuevos. Los adelantos y deudas aceptadas siguen separados. El período abierto se recalcula con la nueva fórmula; un período ya cortado no se reabre automáticamente.
+Para el primer despliegue de funciones con reintentos, añadir `--interactive` al
+comando de publicación permite confirmar esa política en la terminal. Solo la
+etapa de Functions admite esas preguntas; se mantienen las comprobaciones de Git,
+pruebas y copia fija. No aceptar borrados ni migraciones de eventos sin revisarlos.
+Si la carga local de Functions supera 10 segundos, establecer
+`FUNCTIONS_DISCOVERY_TIMEOUT=60` en el entorno de esa ejecución.
 
-## Comprobantes: dos destinos diferentes
+Por defecto publica reglas, Functions y Hosting, en ese orden. Los alcances
+opcionales `--only hosting` y `--only backend` permiten una entrega parcial explícita.
+Firebase no publica todos los servicios de forma atómica: `.deploy/release-*.json`
+registra el commit y cada etapa completada, incluso cuando falla una posterior.
+Hosting incluye `release.json` con el commit y las huellas de sus recursos.
 
-- **Efectivo y digital en el extracto:** factura autorizada de ARCA. Nombre corto `FC-1-637.pdf`; en homologación `PRUEBA-FC-1-637.pdf`. Hasta la autorización se muestra el estado real, no una factura inventada. El PDF fiscal corresponde al importe del servicio, no al saldo de liquidación.
-- **Gastos en Explora:** PDF real, como `G-abc123.pdf`. Una imagen JPG/PNG/WebP se convierte a PDF; no se limita a cambiar la extensión. En los cobros digitales se conserva además el comprobante de pago, separado de la factura fiscal.
-- **Telegram:** los cobros digitales y gastos se envían como imagen con el importe en el texto. Una autorización fiscal posterior actualiza la leyenda sin reemplazar la foto por un PDF ni duplicar el aviso. Si falta la imagen o falla su envío, queda error/reintento; no se da por enviado solamente un texto.
+Todos los accesos históricos (`DESPLEGAR_EXPLORA_COMPLETO.sh`, `He.sh` y los tres
+scripts de `tools/`) invocan este mismo procedimiento. **Sin argumentos ahora solo
+validan**, incluidos los scripts antiguos de migración y v4144. Para publicar hay
+que pasar expresamente `--deploy <SHA>`. Las notas de entregas antiguas son históricas;
+este documento reemplaza sus instrucciones de publicación.
 
-La carga nueva de gastos y pagos digitales exige una imagen legible para poder enviarla como foto. El PDF de esa imagen se guarda en Explora y el JPEG se conserva para Telegram. Si solo tenés un PDF de pago/gasto, adjuntá una captura legible de ese comprobante para ese circuito. Esto no aplica a la factura ARCA, que es el documento fiscal independiente. El límite de origen es 15 MB; HEIC no decodificable debe convertirse a JPG/PNG.
+`firebase.json` publica exclusivamente `dist/`, generado por `npm run build`; ya no
+publica toda la raíz. El procedimiento de despliegue lo reconstruye dentro de la
+copia fija. No usar `firebase deploy` directamente como sustituto del procedimiento,
+pues omitiría sus comprobaciones de Git y de pruebas.
 
-### Imágenes históricas
-
-Al abrir un comprobante histórico se prepara su PDF mediante una función autenticada. También existe conversión por lote:
-
-```bash
-bash explora.sh migrate-pdfs
-# Simula y genera informe; no modifica los documentos.
-bash explora.sh migrate-pdfs --apply
-# Pide confirmación y convierte. Conserva el original, importe y fecha.
-```
-
-La operación guarda progreso local para reanudarse. Para volver a revisar desde el comienzo, incluidos errores anteriores:
-
-```bash
-bash explora.sh migrate-pdfs --apply --restart
-```
-
-Solo procesa objetos del Storage del proyecto seleccionado que correspondan al titular del movimiento. No descarga URLs arbitrarias ni copia archivos del otro Firebase. Los errores quedan en `.explora-local`. No se hicieron conversiones sobre tus datos reales al preparar este paquete.
-
-## Revisión y recuperación
-
-`bash explora.sh preview` abre una vista de demostración local en el puerto 8080, ruta `/preview.html`, con datos explícitamente ficticios; no usa Firebase. En Cloud Shell utilizá la vista previa web de ese puerto. `check-offline` ejecuta los controles sin instalar SDKs cloud. `check` exige además las suites completas con dependencias. GitHub Actions valida pero **no despliega**.
-
-`backup` es solo una copia del código local: **no es una copia de Firestore, Authentication ni Storage**. Antes de sustituir una app usada, conservá el código anterior y realizá el respaldo de sus datos por los medios del proyecto. El SH no hace `git push`, `git reset`, `git clean` ni publicación sin confirmación. No subas `.explora-local`, `.env`, certificados, claves o tokens al GitHub público.
-
-El informe `INFORME_PRUEBAS.md` diferencia pruebas ejecutadas de verificaciones reales pendientes. Los documentos y accesos de despliegue viejos conservados en la carpeta son históricos; para esta entrega utilizá `explora.sh` y este README.
+GitHub Pages continúa configurado como antes. Elegir una dirección oficial y migrar
+los accesos existentes requiere un paso posterior. Este cambio no modifica Pages,
+los permisos de GitHub, la base de datos ni las reglas o Functions en producción.

@@ -6896,71 +6896,7 @@ body.proof-image-viewer-open {
   display: none !important;
 }
 
-/* Driver home · visual reference September 2026. Scoped away from Admin. */
-.driver-brand, .driver-profile-button { display: none; }
-#app.driver-view {
-  --driver-ink: #0b104b;
-  --driver-muted: #7586b1;
-  width: 100%; max-width: none; margin: 0; border: 0; border-radius: 0;
-  background: radial-gradient(ellipse at 15% 5%, #edfaf8 0, transparent 32%), #fbfdff;
-  color: var(--driver-ink); box-shadow: none;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-#app.driver-view .topbar {
-  position: relative; top: auto; width: min(100%, 900px); min-height: 110px;
-  margin: 0 auto; padding: 28px 24px 20px; background: transparent;
-  border: 0; box-shadow: none; backdrop-filter: none;
-}
-#app.driver-view .topbar > .brandline { display: none; }
-#app.driver-view .main { max-width: 900px; margin: 0 auto; padding: 0 24px 124px; }
-.driver-view .driver-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.driver-brand-mark { width: 58px; height: 58px; flex: 0 0 auto; }
-.driver-brand strong { display: block; color: #0b104b; font-size: 27px; font-weight: 750; letter-spacing: -.8px; line-height: 1.2; }
-.driver-brand span { display: block; color: #8697be; font-size: 19px; margin-top: 3px; }
-.driver-view .driver-profile-button {
-  display: grid; place-items: center; width: 54px; height: 54px; flex-shrink: 0;
-  padding: 15px; border: 0; border-radius: 50%; background: #f0f4fc; color: #8b9bc0;
-}
-.driver-profile-button svg { width: 100%; height: 100%; fill: currentColor; }
-#driverDashboard { min-width: 0; }
-#driverDashboard .driver-balance-card {
-  position: relative; isolation: isolate; overflow: hidden; padding: 24px 26px 29px;
-  border: 1px solid #c9f2e7; border-radius: 23px;
-  background: radial-gradient(ellipse at 93% 120%, #baf4e4 0, transparent 58%), linear-gradient(115deg, #e7fcf4, #fafffe 52%, #e9fff6);
-}
-.driver-balance-card::after { content: ""; position: absolute; z-index: -1; width: 310px; height: 140px; right: -70px; bottom: -105px; border: 18px solid #ffffff54; border-radius: 50%; transform: rotate(-25deg); }
-.driver-balance-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--driver-muted); font-size: 20px; font-weight: 500; }
-#driverDashboard #syncStatus { display: inline-flex; align-items: center; gap: 7px; width: auto; max-width: 60%; min-height: 29px; margin: 0; padding: 5px 12px; border: 1px solid #c4ecd9; border-radius: 30px; background: #e4fff0; color: #498069; font-size: 13px; font-weight: 500; text-align: center; }
-#syncStatus::before { content: ""; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; }
-#driverDashboard #syncStatus.ok { color: #008a37; }
-#driverDashboard #syncStatus.bad { color: #b13838; background: #fff1ee; border-color: #f2c9bd; }
-#driverDashboard #syncStatus.warn { color: #996218; background: #fff6df; }
-#driverDashboard .driver-balance-title { display: block; margin: 12px 48px 7px 0; color: var(--driver-ink); font-size: clamp(27px, 4.3vw, 43px); font-weight: 760; letter-spacing: -1.4px; line-height: 1.16; text-wrap: balance; }
-#driverDashboard #settlementDirection, #driverDashboard #settlementTotal { display: inline; margin: 0; padding: 0; font: inherit; color: inherit; background: none; border: 0; white-space: normal; box-shadow: none; }
-#driverDashboard #settlementTotal { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.driver-balance-card > p { margin: 0; padding-right: 80px; color: var(--driver-muted); font-size: 16px; line-height: 1.4; }
-.driver-balance-badge { position: absolute; right: 18px; bottom: 22px; padding: 3px 9px; border-radius: 20px; color: #00983d; background: #edfff7; font-size: 12px; }
-.driver-balance-trend { position: absolute; width: 43px; height: 43px; padding: 10px; right: 27px; bottom: 55px; border: 1.5px solid white; border-radius: 50%; fill: none; stroke: #009a42; stroke-width: 2.3; }
-.driver-balance-card[data-state="owing"] { border-color: #f3e5d3 !important; background: radial-gradient(ellipse at 95% 110%, #ffebd0, transparent 60%), #fffaf2 !important; }
-.driver-balance-card[data-state="owing"] .driver-balance-badge { color: #965918; background: #fff2dc; }
-.driver-balance-card[data-state="owing"] .driver-balance-trend { stroke: #b67422; transform: scaleY(-1); }
-.driver-quick-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; scroll-margin-top: 20px; }
-#driverDashboard .driver-action {
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
-  min-width: 0; min-height: 115px; padding: 13px 16px; border: 1px solid #e6ecf7; border-radius: 20px;
-  color: var(--driver-ink); background: #ffffffed; box-shadow: 0 5px 16px #18356906;
-  font-family: inherit; font-size: 16px; font-weight: 550; line-height: 1.18; transition: transform .16s, box-shadow .16s;
-}
-.driver-action::after { content: "›"; position: absolute; right: 13px; bottom: 23px; color: #8d9dc2; font-size: 24px; font-weight: 400; }
-.driver-action svg { width: 31px; height: 31px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.driver-action.tone-cash svg { color: #009f4a; }
-.driver-action.tone-digital svg { color: #087dff; }
-.driver-action.tone-expense svg { color: #ff650e; }
-.driver-action.tone-close svg { color: #8424df; }
-@media (hover: hover) { #driverDashboard .driver-action:hover { transform: translateY(-2px); box-shadow: 0 8px 20px #18356912; } }
-.driver-other-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 6px 20px; padding: 9px 2px 3px; }
-.driver-other-actions button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 0; border: 0; background: none; color: #657699; font-family: inherit; font-size: 12px; font-weight: 500; }
-#driverDashboard .driver-other-actions .operation-pending-badge { position: static; display: inline-grid; place-items: center; min-width: 19px; height: 19px; padding: 2px 5px; border: 0; border-radius: 20px; background: #ecf0fc; color: #586788; font-size: 10px; box-shadow: none; }
+/* Detailed movement history, preserved outside Principal. */
 .driver-history { margin-top: 12px; scroll-margin-top: 20px; }
 .driver-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
 .driver-history-heading h2 { margin: 0; color: var(--driver-ink); font-size: 26px; line-height: 1.2; letter-spacing: -.7px; font-weight: 750; }
@@ -7007,69 +6943,10 @@ body.proof-image-viewer-open {
 .driver-advice > summary { padding: 10px 0; cursor: pointer; }
 .driver-advice #settlementDifferenceHint { margin: 5px 0; color: #657699; line-height: 1.5; }
 .driver-advice #driverNewsCard { margin: 8px 0; }
-#driverDashboard .driver-nav {
-  position: fixed; z-index: 35; left: 50%; bottom: 0; transform: translateX(-50%);
-  display: grid; grid-template-columns: repeat(4, 1fr); width: min(100%, 900px);
-  padding: 10px 20px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #e7edf6;
-  background: #ffffffed; backdrop-filter: blur(14px); box-shadow: 0 -4px 24px #21395503;
-}
-.driver-nav button { position: relative; display: grid; justify-items: center; gap: 5px; min-height: 59px; padding: 2px 4px 8px; border: 0; background: none; color: #8b9cbd; font-family: inherit; font-size: 14px; font-weight: 500; }
-.driver-nav svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.driver-nav [aria-current] { color: #0b104b; }
-.driver-nav [aria-current]::after { content: ""; position: absolute; bottom: 0; width: 38px; height: 4px; border-radius: 4px; background: #087eff; }
-.driver-nav [data-driver-nav="home"][aria-current] svg { fill: currentColor; }
 .driver-profile-card { color: #0b104b; }
 #driverProfileName { margin: 22px 0 6px; font-size: 23px; font-weight: 700; }
 #driverProfileModal #logoutBtn { width: 100%; min-height: 46px; }
 .driver-view button:focus-visible, .driver-view select:focus-visible, .driver-view summary:focus-visible { outline: 3px solid #408ff5; outline-offset: 3px; }
-@media (max-width: 600px) {
-  #app.driver-view .topbar { min-height: 88px; padding: 19px 16px 16px; }
-  #app.driver-view .main { padding: 0 14px 110px; }
-  .driver-view .driver-brand { gap: 9px; }
-  .driver-brand-mark { width: 40px; height: 44px; }
-  .driver-brand strong { font-size: 22px; letter-spacing: -.6px; }
-  .driver-brand span { margin-top: 2px; font-size: 14px; }
-  .driver-view .driver-profile-button { width: 39px; height: 39px; padding: 11px; }
-  #driverDashboard .driver-balance-card { padding: 17px 14px 19px; border-radius: 17px; }
-  .driver-balance-top { font-size: 15px; }
-  #driverDashboard #syncStatus { padding: 4px 8px; min-height: 25px; font-size: 10px; gap: 5px; }
-  #driverDashboard .driver-balance-title { margin: 11px 0 8px; font-size: clamp(25px, 6.5vw, 35px); letter-spacing: -1px; }
-  .driver-balance-card > p { padding-right: 0; max-width: 100%; font-size: 12px; }
-  .driver-balance-badge { position: static; display: inline-block; margin-top: 10px; padding: 2px 7px; font-size: 10px; }
-  .driver-balance-trend { width: 27px; height: 27px; right: 16px; bottom: 13px; padding: 5px; }
-  .driver-quick-actions { gap: 7px; margin-top: 10px; }
-  #driverDashboard .driver-action { min-height: 87px; border-radius: 14px; gap: 6px; padding: 11px 8px; font-size: 12px; }
-  .driver-action svg { width: 25px; height: 25px; }
-  .driver-action::after { right: 7px; bottom: 19px; font-size: 19px; }
-  .driver-other-actions { gap: 16px; padding-top: 4px; }
-  .driver-other-actions button { font-size: 11px; }
-  .driver-history { margin-top: 9px; }
-  .driver-history-heading { margin-bottom: 10px; }
-  .driver-history-heading h2 { max-width: 64%; font-size: 20px; letter-spacing: -.7px; }
-  .driver-sort { gap: 2px; }
-  .driver-sort svg { width: 15px; height: 15px; }
-  #receiptSort { font-size: 10px; }
-  .driver-movements { gap: 9px; }
-  .movement-card { padding: 8px; border-radius: 15px; }
-  .movement-details > summary { grid-template-columns: 37px minmax(0, 1fr) 8px; column-gap: 8px; row-gap: 2px; padding-bottom: 9px; }
-  .movement-icon { grid-row: 1 / 3; width: 37px; height: 37px; }
-  .movement-icon svg { width: 23px; height: 23px; }
-  .movement-copy { grid-column: 2; grid-row: 1; }
-  .movement-copy > strong { font-size: 15px; letter-spacing: -.35px; }
-  .movement-date { grid-column: 2; grid-row: 2; font-size: 9px; padding-top: 1px; }
-  .movement-chevron { grid-column: 3; grid-row: 1 / 3; font-size: 22px; }
-  .movement-balances { padding: 7px 0; }
-  .movement-balances > div { padding: 0 5px; }
-  .movement-balances span { font-size: 10px; }
-  .movement-balances p { font-size: 10px; line-height: 1.3; }
-  .movement-balances strong { font-size: clamp(14px, 4.2vw, 19px); }
-  .movement-no-snapshot { font-size: 10px; padding: 8px; }
-  #driverDashboard .driver-nav { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); }
-  .driver-nav button { min-height: 56px; font-size: 12px; }
-  .driver-nav svg { width: 25px; height: 25px; }
-}
-@media (prefers-reduced-motion: reduce) { .driver-action, .movement-chevron { transition: none !important; } }
-@media (prefers-contrast: more) { #app.driver-view { --driver-muted: #43557d; } .movement-card { border-color: #889bbd; } }
 
 /* Cobros: pantalla de revisión y preparación fiscal. */
 body:has(:is(#chargeModal, #managementModal, #expenseModal, #uberModal):not(.hidden)) { overflow:hidden; }
@@ -7131,6 +7008,38 @@ body:has(:is(#chargeModal, #managementModal, #expenseModal, #uberModal):not(.hid
   .charge-account span, .charge-account small { font-size:11px; }
   .charge-breakdown > div { font-size:14px; }
   :is(#chargeModal, #managementModal, #expenseModal, #uberModal) input, :is(#chargeModal, #managementModal, #expenseModal, #uberModal) select { font-size:16px; }
+}
+
+/* Cobros y gastos: cada paso queda completo en el alto del teléfono.
+   El contenido que puede crecer (por ejemplo, resultados de Maps) conserva su propio espacio. */
+@media(max-width:600px) {
+  :is(#chargeModal, #expenseModal) { align-items:stretch; padding:0; overflow:hidden; }
+  :is(#chargeModal, #expenseModal) .charge-screen-card { box-sizing:border-box; min-height:100dvh; height:100dvh; padding:9px 14px max(28px, calc(16px + env(safe-area-inset-bottom))); display:flex; flex-direction:column; }
+  :is(#chargeModal, #expenseModal) .charge-brand { display:none; }
+  :is(#chargeModal, #expenseModal) .charge-back { padding:2px 0; font-size:13px; }
+  :is(#chargeModal, #expenseModal) .charge-heading { gap:9px; margin:6px 0 8px; }
+  :is(#chargeModal, #expenseModal) .charge-heading h2 { font-size:21px; margin:0 0 2px; }
+  :is(#chargeModal, #expenseModal) .charge-heading p { font-size:12px; line-height:1.25; }
+  :is(#chargeModal, #expenseModal) .charge-icon { width:43px; height:43px; border-radius:13px; }
+  :is(#chargeModal, #expenseModal) .charge-icon svg { width:24px; height:24px; }
+  :is(#chargeForm, #expenseForm) { flex:1; min-height:0; gap:7px; }
+  :is(#chargeModal, #expenseModal) .charge-step-label { font-size:12px; }
+  :is(#chargeModal, #expenseModal) .charge-step-track { margin-bottom:2px; gap:5px; }
+  :is(#chargeModal, #expenseModal) .charge-step { gap:8px; }
+  :is(#chargeModal, #expenseModal) .charge-panel { padding:11px; border-radius:14px; }
+  :is(#chargeModal, #expenseModal) h3, :is(#chargeModal, #expenseModal) .charge-panel > label { margin-bottom:7px; font-size:16px; }
+  :is(#chargeModal, #expenseModal) :is(#chargeAmount, #expenseAmount) { font-size:30px; }
+  :is(#chargeModal, #expenseModal) .money-entry { padding:4px 10px; }
+  :is(#chargeModal, #expenseModal) .money-entry span { font-size:29px; }
+  :is(#chargeModal, #expenseModal) .field { margin:0; }
+  :is(#chargeModal, #expenseModal) .modal-actions { margin-top:auto; padding-top:7px; }
+  :is(#chargeModal, #expenseModal) :is(#saveChargeBtn, #saveExpenseBtn) { min-height:48px; font-size:17px; }
+  :is(#chargeModal, #expenseModal) .secondary { min-height:48px; }
+  #expenseModal .expense-attention { padding:9px 11px; }
+  #expenseModal .expense-attention strong { font-size:11px; }
+  #expenseModal .expense-attention p { margin-top:3px; font-size:11px; line-height:1.25; }
+  :is(#chargeModal, #expenseModal) .photo-source-picker { padding:9px; }
+  :is(#chargeModal, #expenseModal) .photo-source-action { min-height:44px; padding:7px; font-size:10px; }
 }
 
 .profile-invoices-link { display:flex; align-items:center; gap:13px; width:100%; margin:20px 0 12px; padding:15px; border:1px solid #e1e9f4; border-radius:18px; background:#f7faff; color:#10164c; text-align:left; font-size:16px; font-weight:700; }
@@ -7264,6 +7173,29 @@ body .money-entry:focus-within { border-color:#929aa7; background:#fff; box-shad
 body .money-entry input:focus { outline:none !important; border-color:transparent !important; box-shadow:none !important; background:transparent; }
 
 #expenseModal { --charge-accent:#f66b16; --charge-tint:#fff0e6; }
+#expenseModal .expense-proof-picker { padding:10px; border:0; background:#f8fafc; }
+#expenseModal .photo-source-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+#expenseModal .photo-source-action { display:flex; align-items:center; gap:11px; min-height:94px; padding:14px; border:1px solid #fed8bf; border-radius:16px; background:#fff; color:#27354b; text-align:left; box-shadow:0 3px 10px #d55b120d; transition:transform .15s, border-color .15s, background .15s; }
+#expenseModal .photo-source-action:hover { transform:translateY(-1px); border-color:#f66b16; background:#fff7f1; }
+#expenseModal .photo-source-action:focus-visible { outline:3px solid #fcb58a; outline-offset:2px; }
+#expenseModal .expense-photo-icon { display:grid; place-items:center; width:42px; height:42px; flex:none; border-radius:13px; background:#fff0e6; color:#e7550b; }
+#expenseModal .expense-photo-icon svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+#expenseModal .photo-source-action > span:last-child { display:grid; gap:4px; min-width:0; }
+#expenseModal .photo-source-action strong { font-size:14px; line-height:1.15; }
+#expenseModal .photo-source-action small { color:#7b6b62; font-size:12px; }
+#expenseModal .photo-source-selection { margin-top:10px; border-radius:12px; background:#fff; }
+@media(max-width:420px) { #expenseModal .photo-source-actions { grid-template-columns:1fr; } #expenseModal .photo-source-action { min-height:72px; } }
+
+/* El comprobante del cobro digital usa la misma elección visual que Cargar gasto. */
+#chargeModal[data-tone="digital"] .expense-proof-picker { padding:10px; border:0; background:#f8fafc; }
+#chargeModal[data-tone="digital"] .photo-source-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+#chargeModal[data-tone="digital"] .photo-source-action { display:flex; align-items:center; gap:11px; min-height:94px; padding:14px; border:1px solid #c9ddff; border-radius:16px; background:#fff; color:#27354b; text-align:left; box-shadow:0 3px 10px #176edb0d; }
+#chargeModal[data-tone="digital"] .expense-photo-icon { display:grid; place-items:center; width:42px; height:42px; flex:none; border-radius:13px; background:#e5efff; color:#176edb; }
+#chargeModal[data-tone="digital"] .expense-photo-icon svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+#chargeModal[data-tone="digital"] .photo-source-action > span:last-child { display:grid; gap:4px; min-width:0; }
+#chargeModal[data-tone="digital"] .photo-source-action strong { font-size:14px; line-height:1.15; }
+#chargeModal[data-tone="digital"] .photo-source-action small { color:#657699; font-size:12px; }
+#chargeModal[data-tone="digital"] .photo-source-selection { margin-top:10px; border-radius:12px; background:#fff; }
 
 .charge-step { display:grid; gap:14px; }
 #chargeModal .charge-step.hidden { display:none; }
@@ -7476,417 +7408,65 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
   .trip-booking-actions button { padding: 12px 8px; font-size: 13px !important; }
 }
 
-/* Explora 3.1: new expense/debt paths; no balance cards inside the forms. */
-.expense-entry-choices{display:grid;grid-template-columns:1fr;gap:10px;margin:4px 0 16px}
-.expense-entry-choice{border:1.5px solid #dce3ed;border-radius:14px;padding:15px 16px;text-align:left;background:#fff;color:#172340;cursor:pointer;min-height:88px}
-.expense-entry-choice strong{display:block;font-size:17px;line-height:1.3;margin-bottom:6px}
-.expense-entry-choice span{display:block;font-size:13px;line-height:1.5;color:#50617b;font-weight:400}
-.expense-entry-choice.shared[aria-pressed=true]{border-color:#d47825;background:#fff4eb}
-.expense-entry-choice.debt[aria-pressed=true]{border-color:#b43243;background:#fff0f2}
-.expense-entry-choice:focus-visible{outline:3px solid #2c63d5;outline-offset:3px}
-.expense-choice-hint{font-size:14px;color:#516179;line-height:1.5;padding:6px}
-.expense-registration-summary{border-bottom:1px solid #e2e8f0;margin-bottom:18px;padding-bottom:14px}
-.expense-registration-summary>div{display:flex;justify-content:space-between;gap:12px;align-items:center;color:#172340;font-size:15px}
-.expense-registration-summary strong{font-size:22px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.expense-registration-summary p{font-size:13px;line-height:1.5;color:#42526e;margin:10px 0}
-.expense-registration-summary small{font-size:12px;color:#63728a}
-@media(max-width:370px){.expense-registration-summary>div{align-items:flex-start;flex-direction:column}.expense-entry-choice{padding:12px}.expense-entry-choice strong{font-size:16px}}
 
-/* Explora · paleta simplificada · solo presentación
-   Mantiene estructura y lógica. Verde = Explora debe / éxito. Rojo = chofer debe / deuda / error. */
-:root{
-  --explora-neutral:#17233f;
-  --explora-neutral-2:#26344f;
-  --explora-neutral-soft:#f3f5f8;
-  --explora-neutral-soft-2:#f8fafc;
-  --explora-line:#e3e8ef;
-  --explora-muted:#667085;
-  --explora-green:#117743;
-  --explora-green-soft:#eaf8f0;
-  --explora-red:#b42318;
-  --explora-red-soft:#fff1f0;
-}
-
-/* Inicio y navegación: todos los accesos operativos usan un único tono neutral. */
-#app.driver-view{
-  --driver-ink:var(--explora-neutral);
-  --driver-muted:var(--explora-muted);
-}
-#app.driver-view .topbar,
-#app.driver-view .driver-nav{
-  background:#fff;
-  border-color:var(--explora-line);
-}
-#app.driver-view #driverProfileBtn,
-#app.driver-view .statement-calendar-button,
-#app.driver-view .driver-nav button,
-#app.driver-view .driver-nav [data-mode="cash"] svg,
-#app.driver-view .driver-nav [data-mode="digital"] svg,
-#app.driver-view .driver-nav [data-statement-action="expense"] svg,
-#app.driver-view .driver-nav [data-statement-action="management"] svg{
-  color:var(--explora-neutral) !important;
-}
-#app.driver-view .driver-nav [data-driver-nav="home"] svg{
-  fill:var(--explora-neutral) !important;
-  stroke:var(--explora-neutral) !important;
+/* Disponibilidad de choferes: vista compacta inspirada en el panel móvil de Explora. */
+.driver-availability-card { margin: 12px 0 18px; padding: 14px; border: 1px solid #dce9f0; border-radius: 18px; background: linear-gradient(135deg, #f4fbff 0%, #f7fffb 100%); box-shadow: 0 8px 22px rgba(39, 91, 119, .06); }
+.availability-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.availability-card-head h2 { margin:0; color:#132445; font-size:17px; line-height:1.15; font-weight:950; }
+.availability-card-head p, .availability-modal-subtitle { margin:4px 0 0; color:#7b8494; font-size:11px; font-weight:700; }
+.availability-open { width:34px; height:34px; border:0; border-radius:12px; background:transparent; color:#132445; font-size:28px; line-height:1; }
+.availability-summary { display:flex; flex-wrap:wrap; gap:10px 16px; margin:14px 0; padding:11px 12px; border-radius:13px; background:rgba(236,247,255,.82); color:#26344b; font-size:11px; font-weight:750; }
+.availability-summary-button { width:100%; align-items:center; border:0; text-align:left; cursor:pointer; }
+.availability-summary-button:hover { background:#e5f3fc; }
+.availability-summary-button .availability-open { margin-left:auto; padding:0; }
+.availability-count { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.availability-count b { font-size:12px; }
+.availability-dot { display:inline-block; width:12px; height:12px; flex:0 0 12px; border-radius:50%; }
+.availability-dot.is-free { background:#22b15b; box-shadow:0 0 0 3px rgba(34,177,91,.12); }
+.availability-dot.is-busy { background:#d82b4c; box-shadow:0 0 0 3px rgba(216,43,76,.10); }
+.availability-dot.is-offline { background:#8c94a5; box-shadow:0 0 0 3px rgba(140,148,165,.10); }
+.availability-current-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.availability-current-status { display:flex; align-items:center; gap:10px; min-width:0; }
+.availability-current-status strong { display:block; color:#132445; font-size:15px; font-weight:950; }
+.availability-current-status small { display:block; margin-top:2px; color:#7b8494; font-size:10px; font-weight:650; }
+.availability-change { border:0; border-radius:12px; padding:10px 13px; background:#e2eefb; color:#132445; font-size:11px; font-weight:900; white-space:nowrap; }
+.availability-modal { place-items:end center; }
+.availability-card-modal { width:min(100%, 510px); max-height:min(82dvh, 720px); padding:18px 14px 14px; overflow:hidden; }
+.availability-card-modal .modal-head { margin:0 4px 14px; align-items:flex-start; }
+.availability-card-modal .modal-head h2 { margin:0; color:#132445; font-size:20px; }
+.availability-list { max-height:min(58dvh, 500px); overflow:auto; border-top:1px solid #edf0f4; }
+.availability-row { display:flex; align-items:center; gap:10px; min-height:70px; padding:10px 4px; border-bottom:1px solid #edf0f4; }
+.availability-row.is-current { margin:0 -4px; padding-left:8px; padding-right:8px; border-radius:12px; background:#edf7ff; }
+.availability-avatar { display:grid; place-items:center; width:43px; height:43px; flex:0 0 43px; border-radius:50%; background:#edf2f6; color:#7a8799; font-size:15px; font-weight:850; }
+.availability-row.is-current .availability-avatar { background:#dfeefa; }
+.availability-driver-info { min-width:0; flex:1; }
+.availability-driver-name { display:flex; align-items:center; gap:7px; color:#132445; font-size:14px; font-weight:900; }
+.availability-driver-name .you-badge { padding:3px 8px; border-radius:999px; background:#2774b9; color:#fff; font-size:9px; font-weight:850; }
+.availability-driver-state { display:flex; align-items:center; gap:6px; margin-top:4px; color:#7b8494; font-size:11px; font-weight:650; }
+.availability-driver-state .availability-dot { width:9px; height:9px; flex-basis:9px; box-shadow:none; }
+.availability-whatsapp { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; border:0; border-radius:50%; background:#20bc63; color:#fff; box-shadow:0 5px 13px rgba(32,188,99,.22); }
+.availability-whatsapp svg { width:22px; height:22px; fill:currentColor; }
+.availability-whatsapp:active { transform:scale(.95); }
+.availability-whatsapp[disabled] { display:none; }
+.availability-empty { padding:30px 10px; color:#7b8494; text-align:center; font-size:12px; }
+.availability-modal-note { display:flex; align-items:flex-start; gap:8px; margin:14px 4px 0; padding:12px; border-radius:13px; background:#f0f5ff; color:#7b8494; font-size:11px; line-height:1.35; }
+.availability-modal-note span:first-child { color:#2360a4; font-size:16px; line-height:1; }
+@media (max-width:760px) {
+  .driver-availability-card { margin-top:10px; padding:13px; border-radius:16px; }
+  .availability-summary { gap:8px 11px; font-size:9px; }
+  .availability-count b { font-size:10px; }
+  .availability-current-status strong { font-size:14px; }
+  .availability-change { padding:9px 10px; font-size:10px; }
+  .availability-card-modal { border-radius:28px 28px 0 0; padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
 }
 
-#driverDashboard .driver-action{
-  background:#fff !important;
-  border-color:var(--explora-line) !important;
-  color:var(--explora-neutral) !important;
-}
-#driverDashboard .driver-action svg,
-#driverDashboard .driver-action.tone-cash svg,
-#driverDashboard .driver-action.tone-digital svg,
-#driverDashboard .driver-action.tone-expense svg,
-#driverDashboard .driver-action.tone-close svg{
-  color:var(--explora-neutral) !important;
-}
-.driver-action::after{color:#98a2b3 !important}
 
-/* Tarjeta de saldo: el color solo comunica quién debe a quién. */
-#driverDashboard .driver-balance-card{
-  border-color:#cde9da !important;
-  background:linear-gradient(135deg,#f3fbf6,#fff) !important;
-}
-#driverDashboard .driver-balance-card:not([data-state="owing"]) .driver-balance-badge{
-  color:var(--explora-green) !important;
-  background:var(--explora-green-soft) !important;
-}
-#driverDashboard .driver-balance-card:not([data-state="owing"]) .driver-balance-trend{
-  stroke:var(--explora-green) !important;
-}
-#driverDashboard .driver-balance-card[data-state="owing"]{
-  border-color:#efc9c5 !important;
-  background:linear-gradient(135deg,#fff7f6,#fff) !important;
-}
-#driverDashboard .driver-balance-card[data-state="owing"] .driver-balance-badge{
-  color:var(--explora-red) !important;
-  background:var(--explora-red-soft) !important;
-}
-#driverDashboard .driver-balance-card[data-state="owing"] .driver-balance-trend{
-  stroke:var(--explora-red) !important;
-}
+/* Uber queda fuera de la experiencia visual solicitada; se conservan los datos históricos. */
+#uberModal, #uberHelpModal, #uberDriverConfirmationModal { display: none !important; }
 
-/* Extracto del período: secciones neutras; solo deuda y liquidación usan rojo/verde. */
-#periodStatement{color:var(--explora-neutral)}
-.statement-section,
-.tone-cash,
-.tone-expense,
-.tone-digital,
-.tone-uber,
-.tone-result,
-.tone-distribution{
-  --tone:var(--explora-neutral) !important;
-  --soft:var(--explora-neutral-soft) !important;
-}
-.tone-debt{
-  --tone:var(--explora-red) !important;
-  --soft:var(--explora-red-soft) !important;
-}
-.statement-section h2{
-  background:var(--soft) !important;
-  color:var(--explora-neutral) !important;
-}
-.tone-debt h2{color:var(--explora-red) !important}
-.statement-section h2 svg{stroke:var(--tone) !important}
-.statement-total.is-subtotal{
-  background:var(--soft) !important;
-  color:var(--tone) !important;
-}
-.statement-cash-held{
-  background:var(--explora-neutral-soft) !important;
-  color:var(--explora-neutral) !important;
-}
-.statement-cash-held svg{stroke:var(--explora-neutral) !important}
-.statement-pdf{color:#596b89 !important}
-.statement-pdf:hover{color:var(--explora-neutral) !important}
-.statement-settlement{
-  background:var(--explora-neutral-soft) !important;
-  color:var(--explora-neutral-2) !important;
-}
-.statement-settlement.is-receiving{
-  background:var(--explora-green-soft) !important;
-  color:var(--explora-green) !important;
-}
-.statement-settlement.is-owing{
-  background:var(--explora-red-soft) !important;
-  color:var(--explora-red) !important;
-}
-.statement-footer{background:var(--explora-neutral-soft-2) !important}
 
-/* Historial: no colorear cobros/gastos por tipo. Las deudas personales conservan rojo. */
-.movement-card[data-movement-color] .movement-icon,
-.movement-card[data-movement-color] .movement-balances strong,
-.movement-card[data-movement-color] .movement-no-snapshot strong,
-.movement-value[data-movement-color]{
-  color:var(--explora-neutral) !important;
-}
-.movement-card[data-movement-color] .movement-icon{
-  background:var(--explora-neutral-soft) !important;
-}
-.movement-card.receipt-tone-debt .movement-icon,
-.movement-card.receipt-tone-debt .movement-balances strong,
-.movement-card.receipt-tone-debt .movement-no-snapshot strong,
-.movement-card.receipt-tone-debt .movement-value{
-  color:var(--explora-red) !important;
-  background:var(--explora-red-soft) !important;
-}
-
-/* Formularios de cobro, Uber, gasto y gestión: un único acento azul marino. */
-:is(#chargeModal,#managementModal,#expenseModal,#uberModal,#operationPreviewModal){
-  --charge-accent:var(--explora-neutral) !important;
-  --charge-tint:var(--explora-neutral-soft) !important;
-  --operation-tone:var(--explora-neutral) !important;
-  --operation-soft:var(--explora-neutral-soft) !important;
-  --expense-color:var(--explora-neutral) !important;
-  --expense-tint:var(--explora-neutral-soft) !important;
-  background:#f7f9fc !important;
-}
-:is(#chargeModal,#managementModal,#expenseModal,#uberModal) .charge-icon,
-:is(#chargeModal,#managementModal,#expenseModal,#uberModal) .photo-source-action{
-  color:var(--explora-neutral) !important;
-  background:var(--explora-neutral-soft) !important;
-}
-:is(#chargeModal,#managementModal,#expenseModal,#uberModal) :is(#saveChargeBtn,#managementConfirm,#saveExpenseBtn,#saveUberBtn){
-  background:var(--explora-neutral) !important;
-  color:#fff !important;
-}
-:is(#chargeModal,#managementModal,#expenseModal) :is(#chargeTitle,#chargeAccountTitle,#chargeInvoiceTotal,#managementTitle,#expenseTitle){
-  color:var(--explora-neutral) !important;
-}
-.management-action,
-.management-action-icon,
-.management-collect .management-action-icon,
-.management-pay .management-action-icon{
-  color:var(--explora-neutral) !important;
-}
-.management-action-icon,
-.management-collect .management-action-icon,
-.management-pay .management-action-icon{
-  background:var(--explora-neutral-soft) !important;
-}
-
-/* Gastos compartidos neutrales; deuda 100% del chofer en rojo. */
-#expenseModal .expense-type-group[data-responsibility="shared"],
-#expenseModal .expense-type-group[data-responsibility="explora"]{
-  --expense-color:var(--explora-neutral) !important;
-  --expense-tint:var(--explora-neutral-soft) !important;
-}
-#expenseModal .expense-type-group[data-responsibility="driver"]{
-  --expense-color:var(--explora-red) !important;
-  --expense-tint:var(--explora-red-soft) !important;
-}
-#expenseModal .expense-type-group h3{color:var(--expense-color) !important}
-.expense-type-option[aria-pressed="true"]{
-  border-color:var(--expense-color) !important;
-  background:var(--expense-tint) !important;
-  box-shadow:inset 0 0 0 1px var(--expense-color) !important;
-}
-
-/* Estados y resultados: colores reservados para significado financiero real. */
-#driverDashboard .unified-finance-card #settlementDirection.is-driver-owes,
-#driverDashboard .unified-finance-card .settlement-difference-hint.is-driver-owes,
-.team-driver-row.driver-owes .team-driver-balance,
-.admin-driver-row.driver-owes .admin-driver-balance b,
-.driver-news-card.is-driver-owes h2{
-  color:var(--explora-red) !important;
-}
-#driverDashboard .unified-finance-card #settlementDirection.is-explora-owes,
-#driverDashboard .unified-finance-card .settlement-difference-hint.is-explora-owes,
-.team-driver-row.explora-owes .team-driver-balance,
-.admin-driver-row.explora-owes .admin-driver-balance b,
-.driver-news-card.is-explora-owes h2{
-  color:var(--explora-green) !important;
-}
-#driverDashboard .unified-finance-card #settlementDirection.is-driver-owes{
-  border-color:#efc9c5 !important;
-  background:var(--explora-red-soft) !important;
-}
-#driverDashboard .unified-finance-card #settlementDirection.is-explora-owes{
-  border-color:#cde9da !important;
-  background:var(--explora-green-soft) !important;
-}
-.status.error,#syncStatus.bad{color:var(--explora-red) !important}
-.status.success,#syncStatus.ok,.photo-source-selection.has-photo{color:var(--explora-green) !important}
-
-/* Quitar tonos fuertes residuales de tarjetas operativas sin alterar su layout. */
-#driverDashboard .summary-expense-total,
-#driverDashboard .unified-proof-list .receipt[class*="receipt-tone-"]{
-  border-color:var(--explora-line) !important;
-  background:#fff !important;
-  color:var(--explora-neutral) !important;
-}
-#driverDashboard .unified-proof-list .receipt[class*="receipt-tone-"] .receipt-icon,
-#driverDashboard .unified-proof-list .receipt[class*="receipt-tone-"] .proof{
-  background:var(--explora-neutral-soft) !important;
-  color:var(--explora-neutral-2) !important;
-}
-#driverDashboard .unified-proof-list .receipt[class*="receipt-tone-"] .amount{
-  color:var(--explora-neutral) !important;
-}
-
-/* EXPLORA 3.1.4 · navegación inferior como referencia fotográfica */
-#driverDashboard .driver-nav{
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  width:min(100%,900px);
-  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-  border-top:1px solid #e4e9f2;
-  background:rgba(255,255,255,.97);
-  -webkit-backdrop-filter:blur(14px);
-  backdrop-filter:blur(14px);
-  box-shadow:0 -5px 20px rgba(17,31,61,.035);
-}
-#driverDashboard .driver-nav button{
-  min-width:0;
-  min-height:62px;
-  padding:3px 2px 8px;
-  gap:5px;
-  color:#14214a;
-  font-size:12px;
-  font-weight:500;
-  line-height:1.12;
-  white-space:normal;
-}
-#driverDashboard .driver-nav button span{
-  color:#14214a;
-  text-align:center;
-}
-#driverDashboard .driver-nav svg{
-  width:27px;
-  height:27px;
-  fill:none;
-  stroke:currentColor;
-  stroke-width:2.15;
-}
-#driverDashboard .driver-nav [data-driver-nav="home"] svg{color:#2f7df6;}
-#driverDashboard .driver-nav [data-mode="cash"] svg{color:#f51f59;}
-#driverDashboard .driver-nav [data-mode="digital"] svg{color:#08a64f;}
-#driverDashboard .driver-nav [data-statement-action="expense"] svg{color:#f56a09;}
-#driverDashboard .driver-nav [data-statement-action="management"] svg{color:#8b2cf5;}
-#driverDashboard .driver-nav [aria-current]{color:#14214a;font-weight:700;}
-#driverDashboard .driver-nav [data-driver-nav="home"][aria-current] svg{
-  color:#2f7df6;
-  fill:#2f7df6;
-  stroke:#2f7df6;
-}
-#driverDashboard .driver-nav [aria-current]::after{
-  width:39px;
-  height:4px;
-  bottom:0;
-  border-radius:999px;
-  background:#2f7df6;
-}
-#driverDashboard .driver-nav button:active{transform:translateY(1px);}
-@media(max-width:370px){
-  #driverDashboard .driver-nav{padding-left:5px;padding-right:5px;}
-  #driverDashboard .driver-nav button{font-size:10.5px;}
-  #driverDashboard .driver-nav svg{width:25px;height:25px;}
-}
-/* FIN EXPLORA 3.1.4 · navegación inferior */
-
-/* EXPLORA 3.1.5 · color forzado menú inferior */
-#driverDashboard .driver-nav{
-  grid-template-columns:repeat(5,minmax(0,1fr));
-}
-#driverDashboard .driver-nav button{
-  color:#14214a;
-}
-#driverDashboard .driver-nav button span{
-  color:#14214a;
-}
-
-/* Se fuerza el trazo sobre el SVG Y sobre cada figura interna. Esto evita que
-   reglas heredadas o atributos del SVG vuelvan a pintar los iconos en negro. */
-#driverDashboard .driver-nav [data-driver-nav="home"] svg,
-#driverDashboard .driver-nav [data-driver-nav="home"] svg *{
-  color:#2f7df6!important;
-  stroke:#2f7df6!important;
-  fill:#2f7df6!important;
-}
-#driverDashboard .driver-nav [data-mode="cash"] svg,
-#driverDashboard .driver-nav [data-mode="cash"] svg *{
-  color:#f51f59!important;
-  stroke:#f51f59!important;
-  fill:none!important;
-}
-#driverDashboard .driver-nav [data-mode="digital"] svg,
-#driverDashboard .driver-nav [data-mode="digital"] svg *{
-  color:#08a64f!important;
-  stroke:#08a64f!important;
-  fill:none!important;
-}
-#driverDashboard .driver-nav [data-statement-action="expense"] svg,
-#driverDashboard .driver-nav [data-statement-action="expense"] svg *{
-  color:#f56a09!important;
-  stroke:#f56a09!important;
-  fill:none!important;
-}
-#driverDashboard .driver-nav [data-statement-action="management"] svg,
-#driverDashboard .driver-nav [data-statement-action="management"] svg *{
-  color:#8b2cf5!important;
-  stroke:#8b2cf5!important;
-  fill:none!important;
-}
-#driverDashboard .driver-nav [aria-current]::after{
-  background:#2f7df6!important;
-}
-/* FIN EXPLORA 3.1.5 · color forzado menú inferior */
-
-/* EXPLORA 3.1.6 · Uber retirado de la interfaz nueva */
-#addUberBtn,#uberModal,#uberHelpModal,#uberDriverConfirmationModal{display:none!important}
-
-/* EXPLORA · Cierre y rendición con liquidación a cero */
-.closure-report-modal{align-items:flex-start;padding:18px 10px 34px;overflow:auto;background:rgba(15,23,42,.42)}
-.closure-report-card{width:min(760px,100%);max-height:none;margin:auto;background:#fff;border-radius:24px;box-shadow:0 24px 70px rgba(15,23,42,.22);padding:18px}
-.closure-report-card .modal-head{position:sticky;top:0;z-index:2;background:#fff;padding:2px 0 12px;border-bottom:1px solid #e8edf4}
-.closure-report-kicker{margin:0 0 3px;color:#6f35c8;font-size:11px;font-weight:800;letter-spacing:.11em}.closure-report-card h2{margin:0;color:#111a43;font-size:24px}
-.closure-report-doc{display:grid;gap:14px;padding:14px 0 4px;color:#16203f}.closure-report-warning{display:grid;gap:6px;padding:14px 15px;border:1px solid #f1c7cc;border-radius:15px;background:#fff5f6;color:#8c1725}.closure-report-warning strong{font-size:15px;letter-spacing:.03em}.closure-report-warning span{font-size:12px;line-height:1.45;color:#7a4450}
-.closure-report-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.closure-report-meta>div{display:grid;gap:3px;padding:10px 12px;border:1px solid #e4e9f1;border-radius:12px;background:#f8fafc}.closure-report-meta span{font-size:10px;color:#71809a}.closure-report-meta strong{font-size:12px;overflow-wrap:anywhere}
-.closure-report-doc section{overflow:hidden;border:1px solid #e2e8f0;border-radius:16px;background:#fff}.closure-report-doc section h3{margin:0;padding:12px 14px;background:#f5f8fc;color:#111a43;font-size:15px}.closure-report-doc section>p{margin:0;padding:10px 14px;color:#64748b;font-size:11px;line-height:1.5;border-top:1px solid #edf1f6}
-.closure-report-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid #edf1f6}.closure-report-row>div{display:grid;gap:2px}.closure-report-row strong{font-size:13px}.closure-report-row small{font-size:10px;color:#71809a}.closure-report-row>b{font-size:14px;color:#111a43}.closure-report-empty{padding:14px!important;border-top:0!important}
-.closure-report-totals,.closure-report-ledger,.closure-report-summary{display:grid;gap:0;border-top:1px solid #e8edf4}.closure-report-totals span,.closure-report-ledger span,.closure-report-summary span{display:flex;justify-content:space-between;gap:12px;padding:9px 14px;border-top:1px solid #f0f3f7;font-size:12px}.closure-report-totals span:first-child,.closure-report-ledger span:first-child,.closure-report-summary span:first-child{border-top:0}.closure-report-totals b,.closure-report-ledger b,.closure-report-summary b{color:#111a43}
-.closure-report-result,.closure-report-liquidation{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 14px;border-top:1px solid #e5eaf2}.closure-report-result.before{background:#fff7f7;color:#9f2635}.closure-report-liquidation{background:#f6f2ff;color:#5f2ab3}.closure-report-result.zero{background:#eefbf5;color:#058653}.closure-report-result span,.closure-report-liquidation span{font-size:13px;font-weight:700}.closure-report-result strong,.closure-report-liquidation strong{font-size:22px}
-.closure-report-controls{display:grid;gap:10px;margin-top:12px;padding-top:14px;border-top:1px solid #e8edf4}.closure-report-file-actions{display:flex;flex-wrap:wrap;gap:8px}.closure-report-file-actions a{text-decoration:none;text-align:center}.closure-zero-notice{display:grid;gap:4px;padding:12px 13px;border:1px solid #d9f0e4;border-radius:13px;background:#f1fbf6;color:#086f48}.closure-zero-notice strong{font-size:13px}.closure-zero-notice span{font-size:11px;line-height:1.45;color:#567568}
-@media(max-width:520px){.closure-report-card{padding:14px;border-radius:18px}.closure-report-card h2{font-size:20px}.closure-report-meta{grid-template-columns:1fr}.closure-report-row{padding:10px 11px}.closure-report-result strong,.closure-report-liquidation strong{font-size:20px}}
-/* FIN EXPLORA · Cierre y rendición con liquidación a cero */
-
-/* EXPLORA · Cierre comprobante obligatorio 3.2.0 */
-.closure-proof-panel{
-  display:grid;
-  gap:9px;
-  padding:13px;
-  border:1px solid #d9e5f6;
-  border-radius:15px;
-  background:#f8fbff;
-}
-.closure-proof-panel h3{margin:0;color:#111a43;font-size:14px}
-.closure-proof-panel .file-note{margin:0;color:#60708e;font-size:11px;line-height:1.45}
-.closure-report-proof{display:grid;gap:0;border-top:1px solid #e8edf4}
-.closure-report-proof span{display:flex;justify-content:space-between;gap:12px;padding:9px 14px;border-top:1px solid #f0f3f7;font-size:12px}
-.closure-report-proof span:first-child{border-top:0}
-.closure-report-proof b{max-width:60%;color:#111a43;text-align:right;overflow-wrap:anywhere}
-#generateClosureReport:disabled{opacity:.48;cursor:not-allowed;filter:saturate(.6)}
-/* FIN EXPLORA · Cierre comprobante obligatorio 3.2.0 */
-
-/* Explora · reparto 40/60 */
-.statement-distribution-note{
-  margin:0;
-  padding:10px 18px 15px;
-  color:#7a8498;
-  font-size:11px;
-  line-height:1.35;
-  text-align:left;
-}
-
-/* EXPLORA · Cierre simple V3 */
-.closure-simple-card{position:relative;max-width:520px;padding:26px 22px 22px;text-align:center}
-.closure-simple-x{position:absolute;right:16px;top:14px}
-.closure-simple-brand img{display:block;width:min(210px,58vw);height:auto;margin:8px auto 16px}
-.closure-simple-brand h2{margin:0 auto 22px;max-width:360px;color:#101a45;font-size:24px;line-height:1.15}
-.closure-simple-amount{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:16px;padding:18px;border:1px solid #e5eaf2;border-radius:18px;background:#f7f9fc}
-.closure-simple-amount span{color:#66748f;font-size:14px;font-weight:650}
-.closure-simple-amount strong{color:#101a45;font-size:34px;font-weight:850}
-.closure-simple-notice{text-align:left;margin-bottom:16px}
-.closure-simple-confirm,.closure-simple-back{width:100%;margin-top:10px}
+/* Preview local persistente en formato teléfono; la vista normal no cambia. */
+html.mobile-preview body { width:390px; max-width:390px; min-width:390px; margin:0 auto; background:#eef1f6; box-shadow:0 0 0 1px #cdd3df, 0 12px 40px rgba(0,0,0,.18); }
+html.mobile-preview .topbar { position:relative; }
+html.mobile-preview .main { padding-left:12px; padding-right:12px; }
+@media (max-width:420px) { html.mobile-preview body { width:100%; max-width:100%; min-width:320px; margin:0; box-shadow:none; } }

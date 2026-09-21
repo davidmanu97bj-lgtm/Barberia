@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explora · Vista móvil</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html, body { min-height:100%; margin:0; }
+    body { display:grid; place-items:center; padding:28px; background:#dfe4ec; font-family:system-ui,sans-serif; }
+    .phone { width:390px; height:844px; overflow:hidden; border:10px solid #151a24; border-radius:42px; background:#fff; box-shadow:0 22px 60px rgba(15,23,42,.28); }
+    .phone iframe { display:block; width:100%; height:100%; border:0; background:#fff; }
+    @media (max-width:430px) {
+      body { display:block; padding:0; background:#fff; }
+      .phone { width:100vw; height:100dvh; border:0; border-radius:0; box-shadow:none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="Vista móvil de Explora">
+    <iframe src="./index.html?mobile-runtime=1" title="Explora en teléfono"></iframe>
+  </main>
+</body>
+</html>

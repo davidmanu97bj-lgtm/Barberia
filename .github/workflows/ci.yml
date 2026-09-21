@@ -24,7 +24,7 @@ jobs:
         run: npm test
       - name: Sintaxis de los accesos de Cloud Shell
         run: |
-          for script in explora.sh DESPLEGAR_EXPLORA_COMPLETO.sh He.sh tools/desplegar-explora-completo.sh tools/deploy-migracion-cloud-shell.sh tools/deploy-v4144-cloud-shell.sh; do
+          for script in DESPLEGAR_EXPLORA_COMPLETO.sh He.sh tools/desplegar-explora-completo.sh tools/deploy-migracion-cloud-shell.sh tools/deploy-v4144-cloud-shell.sh; do
             bash -n "$script"
           done
       - name: Preparar paquete de Hosting

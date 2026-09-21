@@ -2,7 +2,6 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {searchTourismPlaces} from '../tourism-catalog.js';
 
 const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
 const start=app.indexOf('function initializeTourismSelector(part)');
@@ -31,34 +30,42 @@ function selectorPage() {
       const el=elements['tourism'+part+suffix]=new Element();el.field=field;field.append(el);
     }
   }
-  const context=vm.createContext({document,$:id=>elements[id],searchTourismPlaces,tourismUsage:{},tourismUsageKey:'test',localStorage:{setItem(){}},
-    tourismCountryNames:{ARG:'Argentina',BRA:'Brasil',PRY:'Paraguay'},
+  const searches=[];
+  const context=vm.createContext({document,$:id=>elements[id],
+    googleTourismPlaces:new Map(),
+    clearTimeout(){},setTimeout(fn){fn();return 1;},
+    exploraRouteCallable:async({query})=>{
+      searches.push(query);
+      return {data:{places:[{id:query.replace(/\s+/g,'-'),label:`${query} · Google Maps`}]}};
+    },
+    routeFailureMessage:()=>"No se pudo buscar el lugar.",
     selectTourismRoute:()=>routes.push([elements.tourismOrigin.value,elements.tourismDestination.value])});
   vm.runInContext(app.slice(start,end)+';initializeTourismSelector("Origin");initializeTourismSelector("Destination");',context);
-  return {elements,fields,document,routes};
+  return {elements,fields,document,routes,searches};
 }
+async function settleSearch(){for(let i=0;i<5;i++)await Promise.resolve();}
 
-test('tocar una sugerencia completa salida y llegada aunque el navegador pierda el foco antes del click',()=>{
-  const {elements,fields,document,routes}=selectorPage();
-  for(const [part,query,id] of [['Origin','cataratas argentina','cataratas-argentina'],['Destination','aeroporto foz',null]]) {
+test('tocar un resultado de Google Maps completa salida y llegada aunque el navegador pierda el foco antes del click',async()=>{
+  const {elements,fields,document,routes,searches}=selectorPage();
+  for(const [part,query] of [['Origin','cataratas argentina'],['Destination','aeroporto foz']]) {
     const input=elements['tourism'+part+'Search'],matches=elements['tourism'+part+'Matches'];
-    input.value=query;input.fire('input');const choice=matches.children[0];assert.ok(choice);
+    input.value=query;input.fire('input');await settleSearch();const choice=matches.children[0];assert.ok(choice);
     document.fire('pointerdown',{target:choice});
     // En pantallas táctiles el desenfoque puede no indicar qué opción se está tocando.
     fields[part].fire('focusout',{target:input,relatedTarget:null});
     assert.ok(matches.children.includes(choice),'La opción debe seguir disponible hasta completar el toque');
-    choice.fire('click');
-    assert.ok(input.value.length>query.length);assert.ok(elements['tourism'+part].value);
-    if(id)assert.equal(elements['tourism'+part].value,id);
+    choice.onclick();
+    assert.equal(input.value,`${query} · Google Maps`);assert.ok(elements['tourism'+part].value.startsWith('google:'));
     assert.equal(matches.children.length,0);assert.equal(input.attributes['aria-expanded'],'false');
   }
+  assert.deepEqual(searches,['cataratas argentina','aeroporto foz']);
   assert.ok(routes.at(-1).every(Boolean));
 });
 
-test('la lista se cierra al tocar o enfocar fuera del campo, sin seleccionar por abrirla',()=>{
+test('la lista de Google se cierra al tocar o enfocar fuera del campo, sin seleccionar por abrirla',async()=>{
   const {elements,document}=selectorPage(),input=elements.tourismOriginSearch,matches=elements.tourismOriginMatches;
   for(const event of ['pointerdown','focusin']) {
-    input.focus();assert.ok(matches.children.length);assert.equal(input.value,'');assert.equal(elements.tourismOrigin.value,'');
+    input.value='Iguazú';input.focus();await settleSearch();assert.ok(matches.children.length);assert.equal(elements.tourismOrigin.value,'');
     document.fire(event,{target:document});assert.equal(matches.children.length,0);assert.equal(input.attributes['aria-expanded'],'false');
   }
 });

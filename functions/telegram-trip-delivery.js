@@ -1,63 +1,75 @@
-'use strict';
-const {randomUUID}=require('node:crypto');
-const {invoiceFilename}=require('./telegram-compact');
+"use strict";
+const {randomUUID} = require('node:crypto');
+const {richMessage,invoiceFilename} = require('./telegram-compact');
 
-// One operational message per payment. Digital receipts MUST remain photographs.
-// Later ARCA authorization changes the photo caption, not the media or the payment.
-async function deliverTripNotification({db,ref,paymentId,caption,photo,requirePhoto=Boolean(photo),chatId,api,sendPhoto,now=Date.now}) {
-  const owner=randomUUID();
-  const previous=await db.runTransaction(async tx=>{
-    const snapshot=await tx.get(ref),row=snapshot.data()||{};
-    // Do not resend messages already delivered by an older release.
-    if (row.telegramMessageId && row.layoutVersion!==2) return null;
-    if (row.status==='processing' && Number(row.leaseUntil || 0)>now()) throw new Error('TELEGRAM_NOTIFICATION_BUSY');
-    tx.set(ref,{layoutVersion:2,status:'processing',owner,leaseUntil:now()+180000,updatedAtMs:now(),
-      sourceCollection:'billing_records',sourceDocumentId:paymentId},{merge:true});
+// Both the collection event and ARCA authorization event use the same lease and
+// message. Authorization upgrades that message; it never generates another invoice.
+async function deliverTripNotification({db,ref,paymentId,caption,photo,chatId,api,invoicePdf,now=Date.now}) {
+  const owner = randomUUID();
+  const previous = await db.runTransaction(async tx => {
+    const snapshot = await tx.get(ref), row = snapshot.data() || {};
+    if (row.invoiceAttached === true || (row.status === 'sent' && row.layoutVersion !== 1)) return null;
+    const leaseUntil = row.layoutVersion === 1 ? row.leaseUntil : Number(row.updatedAtMs || 0)+600000;
+    if (row.status === 'processing' && leaseUntil > now()) throw new Error('TELEGRAM_NOTIFICATION_BUSY');
+    tx.set(ref,{layoutVersion:1,status:'processing',owner,leaseUntil:now()+180000,updatedAtMs:now(),sourceCollection:'billing_records',sourceDocumentId:paymentId},{merge:true});
     return row;
   });
   if (!previous) return {skipped:true};
-  const save=values=>db.runTransaction(async tx=>{
-    const current=(await tx.get(ref)).data();
-    if (current?.owner!==owner) throw new Error('TELEGRAM_LEASE_LOST');
+  let messageId = previous.telegramMessageId || null;
+  const targetChat = previous.telegramChatId || chatId;
+  const stableCaption = String(previous.caption || caption).replace(/^Total con caja:[^\r\n]*(?:\r?\n)?/gmi,'').trim();
+  const stablePhoto = previous.photoUrl || photo || '';
+  const save = values => db.runTransaction(async tx => {
+    const current = (await tx.get(ref)).data();
+    if (current?.owner !== owner) throw new Error('TELEGRAM_LEASE_LOST');
     tx.set(ref,{...values,updatedAtMs:now()},{merge:true});
   });
-  let messageId=previous.telegramMessageId || null;
-  const target=previous.telegramChatId || chatId;
-  const image=previous.photoUrl || photo || '';
-  const stableCaption=String(previous.caption || caption || '').trim();
   try {
-    if (requirePhoto && !image) throw new Error('TELEGRAM_REQUIRED_IMAGE_MISSING');
-    const invoice=(await db.collection('arca_invoices').doc(paymentId).get()).data();
-    const authorized=invoice?.status==='authorized';
-    const state=authorized?'authorized':invoice?.status || 'queued';
-    if (messageId && previous.invoiceState===state) {
-      await save({status:'sent',leaseUntil:0});return {skipped:true,messageId};
+    const invoice = (await db.collection('arca_invoices').doc(paymentId).get()).data();
+    const authorized = invoice?.status === 'authorized' && invoice.environment === 'production';
+    const invoiceState = authorized ? 'authorized' : invoice?.status || 'queued';
+    if (messageId && previous.invoiceState === invoiceState && !authorized) {
+      await save({status:'sent',leaseUntil:0});
+      return {skipped:true,messageId};
     }
-    const name=authorized?invoiceFilename(invoice):'';
-    const notice=authorized?`\n\n🧾 ${name} · PDF disponible en Explora.`:
-      ['review','rejected','disabled'].includes(state)?'\n\n🧾 Factura ARCA pendiente de revisión en Explora.':'\n\n🧾 Factura ARCA pendiente.';
-    const text=(stableCaption+notice).slice(0,requirePhoto?1024:4096);
+    const notice = authorized ? '' : ['review','rejected','disabled'].includes(invoiceState)
+      ? '\n\n⚠️ Factura pendiente de revisión en Explora.' : '\n\n🧾 Factura ARCA pendiente.';
+    let bytes = null, pdfError = null;
+    if (authorized) {
+      try { bytes = await invoicePdf(invoice); }
+      catch(error) { pdfError = error; }
+    }
+    const text = stableCaption + (pdfError ? '\n\n🧾 Factura autorizada. Preparando PDF.' : notice);
+    async function send(includePhoto) {
+      const rich = richMessage(text,{photo:includePhoto ? stablePhoto : '',document:bytes ? 'attach://invoice' : ''});
+      const payload = {chat_id:targetChat,rich_message:rich,...(messageId ? {message_id:messageId} : {})};
+      const method = messageId ? 'editMessageText' : 'sendRichMessage';
+      if (!bytes) return api(method,payload);
+      const form = new FormData();
+      form.append('chat_id',String(targetChat));
+      if (messageId) form.append('message_id',String(messageId));
+      form.append('rich_message',JSON.stringify(rich));
+      form.append('invoice',new Blob([bytes],{type:'application/pdf'}),invoiceFilename(invoice));
+      return api(method,form,{multipart:true});
+    }
     let message;
-    try {
-      if (messageId) {
-        message=await api(requirePhoto?'editMessageCaption':'editMessageText',{
-          chat_id:target,message_id:messageId,...(requirePhoto?{caption:text,show_caption_above_media:true}:{text})});
-      } else if (requirePhoto) {
-        message=sendPhoto?await sendPhoto(image,text,target):await api('sendPhoto',{chat_id:target,photo:image,caption:text,show_caption_above_media:true});
-      } else message=await api('sendMessage',{chat_id:target,text});
-    } catch(error) {
-      if (messageId && /message is not modified/i.test(error.message)) message={message_id:messageId};
-      else throw error; // Never mark a text-only fallback as a delivered image.
+    try { message = await send(Boolean(stablePhoto)); }
+    catch(error) {
+      if (messageId && /message is not modified/i.test(error.message)) message = {message_id:messageId};
+      // Only an explicit media rejection is safe to retry without its photo.
+      else if (stablePhoto && error.telegramStatus === 400 && /photo|image|url|webpage|http/i.test(error.message)) message = await send(false);
+      else throw error;
     }
-    messageId=message?.message_id || messageId;
+    messageId = message?.message_id || messageId;
     if (!messageId) throw new Error('TELEGRAM_MESSAGE_ID_MISSING');
-    await save({status:'sent',leaseUntil:0,telegramMessageId:messageId,telegramChatId:String(target),
-      caption:stableCaption,photoUrl:image,invoiceState:state,invoiceAttached:false,invoiceFilename:name||null,
-      sentAtMs:previous.sentAtMs || now(),lastError:null,attachmentType:requirePhoto?'photo':'text'});
-    return {sent:true,messageId,invoiceAttached:false,photoSent:requirePhoto};
+    await save({status:'sent',leaseUntil:0,telegramMessageId:messageId,telegramChatId:String(targetChat),caption:stableCaption,
+      photoUrl:stablePhoto,invoiceState,invoiceAttached:Boolean(bytes),invoiceFilename:bytes ? invoiceFilename(invoice) : null,
+      sentAtMs:previous.sentAtMs || now(),lastError:null});
+    if (pdfError) throw pdfError;
+    return {sent:true,messageId,invoiceAttached:Boolean(bytes)};
   } catch(error) {
     await save({status:'error',leaseUntil:0,lastError:String(error.message || error).slice(0,500)}).catch(()=>{});
     throw error;
   }
 }
-module.exports={deliverTripNotification};
+module.exports = {deliverTripNotification};

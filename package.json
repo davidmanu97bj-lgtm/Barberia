@@ -1,6 +1,6 @@
 {
-  "name": "explora-periodo-barberia",
-  "version": "3.0.0",
+  "name": "explora-pago-home-cierre-demanda",
+  "version": "2.5.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,11 +13,12 @@
     "test:activity-receipts": "node tests/admin-activity-financial-actions.test.mjs",
     "build": "node tools/build-hosting.mjs",
     "deploy": "node tools/deploy.mjs",
-    "serve": "python3 -m http.server 8080",
-    "test:offline": "node tools/run-tests.mjs --offline",
-    "manage": "bash explora.sh"
+    "serve": "python3 -m http.server 8080"
   },
   "engines": {
     "node": "22"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
   }
 }

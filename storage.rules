@@ -13,7 +13,8 @@ service firebase.storage {
 
     function isAuthorizedAdmin() {
       return signedIn() && (
-        request.auth.token.get('admin', false) == true
+        request.auth.uid == '2LziyTTdFcZzSOhK3hLbAKs2U4s2'
+        || request.auth.token.admin == true
       );
     }
 
@@ -319,22 +320,19 @@ service firebase.storage {
       allow delete: if false;
     }
 
-    // Converted receipt PDFs are generated only by the authenticated backend.
-    // Original photographs are retained in their original owner-scoped paths.
-    match /receipt_pdfs/{ownerUid}/{allPaths=**} {
-      allow get: if isAuthorizedAdmin() || isOwner(ownerUid);
-      allow list: if isAuthorizedAdmin();
-      allow write: if false;
-    }
-    match /uber_verified/{ownerUid}/{allPaths=**} {
-      allow get: if isAuthorizedAdmin() || isOwner(ownerUid);
-      allow write: if false;
-    }
-
     // =========================================================
     // DENEGACIÓN FINAL
     // =========================================================
 
+    match /monthly_reports/{ownerUid}/{allPaths=**} {
+      allow read: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow write: if false;
+    }
+    match /driver_monthly_invoices/{ownerUid}/{month}/{file} {
+      allow read: if isAuthorizedAdmin() || isOwner(ownerUid);
+      allow create: if isOwner(ownerUid) && validOperationalUpload() && request.resource.contentType == 'application/pdf';
+      allow update, delete: if false;
+    }
     match /{allPaths=**} {
       allow read, write: if false;
     }

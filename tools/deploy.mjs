@@ -6,9 +6,9 @@ import { command } from './command.mjs';
 
 const FIREBASE_CLI_VERSION = '15.30.0';
 const REMOTES = new Set([
-  'https://github.com/davidmanu97bj-lgtm/Barberia.git',
-  'https://github.com/davidmanu97bj-lgtm/Barberia',
-  'git@github.com:davidmanu97bj-lgtm/Barberia.git'
+  'https://github.com/davidmanu97bj-lgtm/santander.git',
+  'https://github.com/davidmanu97bj-lgtm/santander',
+  'git@github.com:davidmanu97bj-lgtm/santander.git'
 ]);
 const SCOPES = new Set(['all', 'hosting', 'backend']);
 

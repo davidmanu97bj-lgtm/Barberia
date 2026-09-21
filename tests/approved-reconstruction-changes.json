@@ -1,0 +1,181 @@
+{
+  "context": "Excepciones por ampliación explícita del alcance del usuario: reglas financieras, cierre único y Telegram. El baseline original se conserva. Normalizar CRLF evita diferencias propias de Windows.",
+  "functions": {
+    "initializeTourismSelector": {
+      "hash": "b8991dbed518d9339569bcd99f72ac610789fe8a3acbd4ade7e65a176ae47284",
+      "reason": "Búsqueda solicitada en Google Maps directamente desde Salida y Llegada, sin catálogo local ni botón intermedio; al elegir Llegada lleva a Continuar."
+    },
+    "validateChargeStep": {
+      "hash": "5fc723672c893079faa75f41577ca0b0afda0add0950a69c391cb725b47c04e8",
+      "reason": "Solicitud de Google Maps: admite lugares elegidos en Google cuando ambos puntos y la distancia calculada están disponibles."
+    },
+    "uberDriverSubmissionDelta": {
+      "hash": "3ab9789a20a12e8c082f8cfa06c151f47014fabc3c01f3c48ff52be734dd59d3",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "renderDriverLoadState": {
+      "hash": "b7c45d97bd8d51a86b5ea317e8668279988186827fcda6faa263b9ad97c6e1ae",
+      "reason": "Inicio y actividades con presentación compartida; nuevo período tras cierre sin eliminar el historial."
+    },
+    "digitalCashboxAmount": {
+      "hash": "9e66a3bc0aa2b579921e264e51beb0b78c03ba8c5d211ed620ae467996072b24",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "adjustmentTotal": {
+      "hash": "2428e3f5bb0f09577a8862c465e0a2ff97bc6442011bcda840a4edbb857fa8fc",
+      "reason": "Cierre único: compensa la deuda incluida sin descontarla dos veces; pruebas period-closure y period-policy."
+    },
+    "expenseNetDriverRate": {
+      "hash": "a870d3cdfdd635fd412a6ec87edb64dbc97bba12c9ef33f95a85a4660128be2f",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "settlementMovementDeltaSince": {
+      "hash": "c4a29a131dafa5e3b36a89dbd7d4ea7a177b76466086eabfdd1395882a267dd9",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "openCashboxAmount": {
+      "hash": "d090d555af6b8344bb57adf8afaa4d88265a1f8fa0b24a4ca85e7053ea977880",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "buildUnifiedReceipts": {
+      "hash": "86521d18b6279cd0f9ecff2cd78bb96f2519f9ba413eb7bdf3414dc382c2a8f4",
+      "reason": "Inicio y actividades con presentación compartida; nuevo período tras cierre sin eliminar el historial."
+    },
+    "render": {
+      "hash": "51efd30855fc1eaff2edb1ac922ec4da31543a7ac301ccb455464e4e9da06e15",
+      "reason": "Inicio y actividades con presentación compartida; nuevo período tras cierre sin eliminar historial. Oculta comprobantes de caja chica solo en Todas las actividades, antes de contar y paginar, sin modificar cálculos ni registros. Oculta el asiento interno de migración únicamente en actividades; la deuda inicial continúa en Billeteras y en el cálculo."
+    },
+    "receiptBalanceSnapshot": {
+      "hash": "bdfe1105dc2cf1b591f7c1358e8d67178437fb2d5f70c43b661aa9a0cb199ed2",
+      "reason": "Cierre único: compensa la deuda incluida sin descontarla dos veces; pruebas period-closure y period-policy."
+    },
+    "adminBillingBalanceForDriver": {
+      "hash": "dbe05d2f5a775ab4adb1dcd8c0af9c244d1304f9992309decf1be26e9ee5298c",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "previewDefinition": {
+      "hash": "c57389baacaa5feca1903342b5b0ac9d440cb33757d059a451a42cf8ade09a89",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "renderUberAccountPreview": {
+      "hash": "677758224e3a10d8d47fb2d83c0817318d20a81ee1974479da891926c9f34950",
+      "reason": "Regla aprobada: dos billeteras netas, reparto 50%, caja chica 10% bruto solo para movimientos nuevos; conserva ramas históricas. Pruebas period-policy, settlement-gross-flow y realtime-balance."
+    },
+    "renderExpenseTypes": {
+      "hash": "62047bd0d2c8931a5113561d8fce697eb780dde095eef7ee39f58ccbe0cee7ef",
+      "reason": "Chofer: seis categorías autorizadas, solo efectivo y avance inmediato al elegir categoría."
+    },
+    "showExpenseStep": {
+      "hash": "d13b63819311488e75ba627ef441f95a3667a9ba54bf14540fd04cb1019c4a55",
+      "reason": "Chofer: seis categorías autorizadas, solo efectivo y avance inmediato al elegir categoría. La foto es el tercer y último paso; al elegirla se habilita Confirmar gasto."
+    },
+    "initializePhotoSourcePickers": {
+      "hash": "4e746af2da1cd30956bf6b45153eccaa72577cf593ff581ca3e1d2934fef17c6",
+      "reason": "Al seleccionar la foto de un gasto se mantiene el comprobante elegido y se habilita su confirmación en el tercer paso."
+    },
+    "validateExpenseStep": {
+      "hash": "dcd7e40ada9e662ddccfe31140eb2f7598959c55d28b7b6611dfe95e5b0c3303",
+      "reason": "Chofer: seis categorías autorizadas, solo efectivo y avance inmediato al elegir categoría."
+    },
+    "chargeSteps": {
+      "hash": "3cba5c37309b3c0e6dd3966060cb0bc0deae05c25d68a878028fdc8aa286f2e3",
+      "reason": "Salida/llegada progresivas en rojo/verde y eliminación del panel de movimientos en cobros."
+    },
+    "showChargeStep": {
+      "hash": "a5c2eb4f43f9eb76f698f097cec4bd289c82e3eb408e6222432b33a3023ad863",
+      "reason": "Salida/llegada progresivas en rojo/verde y eliminación del panel de movimientos en cobros."
+    },
+    "renderTourismSelectors": {
+      "hash": "b9d99196fb3b3d687bc4b9ccb8cfa51d14fa534523c1587b2a53f8d2fa4967ca",
+      "reason": "Salida/llegada progresivas en rojo/verde y eliminación del panel de movimientos en cobros."
+    },
+    "selectTourismRoute": {
+      "hash": "d70074c150bc431c13b021d3005575c6450b8206d8827f154d94a217fc152fd2",
+      "reason": "Salida/llegada progresivas en rojo/verde y eliminación del panel de movimientos en cobros."
+    },
+    "renderAdminDriverOptions": {
+      "hash": "dd0b8974c12a3ecac9d65ffb9903d5ee3c8f7320cb9a8de940b733ad27e9b5ae",
+      "reason": "Menú administrativo solicitado: reutiliza la selección de choferes activos en Pago digital."
+    },
+    "unsubscribeAdminDashboard": {
+      "hash": "2fc3c16ff059f654de8a708e3d5a0ff3c989478fe9d1a674d22b540b2d503e41",
+      "reason": "Menú administrativo solicitado: limpia documentos y consultas pendientes al cambiar de sesión."
+    },
+    "renderAdminDashboardUpdates": {
+      "hash": "bcd3727355466ee29c2888a5f3fd6aaa4116ec70e9af358245f3463964ecab45",
+      "reason": "Menú administrativo solicitado: actualiza vistas conjuntas y revisión de deuda grupal con las mismas fuentes financieras."
+    },
+    "subscribeAdminDashboard": {
+      "hash": "b630e8d214bd34e2bb3c86e0b91280e1560f1d383a3a91768c2d1beeda9fc6c3",
+      "reason": "Menú administrativo solicitado: refresca documentos del equipo ante cambios de movimientos o facturas recibidas."
+    }
+  },
+  "handlers": {
+    "chargeForm": {
+      "hash": "27b646192bc7cede195823c3f2ad1edeb899354c10f6789a7a788aece3d348fc",
+      "reason": "Cobros nuevos aplican 50%+10% por versión, conservan los datos de factura AFIP."
+    },
+    "expenseForm": {
+      "hash": "13ce7fe6b3c7965ee24907afd5ae745cf93df8afba529e512505ca342a41b94a",
+      "reason": "Gastos del chofer solo efectivo y seis categorías; la foto es el último paso y el botón confirma directamente."
+    },
+    "managementForm": {
+      "hash": null,
+      "reason": "Flujo reemplazado por el cierre único con comprobante y botón Aceptar y cerrar; probado en period-confirmation."
+    }
+  },
+  "protectedFiles": {
+    "firestore.rules": {
+      "hash": "1e2c27b8b116fd19bfa16c9e314252cc80b75d238147513e369177271e899cc0",
+      "reason": "Publicación autorizada: los movimientos nuevos requieren la regla de billeteras netas; las versiones anteriores deben actualizarse para evitar registrar operaciones con la fórmula antigua. Los documentos históricos se conservan."
+    },
+    "functions/expense-policy.js": {
+      "hash": "044e01190580912b786c33020c3b663b16eee01da5c6a7600482301a11abffa2",
+      "reason": "Agrega Peaje y la lista permitida al chofer sin eliminar categorías históricas/admin."
+    },
+    "functions/index.js": {
+      "hash": "a793d251fcd01c6c0b6dadde26aa8302394206e98b9579d2076de37c1e3b3056",
+      "reason": "Menú administrativo solicitado: expone consulta de documentos mensuales protegida por el control administrativo existente; no cambia cálculos ni emisores de facturas."
+    },
+    "functions/telegram-billing-balance.js": {
+      "hash": "aabb3748111e32c61eae773b2fb75dc15158698ac5d045a32014330838631c66",
+      "reason": "Publicación autorizada: Telegram conserva las reglas anteriores y toma el saldo anclado para cuentas migradas, para coincidir con la billetera y el cierre único."
+    },
+    "functions/telegram-compact.js": {
+      "hash": "37b338dcc68ed4523034c7c954655681666bc7bafdc68814b7aeaf8fb5d20b15",
+      "reason": "Formatos solicitados: gasto digital, deuda individual 100% y aviso grupal. Direcciones resumidas de salida y destino en los avisos de cobro, sin códigos postales ni datos administrativos repetidos (solicitado el 19/09/2026)."
+    },
+    "functions/tests/telegram-trip-delivery.test.js": {
+      "hash": "0c6561d07d685184a784a09051167cbb554ac841004c8d2ead426dbd252e3043",
+      "reason": "Expectativas de textos solicitados; conserva concurrencia, reintentos y PDF autorizado."
+    },
+    "functions/tests/unified-main-preview-contract.test.js": {
+      "hash": "fcf745e019425fa7a687ad359fb0cec51064d0dfa596f2cfd07b0bb933164e81",
+      "reason": "Expectativas matemáticas de la nueva regla con sus ramas históricas."
+    },
+    "functions/uber-submission.js": {
+      "hash": "e79bf5a9538c83b0660cafabc1ea0df181394773273b19380b557e26f41fd8a6",
+      "reason": "Publicación autorizada: los movimientos nuevos requieren la regla de billeteras netas; las versiones anteriores deben actualizarse para evitar registrar operaciones con la fórmula antigua. Los documentos históricos se conservan."
+    },
+    "package.json": {
+      "hash": "40c21405917c3460de89730d565da267aadda0dcbb8c67cfc2e50c2245cc746a",
+      "reason": "Dependencia Playwright para verificación local de navegadores."
+    },
+    "storage.rules": {
+      "hash": "bf42ee53ccd3cfe85a6c0e261df8641e0ab67d35a2bca6df1820dc5efd7657ca",
+      "reason": "Resúmenes PDF de solo lectura para dueño/admin y facturas PDF del chofer sin sobrescritura ni eliminación."
+    },
+    "styles.css": {
+      "hash": "ff22e0d57f8f97edfecf0ca0ffa17a5b745ac62ba6dc0ecc043a46910f081c92",
+      "reason": "Presentación móvil de la reconstrucción: cada paso de efectivo, digital y gasto mantiene sus datos y acciones visibles en el alto del teléfono; el comprobante digital replica los botones de Cargar gasto."
+    },
+    "firebase.json": {
+      "hash": "18394688c9724275f63283dcea3fb6e30685c3250b36b408e6ddcb12687b9480",
+      "reason": "Publicación autorizada: exigir revalidación de JavaScript y CSS para evitar mezclar archivos financieros y visuales de versiones distintas en navegadores con caché."
+    },
+    "functions/tests/team-realtime-contract.test.js": {
+      "hash": "3ea7758041322a5055f8c2beaf84b13170b0d65cda6960e0de5d41d4370ad492",
+      "reason": "El usuario pidió rediseñar la administración: cambia el título a Resumen del equipo y conserva las comprobaciones de saldos en tiempo real."
+    }
+  }
+}

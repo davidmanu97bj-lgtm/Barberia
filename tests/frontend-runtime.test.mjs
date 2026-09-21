@@ -16,7 +16,7 @@ test('la entrada actual carga app.js, estilos, manifest y registra su service wo
   assert.match(app, /serviceWorker\.register\("\.\/service-worker\.js"\)/);
 });
 
-test('el service worker retira solamente sus cachés antiguas y deja las peticiones a la red', async () => {
+test('el service worker retira solamente sus cachÃ©s antiguas y deja las peticiones a la red', async () => {
   const listeners = {};
   const removed = [];
   let claimed = false;
@@ -33,7 +33,7 @@ test('el service worker retira solamente sus cachés antiguas y deja las peticio
   assert.equal(skipped, true);
   assert.equal(claimed, true);
   assert.deepEqual(removed, ['explora-shell-old']);
-  listeners.fetch({ respondWith: () => assert.fail('El worker no debe servir una versión cacheada') });
+  listeners.fetch({ respondWith: () => assert.fail('El worker no debe servir una versiÃ³n cacheada') });
 });
 
 test('el paquete de Hosting contiene solo recursos publicados, limpia sobrantes y detecta recursos faltantes', () => {
@@ -50,7 +50,7 @@ test('el paquete de Hosting contiene solo recursos publicados, limpia sobrantes 
     const sha = 'a'.repeat(40);
     const output = buildHosting(root, sha);
     assert.equal(fs.existsSync(path.join(output, 'old.js')), false);
-    assert.deepEqual(fs.readdirSync(path.join(output, 'functions')), ['expense-policy.js','jpeg-pdf.js','period-settlement.js']);
+    assert.deepEqual(fs.readdirSync(path.join(output, 'functions')), ['expense-policy.js', 'period-policy.js']);
     assert.equal(fs.existsSync(path.join(output, 'functions/index.js')), false);
     const release = JSON.parse(fs.readFileSync(path.join(output, 'release.json')));
     assert.equal(release.commit, sha);

@@ -95,16 +95,11 @@ function createUberProofFunction({db, bucket, assertViewer}) {
     if (!result.valid) return result;
     // Invalid images never reach Storage or the financial collection. Valid proofs
     // are immutable, server-written, and bound to the exact owner/week/amount.
-    const id = crypto.randomUUID(), photoToken = crypto.randomUUID(), pdfToken = crypto.randomUUID();
-    const telegramPhotoPath = `uber_verified/${uid}/${id}.jpg`;
-    const proofPath = `uber_verified/${uid}/${id}.pdf`;
-    const pdf = Buffer.from(require("./jpeg-pdf").create(bytes));
-    await bucket.file(telegramPhotoPath).save(bytes,{resumable:false,metadata:{contentType:"image/jpeg",metadata:{firebaseStorageDownloadTokens:photoToken}}});
-    await bucket.file(proofPath).save(pdf,{resumable:false,metadata:{contentType:"application/pdf",metadata:{firebaseStorageDownloadTokens:pdfToken}}});
-    const download = (path,token) => `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
-    const proofUrl=download(proofPath,pdfToken),telegramPhotoUrl=download(telegramPhotoPath,photoToken);
-    await db.collection("uber_proof_checks").doc(id).set({uid,amount,weekStartDate:week.start,weekCloseDate:week.close,
-      proofPath,proofUrl,telegramPhotoPath,telegramPhotoUrl,valid:true,createdAt:Timestamp.now(),expiresAt:Timestamp.fromMillis(Date.now()+3600000),imageHash:crypto.createHash("sha256").update(bytes).digest("hex")});
+    const id = crypto.randomUUID(), token = crypto.randomUUID();
+    const proofPath = `uber_verified/${uid}/${id}.jpg`;
+    await bucket.file(proofPath).save(bytes,{resumable:false, metadata:{contentType:"image/jpeg", metadata:{firebaseStorageDownloadTokens:token}}});
+    const proofUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(proofPath)}?alt=media&token=${token}`;
+    await db.collection("uber_proof_checks").doc(id).set({uid, amount, weekStartDate:week.start, weekCloseDate:week.close, proofPath, proofUrl, valid:true, createdAt:Timestamp.now(), expiresAt:Timestamp.fromMillis(Date.now()+3600000), imageHash:crypto.createHash("sha256").update(bytes).digest("hex")});
     return {...result,id,proofPath,proofUrl};
   });
 }

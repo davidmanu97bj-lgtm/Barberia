@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
-const engine=createRequire(import.meta.url)('../functions/period-settlement.js');
+const periodPolicy=createRequire(import.meta.url)('../functions/period-policy.js');
 
 const source = fs.readFileSync(new URL('../app.js', import.meta.url), 'utf8');
 function declaration(name) {
@@ -104,18 +104,18 @@ test('un alta pendiente muestra Guardando y una pérdida de conexión conserva e
 });
 
 for (const [kind,preview,ids,delta] of [
-  ['management','renderManagementPreview',['managementPreview'],-100000],
-  ['uber','renderUberAccountPreview',['uberPrincipalPreview','uberCashboxPreview'],55000]
+  ['expense','renderExpensePreview',['expenseGrossPreview','expenseRefundPreview'],50000],
+  ['uber','renderUberAccountPreview',['uberPrincipalPreview','uberCashboxPreview'],105000]
 ]) test(`${kind}: el impacto no se vuelve a sumar al recibir el alta, pero sí refresca otros cambios antes de guardar`, () => {
   let balance=0;
-  const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,{value:'100000',dataset:{},classList:{toggle(){},add(){},remove(){}},textContent:'',innerHTML:''});return nodes.get(id);};
+  const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,{value:'100000',dataset:{},classList:{toggle(){},add(){}},textContent:'',innerHTML:''});return nodes.get(id);};
   $('chargeMode').value='cash';
-  const ctx=vm.createContext({$,activeSubmissionLocks:new Set(),submissionPreviewBalances:new Map(),submissionPreviewModels:new Map(),ExploraPeriodSettlement:engine,
-    settlementModel:()=>({...engine.calculate(),balance}),scheduleDashboardRender(){},parseMoneyInput:Number,parseUberAmount:Number,
+  const ctx=vm.createContext({$,activeSubmissionLocks:new Set(),submissionPreviewBalances:new Map(),
+    settlementModel:()=>({balance}),scheduleDashboardRender(){},parseMoneyInput:Number,parseUberAmount:Number,
     normalizedSettlementBalance:value=>value,money:String,signedMoney:String,escapeHtml:String,
     settlementPreviewCopy:value=>({label:String(value)}),receiptBalanceLabel:String,managementDirection:'driver_to_explora',
-    ExploraExpensePolicy:{find:()=>({refundRate:0.5})},document:{querySelectorAll:()=>[]}});
-  load(ctx,'acquireSubmissionLock','releaseSubmissionLock','captureSubmissionBalance','previewSettlementBalance','previewDefinition',preview);
+    ExploraExpensePolicy:{find:()=>({refundRate:0.5})},ExploraPeriodPolicy:periodPolicy,document:{querySelectorAll:()=>[]}});
+  load(ctx,'acquireSubmissionLock','releaseSubmissionLock','captureSubmissionBalance','previewSettlementBalance',preview);
   ctx[preview]();const first=ids.map(id=>$(id).innerHTML);
   balance=200;ctx[preview]();assert.notDeepEqual(ids.map(id=>$(id).innerHTML),first);
   assert.equal(ctx.acquireSubmissionLock(kind),true);assert.equal(ctx.acquireSubmissionLock(kind),false);
@@ -123,21 +123,6 @@ for (const [kind,preview,ids,delta] of [
   balance+=delta;ctx[preview]();assert.deepEqual(ids.map(id=>$(id).innerHTML),submitted,'la operación que llega no se añade otra vez en el modal');
   ctx.releaseSubmissionLock(kind);ctx[preview]();assert.notDeepEqual(ids.map(id=>$(id).innerHTML),submitted,'si falla, el siguiente intento parte del saldo más reciente');
 });
-
-for (const [kind,operation,delta] of [['charge','cash',55000],['expense','expense',-50000]])
- test(`${kind}: quitar el bloque visual no elimina el snapshot interno ni duplica el impacto`,()=>{
-  let balance=0;
-  const ctx=vm.createContext({activeSubmissionLocks:new Set(),submissionPreviewBalances:new Map(),submissionPreviewModels:new Map(),ExploraPeriodSettlement:engine,
-    settlementModel:()=>({...engine.calculate(),balance}),scheduleDashboardRender(){}});
-  load(ctx,'acquireSubmissionLock','releaseSubmissionLock','captureSubmissionBalance','previewSettlementBalance','previewDefinition');
-  assert.equal(ctx.previewSettlementBalance(kind),0);
-  balance=200;assert.equal(ctx.previewSettlementBalance(kind),200);
-  assert.equal(ctx.acquireSubmissionLock(kind),true);assert.equal(ctx.acquireSubmissionLock(kind),false);
-  balance=300;ctx.captureSubmissionBalance(kind);
-  assert.equal(ctx.previewDefinition(operation,100000).delta,delta);
-  balance+=delta;assert.equal(ctx.previewSettlementBalance(kind),300);
-  ctx.releaseSubmissionLock(kind);assert.equal(ctx.previewSettlementBalance(kind),balance);
- });
 
 test('después del guardado cierra y muestra el saldo recibido sin un temporizador adicional', () => {
   let hidden=false,rendered=0,scrolled=false;
@@ -157,4 +142,15 @@ test('un comprobante local sin acuse del servidor nunca se anuncia como confirma
   assert.equal(await ctx.confirmCommittedOperation({},'id','fp'),false);assert.ok(serverReads>0);
   confirmed=true;assert.equal(await ctx.confirmCommittedOperation({},'id','fp'),true);
   assert.equal(await ctx.confirmCommittedOperation({},'other-id','fp'),false);
+});
+
+test('el cobro conserva el bloqueo y la base al guardar, aunque ya no muestre la vista de movimientos',()=>{
+ let balance=100;
+ const ctx=vm.createContext({activeSubmissionLocks:new Set(),submissionPreviewBalances:new Map(),settlementModel:()=>({balance}),scheduleDashboardRender(){}});
+ load(ctx,'acquireSubmissionLock','releaseSubmissionLock','captureSubmissionBalance','previewSettlementBalance');
+ assert.equal(ctx.acquireSubmissionLock('charge'),true);
+ assert.equal(ctx.acquireSubmissionLock('charge'),false);
+ ctx.captureSubmissionBalance('charge');balance=200;
+ assert.equal(ctx.previewSettlementBalance('charge'),100);
+ ctx.releaseSubmissionLock('charge');assert.equal(ctx.previewSettlementBalance('charge'),200);
 });

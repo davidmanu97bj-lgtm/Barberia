@@ -12,5 +12,5 @@ module.exports = function loadFrontendFunctions() {
     if (start < 0 || end < 0) throw new Error(`No se encontró ${name} en la aplicación publicada`);
     return source.slice(start, end);
   });
-  return vm.runInNewContext(`${functions.join('\n')}\n({${names.join(',')}})`, {ExploraPeriodSettlement:require('../../functions/period-settlement'),settlementModel:()=>require('../../functions/period-settlement').calculate(),submissionPreviewModels:new Map()}, { timeout: 1000 });
+  return vm.runInNewContext(`${functions.join('\n')}\n({${names.join(',')}})`, {}, { timeout: 1000 });
 };

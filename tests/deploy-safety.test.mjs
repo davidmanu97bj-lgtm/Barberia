@@ -9,7 +9,7 @@ const root = path.resolve('fixture');
 function git(overrides = {}, calls = []) {
   const outputs = {
     'rev-parse --show-toplevel': root,
-    'remote get-url origin': 'https://github.com/davidmanu97bj-lgtm/Barberia.git',
+    'remote get-url origin': 'https://github.com/davidmanu97bj-lgtm/santander.git',
     'status --porcelain --untracked-files=all': '',
     'rev-parse HEAD': sha,
     'ls-remote --exit-code origin refs/heads/main': `${sha}\trefs/heads/main`
@@ -82,7 +82,7 @@ test('una entrega válida publica las tres etapas del mismo commit sin force', (
   assert.deepEqual(deploys.map(args => args[args.indexOf('--only') + 1]), ['firestore:rules,firestore:indexes,storage', 'functions', 'hosting']);
   for (const args of deploys) {
     assert.ok(args.includes('--package=firebase-tools@15.30.0'));
-    assert.ok(args.includes('barberia-c25a1'));
+    assert.ok(args.includes('explora-control-operativo'));
     assert.ok(args.includes(`GitHub main ${sha}`));
     assert.equal(args.includes('--force'), false);
   }

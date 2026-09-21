@@ -1,6 +1,5 @@
-EXPLORA 3.0.0 — Entrega actual
-Leé README.md e INFORME_PRUEBAS.md.
-En Cloud Shell, dentro de esta carpeta: bash explora.sh
-El destino incluido es barberia-c25a1: confirmalo antes de publicar.
-No se migran datos/usuarios desde el proyecto anterior automáticamente.
-Los documentos de otras versiones son históricos.
+Archivos modificados:
+- functions/index.js: Telegram para cobros digitales con foto, efectivo sin foto y gastos con foto.
+- js/segments/52-script.mjs: todos los cierres pendientes pasan al administrador, quien carga el comprobante y cierra.
+- index.html: actualización de versión del módulo.
+- service-worker.js: actualización de caché PWA.

@@ -9,7 +9,7 @@
   const groups = [
     {id:'shared',label:'50% chofer · 50% Explora',refundRate:0.5,description:'Explora reintegra el 50%',types:[
       ['service','Service del auto','wrench'],['combustible','Combustible','fuel'],['lavadero','Lavadero','wash'],
-      ['patente','Patente','plate'],['seguro_auto','Seguro del auto','carShield'],['control_municipal','Control municipal','municipal'],['vtv','VTV','inspection']
+      ['patente','Patente','plate'],['seguro_auto','Seguro del auto','carShield'],['control_municipal','Municipalidad','municipal'],['vtv','VTV','inspection'],['peaje','Peaje','toll']
     ]},
     {id:'driver',label:'100% chofer',refundRate:0,description:'Sin reintegro · 100% deuda del chofer',types:[
       ['seguro_vida','Seguro de vida','heart'],['monotributo','Monotributo','tax'],['multa','Multa','ticket'],
@@ -20,23 +20,9 @@
       ['pastillas','Pastillas','pads'],['disco_freno','Disco de freno','disc']
     ]}
   ];
+  const driverAllowedTypes = Object.freeze(['combustible','lavadero','seguro_auto','control_municipal','vtv','peaje']);
   const types = groups.flatMap(group => group.types.map(([id,label,icon]) => Object.freeze({id,label,icon,group:group.id,groupLabel:group.label,refundRate:group.refundRate})));
-  const debtVersion = 'driver_debt_100_v1';
-  const entryGroups = Object.freeze([
-    Object.freeze({id:'shared', label:'Gasto pagado en efectivo',
-      description:'Lo paga el chofer y se descuenta antes de la caja y el reparto.',
-      types:Object.freeze(types.filter(type => type.group !== 'driver'))}),
-    Object.freeze({id:'debt', label:'Deuda del chofer 100%',
-      description:'Choque, préstamo, multa o ruptura. Se debe a Explora, sin compartir.',
-      types:Object.freeze(['choque','prestamo','multa','ruptura','seguro_vida','monotributo','canon'].map(id => types.find(type => type.id === id)))})
-  ]);
   function find(type) { return types.find(item => item.id === type) || null; }
-  // Applied only when registering NEW data. Never reclassify historical gastos.
-  function entryKind(type) { const item = find(type); return item ? (item.group === 'driver' ? 'debt' : 'shared') : ''; }
-  function isSelfDeclaredDebt(data = {}) {
-    return data.type === 'driver_debt_100' && data.debtRuleVersion === debtVersion &&
-      data.registrationOrigin === 'driver_expense_debt_menu' && data.debtResponsibility === 'driver';
-  }
   function refundRate(expense = {}) {
     return expense.receiptFlowVersion === version ? (find(expense.expenseType)?.refundRate ?? 0) : 0.5;
   }
@@ -45,6 +31,7 @@
     return expense.receiptFlowVersion === 'gross_expense_driver_debit_50_v2' ? 0.5 : -0.5;
   }
   const icons = {
+    toll:'<path d="M3 21V8h5v13M2 8h7M5 3v2m3 7h14M10 12l3 4m2-4 3 4M2 21h8M18 16v5"/>',
     fuel:'<path d="M4 21V3h10v18M4 10h10M2 21h14M14 7h2l4 4v7a1 1 0 0 0 2 0V8l-4-4"/>',
     wash:'<path d="m4 12 2-6h12l2 6M3 12h18v7H3zM6 19v2M18 19v2M6 15h2M16 15h2M5 2v1M12 1v2M19 2v1"/>',
     wrench:'<path d="m14 6 4 4 3-3a6 6 0 0 1-8 7l-6 6a2 2 0 0 1-3-3l6-6a6 6 0 0 1 7-8z"/>',
@@ -65,5 +52,5 @@
     pads:'<path d="M6 4h4v16H6C1 16 1 8 6 4Zm12 0h-4v16h4c5-4 5-12 0-16ZM10 7h4m-4 10h4"/>',
     disc:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 5v1m6 6h1m-7 6v1m-7-7h1m1-5 1 1m8 8 1 1m0-10-1 1m-8 8-1 1"/>'
   };
-  return Object.freeze({version,groups,types,find,refundRate,netDriverRate,icons,debtVersion,entryGroups,entryKind,isSelfDeclaredDebt});
+  return Object.freeze({version,groups,types,find,refundRate,netDriverRate,icons,driverAllowedTypes});
 });
