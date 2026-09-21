@@ -2847,8 +2847,8 @@ function renderDriverAvailability() {
     });
   const counts = rows.reduce((result, driver) => {
     const state = availabilityState(driver);
-    result[state] += 1;
     if (state === "busy" && String(availabilityOccupation(driver)).toLowerCase() === "aeropuerto") result.airport += 1;
+    else result[state] += 1;
     return result;
   }, { free: 0, busy: 0, airport: 0 });
   ["availableDriversCount", "busyDriversCount", "airportDriversCount"].forEach((id, index) => {

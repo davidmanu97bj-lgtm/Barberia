@@ -7441,8 +7441,8 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 .availability-occupation-chooser { position:absolute; z-index:3; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:inherit; color:var(--red); background:var(--red-soft); text-align:center; }
 .availability-occupation-chooser strong { font-size:19px; letter-spacing:.02em; }
 .availability-occupation-chooser > span { color:#7b8494; font-size:10px; font-weight:700; }
-.availability-occupation-chooser > div { display:flex; gap:8px; width:min(100%,250px); margin-top:5px; }
-.availability-occupation-chooser button { flex:1; min-height:32px; border:1px solid #e2b9bc; border-radius:9px; background:#fff; color:var(--red); font-size:11px; font-weight:900; }
+.availability-occupation-chooser > div { display:flex; gap:10px; width:min(100%,280px); margin-top:7px; }
+.availability-occupation-chooser button { flex:1; min-height:38px; border:1px solid #e2b9bc; border-radius:10px; background:#fff; color:var(--red); font-size:12px; font-weight:900; }
 .availability-occupation-chooser button:hover { background:#fff8f8; border-color:var(--red); }
 .availability-modal { place-items:end center; }
 .availability-card-modal { width:min(100%, 510px); max-height:min(82dvh, 720px); padding:18px 14px 14px; overflow:hidden; }
