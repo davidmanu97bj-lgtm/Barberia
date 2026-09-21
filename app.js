@@ -2845,10 +2845,15 @@ function renderDriverAvailability() {
       const order = rank[availabilityState(a)] - rank[availabilityState(b)];
       return order || adminDriverLabel(a).localeCompare(adminDriverLabel(b), "es", { sensitivity: "base" });
     });
-  const counts = rows.reduce((result, driver) => { result[availabilityState(driver)] += 1; return result; }, { free: 0, busy: 0 });
-  ["availableDriversCount", "busyDriversCount"].forEach((id, index) => {
+  const counts = rows.reduce((result, driver) => {
+    const state = availabilityState(driver);
+    result[state] += 1;
+    if (state === "busy" && String(availabilityOccupation(driver)).toLowerCase() === "aeropuerto") result.airport += 1;
+    return result;
+  }, { free: 0, busy: 0, airport: 0 });
+  ["availableDriversCount", "busyDriversCount", "airportDriversCount"].forEach((id, index) => {
     const node = $(id);
-    if (node) node.textContent = String([counts.free, counts.busy][index]);
+    if (node) node.textContent = String([counts.free, counts.busy, counts.airport][index]);
   });
 
   const current = rows.find(driver => String(driver.id) === String(auth.currentUser?.uid)) || currentProfile || {};
