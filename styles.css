@@ -7419,7 +7419,8 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 .availability-open { width:34px; height:34px; border:0; border-radius:12px; background:transparent; color:#132445; font-size:28px; line-height:1; }
 .availability-summary { display:flex; flex-wrap:wrap; gap:7px 13px; margin:8px 0 0; padding:7px 9px; border-radius:10px; background:rgba(236,247,255,.82); color:#26344b; font-size:10px; font-weight:750; }
 .availability-summary-button { width:100%; align-items:center; border:0; text-align:left; cursor:pointer; }
-.availability-summary-button:hover { background:#e5f3fc; }
+.availability-summary-button { border:1px solid #dfe9e5; background:linear-gradient(90deg,var(--green-soft) 0%,#f8fafb 48%,var(--red-soft) 100%); }
+.availability-summary-button:hover { background:linear-gradient(90deg,#e7f8ed 0%,#f5f8f8 48%,#ffebeb 100%); }
 .availability-summary-button .availability-open { margin-left:auto; padding:0; }
 .availability-count { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
 .availability-count b { font-size:12px; }
