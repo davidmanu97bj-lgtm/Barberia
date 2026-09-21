@@ -2841,8 +2841,8 @@ function renderDriverAvailability() {
       const currentA = String(a.id) === String(auth.currentUser?.uid);
       const currentB = String(b.id) === String(auth.currentUser?.uid);
       if (currentA !== currentB) return currentA ? -1 : 1;
-      const rank = { free: 0, busy: 1 };
-      const order = rank[availabilityState(a)] - rank[availabilityState(b)];
+      const rank = driver => availabilityState(driver) === "free" ? 0 : String(availabilityOccupation(driver)).toLowerCase() === "aeropuerto" ? 2 : 1;
+      const order = rank(a) - rank(b);
       return order || adminDriverLabel(a).localeCompare(adminDriverLabel(b), "es", { sensitivity: "base" });
     });
   const counts = rows.reduce((result, driver) => {
