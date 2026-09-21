@@ -163,6 +163,7 @@ let teamDrivers = [];
 let unsubscribeTeamDrivers = null;
 const localAvailabilityOverrides = new Map();
 let availabilityToastTimer = null;
+let whatsappSetupRequired = false;
 let adminPayments = [];
 let adminExpenses = [];
 let adminUberClosures = [];
@@ -2762,6 +2763,7 @@ function normalizeWhatsappPhone(value = "") {
   let digits = String(value || "").replace(/[^0-9]/g, "");
   if (digits.startsWith("00")) digits = digits.slice(2);
   if (!digits) return "";
+  if (digits.startsWith("549")) return digits;
   if (digits.startsWith("54")) {
     const local = digits.slice(2).replace(/^0+/, "");
     return local.startsWith("9") ? `54${local}` : `549${local}`;
@@ -2770,6 +2772,52 @@ function normalizeWhatsappPhone(value = "") {
   if (digits.startsWith("15")) digits = digits.slice(2);
   return `549${digits}`;
 }
+
+function openWhatsappSetup({ required = false } = {}) {
+  whatsappSetupRequired = required;
+  const modal = $("whatsappSetupModal");
+  const input = $("whatsappSetupInput");
+  if (!modal || !input) return;
+  const existing = availabilityPhone(currentProfile || {});
+  $("whatsappSetupTitle").textContent = required ? "Ingresá tu número de WhatsApp" : "Modificar número de WhatsApp";
+  $("whatsappSetupDescription").textContent = required
+    ? "Es necesario para que otros choferes puedan contactarte cuando estés libre."
+    : "Podés actualizar el número que usarán tus compañeros para contactarte.";
+  $("whatsappSetupCancel")?.classList.toggle("hidden", required);
+  $("whatsappSetupStatus").textContent = "";
+  input.value = existing ? `+${normalizeWhatsappPhone(existing)}` : "+54 9 ";
+  modal.classList.remove("hidden");
+  window.setTimeout(() => input.focus(), 50);
+}
+
+function closeWhatsappSetup() {
+  if (whatsappSetupRequired) return;
+  $("whatsappSetupModal")?.classList.add("hidden");
+}
+
+$("availabilityEditPhoneBtn")?.addEventListener("click", () => openWhatsappSetup());
+$("whatsappSetupCancel")?.addEventListener("click", closeWhatsappSetup);
+$("whatsappSetupForm")?.addEventListener("submit", async event => {
+  event.preventDefault();
+  const uid = auth.currentUser?.uid;
+  const normalized = normalizeWhatsappPhone($("whatsappSetupInput")?.value || "");
+  const status = $("whatsappSetupStatus");
+  if (!uid || normalized.length < 11) { status.textContent = "Ingresá un número válido con código de país."; status.className = "status error"; return; }
+  const save = $("whatsappSetupSave");
+  save.disabled = true; save.textContent = "Guardando…"; status.textContent = "";
+  try {
+    await updateDoc(doc(db, "choferes", uid), { whatsappPhone: normalized, phone: normalized, updatedAt: serverTimestamp() });
+    currentProfile = { ...(currentProfile || {}), whatsappPhone: normalized, phone: normalized };
+    const own = teamDrivers.find(driver => String(driver.id) === String(uid));
+    if (own) { own.whatsappPhone = normalized; own.phone = normalized; }
+    $("whatsappSetupModal")?.classList.add("hidden");
+    whatsappSetupRequired = false;
+    renderDriverAvailability();
+  } catch (error) {
+    status.textContent = "No pudimos guardar el número. Volvé a intentar.";
+    status.className = "status error";
+  } finally { save.disabled = false; save.textContent = "Guardar número"; }
+});
 
 function openNativeWhatsapp(driver = {}) {
   const phone = normalizeWhatsappPhone(availabilityPhone(driver));
@@ -4471,6 +4519,7 @@ onAuthStateChanged(auth, async user => {
     $("operatorName").textContent = `Hola ${currentProfile.displayName || currentProfile.username || user.email?.split("@")[0] || "Chofer"}`;
     if ($("homeDriverGreeting")) $("homeDriverGreeting").textContent = `Hola, ${currentProfile.displayName || currentProfile.username || user.email?.split("@")[0] || "Chofer"}`;
     applyRoleUI();
+    if (!isAdminProfile() && !availabilityPhone(currentProfile)) openWhatsappSetup({ required: true });
     if (isAdminProfile() !== initialAdmin) {
       cancelDashboardRender();
       [unsubscribePayments, unsubscribeExpenses, unsubscribeUber, unsubscribeDebts,

@@ -128,7 +128,7 @@
       .service-option{min-height:80px;padding:13px 11px}.service-option strong{font-size:12px}.service-option span{font-size:16px}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=20260921-availability-4" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-availability-5" />
   <link rel="stylesheet" href="./movement-colors.css?v=20260919-admin-1" />
   <link rel="stylesheet" href="./explora-ui.css?v=20260919-admin-1" />
   <link rel="stylesheet" href="./admin-workspace.css?v=20260919-admin-1" />
@@ -541,10 +541,22 @@
 
 <div id="availabilityModal" class="modal hidden availability-modal" role="dialog" aria-modal="true" aria-labelledby="availabilityModalTitle">
   <div class="modal-card availability-card-modal">
-    <div class="modal-head"><div><h2 id="availabilityModalTitle">Disponibilidad de choferes</h2><p class="availability-modal-subtitle">Estado en tiempo real</p></div><button class="x" data-close="availabilityModal" aria-label="Cerrar">×</button></div>
+    <div class="modal-head"><div><h2 id="availabilityModalTitle">Disponibilidad de choferes</h2><p class="availability-modal-subtitle">Estado en tiempo real</p><button id="availabilityEditPhoneBtn" class="availability-edit-phone" type="button">Modificar número</button></div><button class="x" data-close="availabilityModal" aria-label="Cerrar">×</button></div>
     <div id="availabilityList" class="availability-list" aria-live="polite"><div class="availability-empty">Consultando disponibilidad…</div></div>
     <div class="availability-modal-note"><span aria-hidden="true">ⓘ</span><span>Tocá el ícono de WhatsApp para iniciar una conversación con un chofer libre.</span></div>
   </div>
+</div>
+
+<div id="whatsappSetupModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="whatsappSetupTitle">
+  <form id="whatsappSetupForm" class="modal-card whatsapp-setup-card">
+    <div class="whatsapp-setup-mark" aria-hidden="true">●</div>
+    <h2 id="whatsappSetupTitle">Ingresá tu número de WhatsApp</h2>
+    <p id="whatsappSetupDescription">Lo usamos para que otros choferes puedan contactarte cuando estés libre.</p>
+    <label class="whatsapp-setup-label" for="whatsappSetupInput">Número de WhatsApp</label>
+    <input id="whatsappSetupInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej. 11 5555 1234" required>
+    <p id="whatsappSetupStatus" class="status" role="status" aria-live="polite"></p>
+    <div class="modal-actions whatsapp-setup-actions"><button id="whatsappSetupCancel" class="secondary hidden" type="button">Cancelar</button><button id="whatsappSetupSave" class="save" type="submit">Guardar número</button></div>
+  </form>
 </div>
 
 <div id="financialEditModal" class="modal hidden">
