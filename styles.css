@@ -7410,12 +7410,12 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 
 
 /* Disponibilidad de choferes: vista compacta inspirada en el panel móvil de Explora. */
-.driver-availability-card { margin: 12px 0 18px; padding: 14px; border: 1px solid #dce9f0; border-radius: 18px; background: linear-gradient(135deg, #f4fbff 0%, #f7fffb 100%); box-shadow: 0 8px 22px rgba(39, 91, 119, .06); }
+.driver-availability-card { margin: 10px 0 14px; padding: 10px 12px; border: 1px solid #dce9f0; border-radius: 15px; background: linear-gradient(135deg, #f4fbff 0%, #f7fffb 100%); box-shadow: 0 6px 16px rgba(39, 91, 119, .05); }
 .availability-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .availability-card-head h2 { margin:0; color:#132445; font-size:17px; line-height:1.15; font-weight:950; }
 .availability-card-head p, .availability-modal-subtitle { margin:4px 0 0; color:#7b8494; font-size:11px; font-weight:700; }
 .availability-open { width:34px; height:34px; border:0; border-radius:12px; background:transparent; color:#132445; font-size:28px; line-height:1; }
-.availability-summary { display:flex; flex-wrap:wrap; gap:10px 16px; margin:14px 0; padding:11px 12px; border-radius:13px; background:rgba(236,247,255,.82); color:#26344b; font-size:11px; font-weight:750; }
+.availability-summary { display:flex; flex-wrap:wrap; gap:7px 13px; margin:8px 0 0; padding:7px 9px; border-radius:10px; background:rgba(236,247,255,.82); color:#26344b; font-size:10px; font-weight:750; }
 .availability-summary-button { width:100%; align-items:center; border:0; text-align:left; cursor:pointer; }
 .availability-summary-button:hover { background:#e5f3fc; }
 .availability-summary-button .availability-open { margin-left:auto; padding:0; }
@@ -7428,8 +7428,9 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 .availability-current-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .availability-current-status { display:flex; align-items:center; gap:10px; min-width:0; }
 .availability-current-status strong { display:block; color:#132445; font-size:15px; font-weight:950; }
-.availability-current-status small { display:block; margin-top:2px; color:#7b8494; font-size:10px; font-weight:650; }
-.availability-change { border:0; border-radius:12px; padding:10px 13px; background:#e2eefb; color:#132445; font-size:11px; font-weight:900; white-space:nowrap; }
+.availability-current-status small { display:block; margin-top:1px; color:#7b8494; font-size:9px; font-weight:650; }
+.availability-change { min-height:36px; border:0; border-radius:11px; padding:8px 14px; background:linear-gradient(135deg,#1678d2,#0b58ad); color:#fff; font-size:12px; font-weight:950; white-space:nowrap; box-shadow:0 5px 12px rgba(20,101,184,.24); }
+.availability-change:hover { background:linear-gradient(135deg,#0f6fc9,#084c9c); transform:translateY(-1px); }
 .availability-modal { place-items:end center; }
 .availability-card-modal { width:min(100%, 510px); max-height:min(82dvh, 720px); padding:18px 14px 14px; overflow:hidden; }
 .availability-card-modal .modal-head { margin:0 4px 14px; align-items:flex-start; }
@@ -7452,11 +7453,11 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 .availability-modal-note { display:flex; align-items:flex-start; gap:8px; margin:14px 4px 0; padding:12px; border-radius:13px; background:#f0f5ff; color:#7b8494; font-size:11px; line-height:1.35; }
 .availability-modal-note span:first-child { color:#2360a4; font-size:16px; line-height:1; }
 @media (max-width:760px) {
-  .driver-availability-card { margin-top:10px; padding:13px; border-radius:16px; }
-  .availability-summary { gap:8px 11px; font-size:9px; }
+  .driver-availability-card { margin-top:8px; padding:10px; border-radius:14px; }
+  .availability-summary { gap:6px 9px; padding:6px 8px; font-size:9px; }
   .availability-count b { font-size:10px; }
   .availability-current-status strong { font-size:14px; }
-  .availability-change { padding:9px 10px; font-size:10px; }
+  .availability-change { min-height:34px; padding:7px 11px; font-size:10px; }
   .availability-card-modal { border-radius:28px 28px 0 0; padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
 }
 
