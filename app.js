@@ -162,6 +162,7 @@ let adminDrivers = [];
 let teamDrivers = [];
 let unsubscribeTeamDrivers = null;
 const localAvailabilityOverrides = new Map();
+let availabilityToastTimer = null;
 let adminPayments = [];
 let adminExpenses = [];
 let adminUberClosures = [];
@@ -2841,6 +2842,17 @@ function subscribeDriverAvailability() {
   });
 }
 
+function showAvailabilityToast(state) {
+  const toast = $("availabilityToast");
+  if (!toast) return;
+  window.clearTimeout(availabilityToastTimer);
+  toast.className = `availability-toast is-${state} is-visible`;
+  toast.textContent = `ESTÁS ${availabilityStateLabel(state).toUpperCase()}`;
+  availabilityToastTimer = window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+  }, 700);
+}
+
 async function cycleDriverAvailability() {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
@@ -2848,6 +2860,7 @@ async function cycleDriverAvailability() {
   const next = availabilityState(current) === "free" ? "busy" : "free";
   localAvailabilityOverrides.set(String(uid), next);
   renderDriverAvailability();
+  showAvailabilityToast(next);
   const button = $("changeAvailabilityBtn");
   if (button) { button.disabled = true; button.textContent = "Guardando…"; }
   try {

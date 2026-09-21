@@ -7410,7 +7410,7 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 
 
 /* Disponibilidad de choferes: vista compacta inspirada en el panel móvil de Explora. */
-.driver-availability-card { margin: 10px 0 14px; padding: 10px 12px; border: 1px solid #dce9f0; border-radius: 15px; background: linear-gradient(135deg, #f4fbff 0%, #f7fffb 100%); box-shadow: 0 6px 16px rgba(39, 91, 119, .05); }
+.driver-availability-card { position:relative; margin: 10px 0 14px; padding: 10px 12px; border: 1px solid #dce9f0; border-radius: 15px; background: linear-gradient(135deg, #f4fbff 0%, #f7fffb 100%); box-shadow: 0 6px 16px rgba(39, 91, 119, .05); }
 .driver-availability-card.is-free { border-color:#cfeedd; background:var(--green-soft); }
 .driver-availability-card.is-busy { border-color:#f1d1d3; background:var(--red-soft); }
 .availability-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
@@ -7433,6 +7433,9 @@ body:has(#tripCalendarModal:not(.hidden)) { overflow: hidden; }
 .availability-current-status small { display:block; margin-top:1px; color:#7b8494; font-size:9px; font-weight:650; }
 .availability-change { min-height:36px; border:0; border-radius:11px; padding:8px 14px; background:linear-gradient(135deg,#1678d2,#0b58ad); color:#fff; font-size:12px; font-weight:950; white-space:nowrap; box-shadow:0 5px 12px rgba(20,101,184,.24); }
 .availability-change:hover { background:linear-gradient(135deg,#0f6fc9,#084c9c); transform:translateY(-1px); }
+.availability-toast { position:absolute; z-index:2; inset:0; display:flex; align-items:center; justify-content:center; border-radius:inherit; color:var(--green); background:var(--green-soft); font-size:19px; font-weight:950; letter-spacing:.02em; opacity:0; pointer-events:none; transform:scale(.98); transition:opacity .1s ease, transform .1s ease; }
+.availability-toast.is-visible { opacity:1; transform:scale(1); }
+.availability-toast.is-busy { color:var(--red); background:var(--red-soft); }
 .availability-modal { place-items:end center; }
 .availability-card-modal { width:min(100%, 510px); max-height:min(82dvh, 720px); padding:18px 14px 14px; overflow:hidden; }
 .availability-card-modal .modal-head { margin:0 4px 14px; align-items:flex-start; }
